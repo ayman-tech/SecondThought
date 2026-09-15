@@ -1,0 +1,1 @@
+Online and workplace communication can often become rude, aggressive, or toxic, which can lead to misunderstandings and conflict. The goal of this project is to build a Transformer-based language model that rewrites toxic or angry messages into respectful, neutral language while preserving the original meaning and intent.
