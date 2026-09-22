@@ -1,0 +1,8 @@
+[openai]
+# Pinned for reproducible baseline comparisons. This can be changed without
+# touching application code.
+model = "gpt-4.1-mini-2025-04-14"
+max_output_tokens = 300
+
+[prompt]
+path = "prompts/constrained.txt"
