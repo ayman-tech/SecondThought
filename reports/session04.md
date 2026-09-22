@@ -1,5 +1,4 @@
 ---
-
 team: SecondThought
 session: "04"
 date: 2026-09-22
@@ -17,7 +16,6 @@ hat: Product
 - name: Mohamed Ziyadh
 github: moziyadh110
 hat: Users&Research
-
 ---
 
 ## Shipped this week
