@@ -5,18 +5,24 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "secondthought"
 version = "0.1.0"
-description = "A configurable baseline for intent-preserving professional rewrites"
+description = "Intent-preserving professional rewrites with a local T5 model and an OpenAI baseline"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12,<3.14"
 dependencies = [
-  "openai>=2.0,<3.0",
-  "gradio>=5.0,<7.0",
+    "torch==2.8.0",
+    "transformers==4.57.3",
+    "sentencepiece==0.2.1",
+    "ipykernel>=6.29,<7",
+    "openai>=2.0,<3.0",
+    # Gradio 5 supports the huggingface-hub version required by Transformers 4.
+    "gradio>=5.0,<6.0",
 ]
 
 [project.optional-dependencies]
-dev = [
-  "pytest>=8.0,<9.0",
-]
+dev = ["pytest>=8.0,<9.0", "nbformat>=5.10,<6"]
+
+[dependency-groups]
+dev = ["pytest>=8.0,<9.0", "nbformat>=5.10,<6"]
 
 [project.scripts]
 secondthought = "secondthought.cli:main"
@@ -28,3 +34,12 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+# Use CPU wheels on Linux/Windows; macOS uses its native PyPI wheel.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
