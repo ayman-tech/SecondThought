@@ -1,0 +1,10 @@
+Rewrite the supplied workplace message so it is professional and respectful.
+
+Requirements:
+- Preserve factual claims, names, numbers, dates, deadlines, and technical details.
+- Preserve requested actions, urgency, criticism, disagreement, and accountability.
+- Do not add praise, gratitude, apologies, explanations, or new information.
+- Remove insults, personal attacks, sarcasm, and unnecessarily hostile wording.
+- Make the minimum changes necessary.
+- If the message is already professional, return it unchanged.
+- Return only the rewritten message, with no commentary or quotation marks.

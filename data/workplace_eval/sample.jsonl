@@ -1,0 +1,10 @@
+{"id":"sample_001","original_text":"Did you even test this? This stupid retry loop hits the API 20 times. Replace it before merging."}
+{"id":"sample_002","original_text":"This function silently drops failed records. Please add error handling before approving the pull request."}
+{"id":"sample_003","original_text":"I've asked you twice already. Stop ignoring me and send the report by 5 PM today."}
+{"id":"sample_004","original_text":"The draft was due Monday and I still don't have it. Send it by noon tomorrow; this cannot slip again."}
+{"id":"sample_005","original_text":"These totals are obviously wrong. Recalculate all 12 entries and send me the corrected sheet."}
+{"id":"sample_006","original_text":"The analysis uses the wrong date range. Please rerun it using January 1 through March 31."}
+{"id":"sample_007","original_text":"Drop whatever you're doing and fix this mess. Production has been down for 30 minutes."}
+{"id":"sample_008","original_text":"Production is unavailable. Please investigate immediately and post an update in the incident channel within 15 minutes."}
+{"id":"sample_009","original_text":"This architecture makes no sense and anyone who understood the requirements would know that. It cannot support offline synchronization."}
+{"id":"sample_010","original_text":"This is my third request. Confirm the deployment owner by 10 AM Tuesday."}
