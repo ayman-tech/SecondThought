@@ -1,3 +1,22 @@
+---
+team: SecondThought
+session: "05"
+date: 2026-09-29
+members:
+  - name: Nandan Prince
+    github: princeixr
+    hat: Data&Eval
+  - name: Ayman Sayed
+    github: ayman-tech
+    hat: Engineering
+  - name: Sai Rahul Meda
+    github: SAI-RAHUL-M
+    hat: Product
+  - name: Mohamed Ziyadh
+    github: moziyadh110
+    hat: Users&Research
+---
+
 # SecondThought — Weekly Report
 
 ## Shipped this week
