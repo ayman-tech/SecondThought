@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SecondThought</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>SecondThought</h1>
+    <span id="server-status" class="status-dot" title="Checking server…"></span>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <label for="message">Your message</label>
+  <textarea id="message" rows="6" maxlength="4000"
+    placeholder="Paste or type a message, or select text on the page before opening SecondThought."></textarea>
+
+  <div class="actions">
+    <span class="hint">Ctrl+Enter</span>
+    <button id="rewrite" type="button" class="primary">Second thought?</button>
+  </div>
+
+  <section id="result" hidden>
+    <div class="result-head">
+      <label>Suggested rewrite</label>
+      <button id="copy" type="button" class="secondary">Copy</button>
+    </div>
+    <div id="rewritten" class="output" tabindex="0"></div>
+    <p id="meta" class="meta"></p>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+</html>
