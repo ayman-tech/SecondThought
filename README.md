@@ -82,7 +82,7 @@ secondthought batch \
   --output outputs/baseline.csv
 ```
 
-Run the initial deterministic checks:
+Run the deterministic metrics, including typed critical-value preservation:
 
 ```bash
 secondthought evaluate \
@@ -90,7 +90,44 @@ secondthought evaluate \
   --output outputs/baseline_evaluated.csv
 ```
 
-The baseline CSV keeps the original and rewritten messages side by side and records request latency and token usage. The evaluated CSV adds simple reproducible metrics: number recall, word overlap, edit ratio, length ratio, and exact match. Human review is still required to judge meaning, urgency, criticism, and usefulness. Model information and the UTC timestamp are always the last two CSV columns.
+To include the two optional learned evaluators, install their dependencies and add
+the flag:
+
+```bash
+uv sync --extra evaluation
+
+secondthought evaluate \
+  --predictions outputs/baseline.csv \
+  --output outputs/baseline_evaluated.csv \
+  --with-learned-metrics
+```
+
+The learned metrics use Detoxify's `original` toxicity classifier and
+`sentence-transformers/all-mpnet-base-v2` by default. The first run downloads the
+model weights; later runs use the local cache. `--toxicity-model`,
+`--similarity-model`, and `--device` can override these defaults.
+
+The evaluated CSV contains input/output toxicity, absolute and relative toxicity
+reduction, semantic cosine similarity, and critical-value counts and details. The
+critical-value implementation normalizes numbers and number words, dates, times,
+money, percentages, measurements, URLs, email addresses, mentions, ticket IDs,
+and technical identifiers. Missing and newly introduced values are serialized as
+JSON columns. If a prediction CSV has a `critical_values` column, it must be a JSON
+list and is used as the source-of-truth preservation list; this is the recommended
+way to cover names, projects, or other literal values that deterministic extraction
+cannot identify safely. Semantic similarity remains the proxy for broader intent
+and requested-action preservation.
+
+Detoxify and Sentence-Transformers are separate learned models, not ground truth.
+The toxicity classifier is trained on internet-comment data and can be biased or
+miscalibrated for workplace language. High embedding similarity can miss changed
+negation, urgency, deadlines, or requested actions. Always inspect the individual
+preservation columns and calibrate learned-score thresholds on human-labeled
+development records. Neither learned score is currently converted to a pass/fail
+decision by the CLI.
+
+The CSV retains the original and rewritten messages, request latency, and token
+usage. Model information and the UTC timestamp remain the last two columns.
 
 ## Change the experiment
 

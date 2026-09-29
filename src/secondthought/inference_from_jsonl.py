@@ -12,18 +12,19 @@ from pathlib import Path
 from time import perf_counter
 
 from .data import write_csv
-from .evaluation import evaluate_pair, summarize
+from .evaluation import (
+    DetoxifyToxicityScorer,
+    SentenceTransformerSimilarityScorer,
+    evaluate_records,
+    format_evaluated_row,
+    summarize,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL = PROJECT_ROOT / "models/epoch3/t5-small-paradetox"
 DEFAULT_ARCHIVE = PROJECT_ROOT / "models/epoch5/epoch3.zip"
 PREFIX = "detoxify: "
 MAX_INPUT_TOKENS = 128
-COLUMNS = (
-    "id", "original_text", "rewritten_text", "latency_ms", "input_tokens",
-    "output_tokens", "response_id", "number_recall", "word_overlap",
-    "edit_ratio", "length_ratio", "exact_match", "model_info", "timestamp_utc",
-)
 
 
 def read_inputs(path: Path) -> list[dict[str, str]]:
@@ -88,22 +89,28 @@ def encode_input(tokenizer, record):
     return encoded
 
 
-def evaluated_row(record, rewritten, latency_ms, input_tokens, output_tokens, model_dir):
-    row = {
+def prediction_row(record, rewritten, latency_ms, input_tokens, output_tokens, model_dir):
+    return {
         **record,
         "rewritten_text": rewritten,
         "latency_ms": round(latency_ms, 2),
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
-        "response_id": "",  # Local inference has no API response ID.
-        **evaluate_pair(record["original_text"], rewritten),
         "model_info": f"local-t5:{model_dir}",
         "timestamp_utc": datetime.now(UTC).isoformat(),
     }
-    return {column: row[column] for column in COLUMNS}
 
 
-def run(dataset: Path, output: Path, model_dir: Path | None = None) -> None:
+def run(
+    dataset: Path,
+    output: Path,
+    model_dir: Path | None = None,
+    *,
+    include_learned_metrics: bool = True,
+    toxicity_model: str = "original",
+    similarity_model: str = "sentence-transformers/all-mpnet-base-v2",
+    device: str = "cpu",
+) -> None:
     records = read_inputs(dataset)
     selected = prepare_model(
         model_dir if model_dir is not None else DEFAULT_MODEL,
@@ -119,7 +126,7 @@ def run(dataset: Path, output: Path, model_dir: Path | None = None) -> None:
     for record in records:
         encode_input(tokenizer, record)
     print(f"Loaded {selected}; processing {len(records)} messages on CPU.", flush=True)
-    rows = []
+    predictions = []
     with torch.inference_mode():
         for index, record in enumerate(records, 1):
             started = perf_counter()
@@ -131,13 +138,32 @@ def run(dataset: Path, output: Path, model_dir: Path | None = None) -> None:
                 raise ValueError(f"Model produced an empty rewrite for {record['id']!r}")
             # Exclude the decoder's initial token and padding; include generated EOS.
             output_tokens = sum(token != tokenizer.pad_token_id for token in generated[0, 1:].tolist())
-            rows.append(evaluated_row(
+            predictions.append(prediction_row(
                 record, rewritten, elapsed_ms, inputs["input_ids"].shape[1], output_tokens, selected,
             ))
             print(f"[{index}/{len(records)}] {record['id']}", flush=True)
+    metric_rows = evaluate_records(
+        predictions,
+        toxicity_scorer=(
+            DetoxifyToxicityScorer(toxicity_model, device=device)
+            if include_learned_metrics
+            else None
+        ),
+        similarity_scorer=(
+            SentenceTransformerSimilarityScorer(similarity_model, device=device)
+            if include_learned_metrics
+            else None
+        ),
+    )
+    rows = [
+        format_evaluated_row(prediction, metrics)
+        for prediction, metrics in zip(predictions, metric_rows, strict=True)
+    ]
     write_csv(output, rows)
-    summary = summarize(rows)
-    summary["average_latency_ms"] = round(sum(row["latency_ms"] for row in rows) / len(rows), 2)
+    summary = summarize(metric_rows)
+    summary["average_latency_ms"] = round(
+        sum(row["latency_ms"] for row in predictions) / len(predictions), 2
+    )
     print(json.dumps(summary, indent=2))
     print(f"Saved {len(rows)} rows to {output.resolve()}")
 
@@ -147,9 +173,27 @@ def main() -> None:
     parser.add_argument("--dataset", type=Path, default=PROJECT_ROOT / "data/workplace_eval/input.jsonl")
     parser.add_argument("--output", type=Path, default=PROJECT_ROOT / "outputs/epoch3_evaluated.csv")
     parser.add_argument("--model-dir", type=Path, help="Extracted local model folder; skips default ZIP extraction")
+    parser.add_argument(
+        "--without-learned-metrics",
+        action="store_true",
+        help="skip Detoxify and Sentence-Transformers evaluation",
+    )
+    parser.add_argument("--toxicity-model", default="original")
+    parser.add_argument(
+        "--similarity-model", default="sentence-transformers/all-mpnet-base-v2"
+    )
+    parser.add_argument("--device", default="cpu")
     args = parser.parse_args()
     try:
-        run(args.dataset, args.output, args.model_dir)
+        run(
+            args.dataset,
+            args.output,
+            args.model_dir,
+            include_learned_metrics=not args.without_learned_metrics,
+            toxicity_model=args.toxicity_model,
+            similarity_model=args.similarity_model,
+            device=args.device,
+        )
     except (OSError, ValueError, zipfile.BadZipFile) as error:
         parser.exit(1, f"Error: {error}\n")
 
