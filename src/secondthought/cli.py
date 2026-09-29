@@ -12,6 +12,7 @@ from .evaluation import (
     DetoxifyToxicityScorer,
     SentenceTransformerSimilarityScorer,
     evaluate_records,
+    format_evaluated_row,
     summarize,
 )
 from .rewriter import OpenAIRewriter
@@ -63,19 +64,10 @@ def run_evaluation(
             else None
         ),
     )
-    evaluated_rows = []
-    for prediction, metrics in zip(predictions, metric_rows, strict=True):
-        ending = {
-            key: prediction[key]
-            for key in ("model_info", "timestamp_utc")
-            if key in prediction
-        }
-        main_columns = {
-            key: value
-            for key, value in prediction.items()
-            if key not in ending
-        }
-        evaluated_rows.append({**main_columns, **metrics, **ending})
+    evaluated_rows = [
+        format_evaluated_row(prediction, metrics)
+        for prediction, metrics in zip(predictions, metric_rows, strict=True)
+    ]
 
     write_csv(output_path, evaluated_rows)
     summary = summarize(metric_rows)

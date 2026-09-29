@@ -8,6 +8,7 @@ from secondthought.evaluation import (
     evaluate_pair,
     evaluate_records,
     extract_critical_values,
+    format_evaluated_row,
     summarize,
 )
 
@@ -143,3 +144,59 @@ def test_learned_evaluators_are_batched_and_summarized():
 def test_invalid_critical_value_json_is_rejected():
     with pytest.raises(ValueError, match="valid JSON"):
         coerce_critical_values("not-json")
+
+
+def test_evaluated_csv_order_places_metrics_before_metadata():
+    prediction = {
+        "id": "one",
+        "original_text": "Send 2 files.",
+        "rewritten_text": "Please send 2 files.",
+        "latency_ms": 25.0,
+        "input_tokens": 4,
+        "output_tokens": 5,
+        "response_id": "must-be-removed",
+        "model_info": "local-t5:test",
+        "timestamp_utc": "2026-09-29T00:00:00+00:00",
+    }
+    metrics = evaluate_pair(
+        prediction["original_text"],
+        prediction["rewritten_text"],
+        toxicity_scorer=type(
+            "PairToxicity", (), {"score": lambda self, texts: [0.8, 0.1]}
+        )(),
+        similarity_scorer=type(
+            "PairSimilarity", (), {"score_pairs": lambda self, pairs: [0.9]}
+        )(),
+    )
+
+    result = format_evaluated_row(prediction, metrics)
+
+    assert list(result) == [
+        "id",
+        "original_text",
+        "rewritten_text",
+        "semantic_similarity",
+        "toxicity_original",
+        "toxicity_rewritten",
+        "toxicity_reduction",
+        "toxicity_relative_reduction",
+        "critical_value_count",
+        "critical_value_preserved_count",
+        "critical_value_recall",
+        "critical_value_missing_count",
+        "critical_value_unsupported_count",
+        "critical_value_exact",
+        "critical_value_missing",
+        "critical_value_unsupported",
+        "word_overlap",
+        "edit_ratio",
+        "length_ratio",
+        "exact_match",
+        "number_recall",
+        "latency_ms",
+        "input_tokens",
+        "output_tokens",
+        "model_info",
+        "timestamp_utc",
+    ]
+    assert "response_id" not in result

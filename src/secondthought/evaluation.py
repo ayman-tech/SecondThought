@@ -19,6 +19,38 @@ from typing import Any, Protocol
 
 WORD_PATTERN = re.compile(r"\b[\w']+\b", re.UNICODE)
 
+SEMANTIC_COLUMNS = ("semantic_similarity",)
+TOXICITY_COLUMNS = (
+    "toxicity_original",
+    "toxicity_rewritten",
+    "toxicity_reduction",
+    "toxicity_relative_reduction",
+)
+CRITICAL_VALUE_COLUMNS = (
+    "critical_value_count",
+    "critical_value_preserved_count",
+    "critical_value_recall",
+    "critical_value_missing_count",
+    "critical_value_unsupported_count",
+    "critical_value_exact",
+    "critical_value_missing",
+    "critical_value_unsupported",
+)
+LEGACY_METRIC_COLUMNS = (
+    "word_overlap",
+    "edit_ratio",
+    "length_ratio",
+    "exact_match",
+    "number_recall",
+)
+EVALUATION_COLUMNS = (
+    *SEMANTIC_COLUMNS,
+    *TOXICITY_COLUMNS,
+    *CRITICAL_VALUE_COLUMNS,
+    *LEGACY_METRIC_COLUMNS,
+)
+FINAL_METADATA_COLUMNS = ("model_info", "timestamp_utc")
+
 # Ordered from most to least specific. Later matches may not overlap earlier ones,
 # so "$1,000" is one money value rather than money plus a generic number.
 URL_PATTERN = re.compile(r"\b(?:https?://|www\.)[^\s<>]+", re.I)
@@ -185,6 +217,47 @@ class SentenceTransformerSimilarityScorer:
             normalize_embeddings=True,
         )
         return [float((a * b).sum()) for a, b in zip(left, right, strict=True)]
+
+
+def format_evaluated_row(
+    prediction: Mapping[str, Any],
+    metrics: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return one evaluated row in the canonical CSV column order.
+
+    Text comes first, followed by semantic, toxicity, critical-value, and legacy
+    metrics. Generation metadata is placed on the right, with model and timestamp
+    always last. Provider ``response_id`` is intentionally excluded.
+    """
+
+    leading_names = ("id", "original_text", "rewritten_text", "response")
+    leading = {
+        name: prediction[name]
+        for name in leading_names
+        if name in prediction
+    }
+    ordered_metrics = {
+        name: metrics[name]
+        for name in EVALUATION_COLUMNS
+        if name in metrics
+    }
+    reserved = {
+        *leading_names,
+        *EVALUATION_COLUMNS,
+        *FINAL_METADATA_COLUMNS,
+        "response_id",
+    }
+    metadata = {
+        name: value
+        for name, value in prediction.items()
+        if name not in reserved
+    }
+    ending = {
+        name: prediction[name]
+        for name in FINAL_METADATA_COLUMNS
+        if name in prediction
+    }
+    return {**leading, **ordered_metrics, **metadata, **ending}
 
 
 def _decimal_string(value: str) -> str:

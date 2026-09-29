@@ -232,7 +232,6 @@ When learned metrics are enabled, the current output contains the following.
 | `latency_ms` | Time taken to generate the rewrite, in milliseconds. This does not include the later offline evaluation. |
 | `input_tokens` | Input-token usage reported by the generation provider, when available. |
 | `output_tokens` | Output-token usage reported by the generation provider, when available. |
-| `response_id` | Provider response identifier, when available. |
 | `critical_values` | Optional JSON annotations carried from the evaluation dataset. This column appears only when supplied. |
 
 ### Critical-value columns
@@ -292,7 +291,10 @@ model behavior. They are not sufficient product-quality metrics by themselves.
 | `timestamp_utc` | UTC timestamp recorded when generation completed. |
 
 `model_info` and `timestamp_utc` are deliberately retained as the final two CSV
-columns.
+columns. Provider `response_id` values are deliberately removed from evaluated
+CSVs. The full order is: record text, semantic similarity, toxicity metrics,
+critical-value metrics, legacy metrics, other generation metadata, `model_info`,
+and `timestamp_utc`.
 
 ## Printed summary
 
