@@ -33,7 +33,7 @@ secondthought-app = "secondthought.app:main"
 where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]
 
 # Use CPU wheels on Linux/Windows; macOS uses its native PyPI wheel.

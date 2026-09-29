@@ -70,6 +70,10 @@ Launch the minimal web interface:
 secondthought-app
 ```
 
+Or try it from Chrome. Start the local API with `python -m api.server`, then
+load `extension/` as an unpacked extension. The steps are in
+[extension/README.md](extension/README.md).
+
 Generate baseline predictions for the sample dataset:
 
 ```bash
@@ -147,6 +151,8 @@ config/                 Runtime configuration
 data/workplace_eval/    Versioned evaluation inputs
 prompts/                Versioned model instructions
 src/secondthought/      Application and evaluation code
+api/                    Local HTTP API used by the Chrome extension
+extension/              Chrome extension (see extension/README.md)
 tests/                  Offline unit tests
 outputs/                Generated artifacts (ignored by Git)
 reports/                Course reports
