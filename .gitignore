@@ -9,10 +9,11 @@ dist/
 build/
 *.egg-info/
 flagged/
+tests/
+models/
 
 # Generated experiment artifacts
 outputs/*.jsonl
-outputs/*.csv
 !outputs/.gitkeep
 !constrained_evaluated.csv.venv/
 __pycache__/
