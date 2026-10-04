@@ -18,3 +18,7 @@ outputs/*.jsonl
 !constrained_evaluated.csv.venv/
 __pycache__/
 .ipynb_checkpoints/
+
+# License-restricted corpus (Yahoo/Grammarly) - do not commit or redistribute
+data/GYAFC_Corpus/
+data/GYAFC_Corpus.zip
