@@ -1,0 +1,24 @@
+# Local T5 setup, used by the Chrome extension's API server (api/server.py).
+# Nothing here calls OpenAI, so no API key is needed.
+
+[rewriter]
+backend = "t5"
+
+[t5]
+# Same generation settings as notebooks/inference_*.ipynb.
+max_input_tokens = 128
+max_new_tokens = 128
+num_beams = 4
+
+# Steps run in order on every sentence. ParaDetox removes insults first,
+# then the GYAFC model makes the wording formal. The prefix must match the
+# one each model was trained with.
+[[t5.steps]]
+name = "detox"
+model_dir = "models/t5-small-paradetox"
+prefix = "detoxify: "
+
+[[t5.steps]]
+name = "formal"
+model_dir = "models/t5-small-gyafc-formal"
+prefix = "formalize: "
