@@ -1,7 +1,9 @@
 """Local HTTP API exposing the existing rewriter to the Chrome extension.
 
 The rewriter, config, and prompt all come from the core package; this module
-only adds HTTP plumbing. The API key stays in the server's environment.
+only adds HTTP plumbing. By default it runs our local T5 models
+(config/t5.toml); set SECONDTHOUGHT_CONFIG=config/default.toml to use OpenAI,
+in which case the API key stays in the server's environment.
 """
 
 from __future__ import annotations
@@ -20,7 +22,7 @@ from secondthought.cli import build_rewriter
 from secondthought.config import load_settings
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CONFIG = REPO_ROOT / "config" / "default.toml"
+DEFAULT_CONFIG = REPO_ROOT / "config" / "t5.toml"
 MAX_MESSAGE_CHARS = 4000
 
 logger = logging.getLogger("secondthought.api")
