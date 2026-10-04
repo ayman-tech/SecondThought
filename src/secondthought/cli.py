@@ -16,9 +16,17 @@ from .evaluation import (
     summarize,
 )
 from .rewriter import OpenAIRewriter
+from .t5_rewriter import T5Rewriter
 
 
-def build_rewriter(settings: Settings) -> OpenAIRewriter:
+def build_rewriter(settings: Settings) -> OpenAIRewriter | T5Rewriter:
+    if settings.backend == "t5":
+        return T5Rewriter(
+            settings.t5_steps,
+            max_input_tokens=settings.t5_max_input_tokens,
+            max_new_tokens=settings.t5_max_new_tokens,
+            num_beams=settings.t5_num_beams,
+        )
     return OpenAIRewriter(
         model=settings.model,
         prompt_path=settings.prompt_path,
