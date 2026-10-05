@@ -9,7 +9,6 @@ dist/
 build/
 *.egg-info/
 flagged/
-tests/
 models/
 
 # Generated experiment artifacts
