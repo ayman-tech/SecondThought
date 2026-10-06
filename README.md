@@ -56,7 +56,7 @@ The final model and tokenizer are exported to `./epoch5`; the last cell download
 
 The notebook includes a reusable `detoxify(text)` function and instructions for loading the exported model later. Training runs locally within your Colab runtime; the notebook does not publish the model to Hugging Face or enable external experiment tracking.
 
-## Run the steering demo
+## Run the model comparison demo
 
 Launch the local Gradio interface from the repository root:
 
@@ -64,13 +64,22 @@ Launch the local Gradio interface from the repository root:
 secondthought-app
 ```
 
-The app loads `Qwen/Qwen2.5-0.5B-Instruct` and the saved GYAFC formality
-directions in `steering_experimentation/artifacts/`. For every input and alpha, it
-generates two vertically stacked responses: one steered at layer 4 with the
-final-token direction and one steered at layer 11 with the mean-pooled direction.
+The app loads `Qwen/Qwen2.5-0.5B-Instruct`, the saved GYAFC formality directions
+in `steering_experimentation/artifacts/`, and the two local T5-small fine-tunes.
+For every input, it generates four vertically stacked responses: the ParaDetox
+T5 fine-tune, the formality T5 fine-tune, Qwen steered at layer 4 with the
+final-token direction, and Qwen steered at layer 11 with the mean-pooled direction.
 The formality control ranges from `-2` to `+2` in `0.5` increments. Alpha `+2` is
 kept as an experimental setting because the evaluation showed substantial context
-drift at high steering strength.
+drift at high steering strength. Alpha changes only the two Qwen activation-
+steering responses; it is not passed to either fine-tuned model.
+Both T5 models use four-beam decoding with sampling disabled, matching their
+inference notebooks, so they return the same result for the same input.
+
+Before launching, place `detox-t5.zip` and `formalize-t5.zip` in `models/`. The
+app extracts and validates them on first launch, then loads the local folders on
+later launches. The archives are ignored by Git, so each new machine needs its
+own copies.
 
 The first launch may download the Qwen model from Hugging Face. Later launches use
 the local cache. Apple Silicon uses MPS automatically; CUDA is used when available,
