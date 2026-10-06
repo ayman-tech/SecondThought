@@ -1,6 +1,6 @@
 # SecondThought
 
-SecondThought explores rewriting emotionally charged messages into respectful, professional language while preserving meaning, criticism, urgency, facts, and requested actions. It includes local T5 inference and fine-tuning notebooks, plus an OpenAI baseline with a CLI, Gradio interface, and evaluation tools.
+SecondThought explores rewriting emotionally charged messages into respectful, professional language while preserving meaning, criticism, urgency, facts, and requested actions. It includes an activation-steered local Qwen comparison interface, local T5 inference and fine-tuning notebooks, an OpenAI baseline CLI, and evaluation tools.
 
 ## Setup
 
@@ -56,18 +56,32 @@ The final model and tokenizer are exported to `./epoch5`; the last cell download
 
 The notebook includes a reusable `detoxify(text)` function and instructions for loading the exported model later. Training runs locally within your Colab runtime; the notebook does not publish the model to Hugging Face or enable external experiment tracking.
 
-## Run the MVP
+## Run the steering demo
+
+Launch the local Gradio interface from the repository root:
+
+```bash
+secondthought-app
+```
+
+The app loads `Qwen/Qwen2.5-0.5B-Instruct` and the saved GYAFC formality
+directions in `steering_experimentation/artifacts/`. For every input and alpha, it
+generates two vertically stacked responses: one steered at layer 4 with the
+final-token direction and one steered at layer 11 with the mean-pooled direction.
+The formality control ranges from `-2` to `+2` in `0.5` increments. Alpha `+2` is
+kept as an experimental setting because the evaluation showed substantial context
+drift at high steering strength.
+
+The first launch may download the Qwen model from Hugging Face. Later launches use
+the local cache. Apple Silicon uses MPS automatically; CUDA is used when available,
+with CPU as the fallback. The steering demo does not require an OpenAI API key.
+
+## Run the OpenAI baseline
 
 Rewrite one message:
 
 ```bash
 secondthought rewrite "This implementation is careless. Fix the timeout before merging."
-```
-
-Launch the minimal web interface:
-
-```bash
-secondthought-app
 ```
 
 Or try it from Chrome. Start the local API with `python -m api.server`, then
