@@ -64,13 +64,22 @@ Launch the local Gradio interface from the repository root:
 secondthought-app
 ```
 
-The app loads `Qwen/Qwen2.5-0.5B-Instruct` and the saved GYAFC formality
-directions in `steering_experimentation/artifacts/`. For every input and alpha, it
-generates two vertically stacked responses: one steered at layer 4 with the
-final-token direction and one steered at layer 11 with the mean-pooled direction.
-The formality control ranges from `-2` to `+2` in `0.5` increments. Alpha `+2` is
-kept as an experimental setting because the evaluation showed substantial context
-drift at high steering strength.
+The app loads `Qwen/Qwen2.5-0.5B-Instruct`, the two local fine-tuned T5-small
+models, and the saved directions from `steering_experimentation/artifacts/`. It
+displays three vertically stacked responses in this order:
+
+1. **Detox Fine-Tuned:** T5-small trained on ParaDetox.
+2. **Formality Fine-Tuned:** T5-small trained for formal rewriting.
+3. **Combined Steering:** one Qwen rewrite with the GYAFC final-token direction
+   applied at Layer 4 by alpha and the unit-normalized ParaDetox mean-pooled
+   direction applied at Layer 11 by beta. The detox direction's sign is oriented
+   from the causal sweep so positive beta uses the empirically detoxifying side.
+
+Both controls range from `-2` to `+2` in `0.5` increments. The combined response
+uses a fixed minimal-rewrite prompt, while alpha and beta independently control
+the two activation interventions in the same generation. Values above `+1`
+remain experimental because strong interventions can alter meaning or drift off
+topic.
 
 The first launch may download the Qwen model from Hugging Face. Later launches use
 the local cache. Apple Silicon uses MPS automatically; CUDA is used when available,

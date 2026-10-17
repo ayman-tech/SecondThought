@@ -11,6 +11,8 @@ requires-python = ">=3.12,<3.14"
 dependencies = [
     "torch==2.8.0",
     "transformers==4.57.3",
+    "datasets>=4.0,<5.0",
+    "matplotlib>=3.9,<4.0",
     "sentencepiece==0.2.1",
     "ipykernel>=6.29,<7",
     "openai>=2.0,<3.0",

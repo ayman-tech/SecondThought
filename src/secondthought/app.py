@@ -1,4 +1,4 @@
-"""Compact Gradio workbench for comparing activation-steered rewrites."""
+"""Compact Gradio workbench for comparing fine-tuned and steered rewrites."""
 
 from __future__ import annotations
 
@@ -6,11 +6,39 @@ from typing import Protocol
 
 import gradio as gr
 
+from .fine_tuned_rewriter import FINE_TUNED_VARIANTS, FineTunedT5Rewriter
 from .steering_rewriter import STEERING_VARIANTS, SteeredQwenRewriter
 
 
+OUTPUT_VARIANTS = (*FINE_TUNED_VARIANTS, *STEERING_VARIANTS)
+
+
 class Rewriter(Protocol):
-    def rewrite_all(self, message: str, alpha: float) -> dict[str, str]: ...
+    def rewrite_all(
+        self, message: str, alpha: float, beta: float
+    ) -> dict[str, str]: ...
+
+
+class ComparisonRewriter:
+    """Combine two fine-tuned responses with one mixed-steering response."""
+
+    def __init__(
+        self,
+        steering: SteeredQwenRewriter | None = None,
+        fine_tuned: FineTunedT5Rewriter | None = None,
+    ) -> None:
+        self.steering = steering or SteeredQwenRewriter()
+        self.fine_tuned = fine_tuned or FineTunedT5Rewriter()
+
+    def rewrite_all(
+        self,
+        message: str,
+        alpha: float,
+        beta: float,
+    ) -> dict[str, str]:
+        responses = self.fine_tuned.rewrite_all(message)
+        responses.update(self.steering.rewrite_all(message, alpha, beta))
+        return responses
 
 
 APP_CSS = """
@@ -102,7 +130,7 @@ footer { display: none !important; }
 }
 #controls-column {
   display: grid !important;
-  grid-template-rows: minmax(0, 1fr) 198px;
+  grid-template-rows: minmax(0, 1fr) 286px;
   width: 36%;
   min-width: 320px;
   height: 100%;
@@ -110,11 +138,11 @@ footer { display: none !important; }
 }
 #outputs-column {
   display: grid !important;
-  grid-template-rows: 28px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: 28px repeat(3, minmax(0, 1fr));
   width: 64%;
   min-width: 0;
   height: 100%;
-  gap: 12px;
+  gap: 9px;
 }
 
 .st-panel {
@@ -125,7 +153,7 @@ footer { display: none !important; }
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
   overflow: hidden;
 }
-#source-panel, #control-panel, .response-card {
+#source-panel, #control-panel {
   display: flex !important;
   flex-direction: column !important;
 }
@@ -178,17 +206,25 @@ footer { display: none !important; }
 #control-panel { padding: 14px 16px !important; gap: 10px; }
 .control-heading { min-height: 22px; }
 .control-title { color: #3f3f46; font-size: 12px; font-weight: 500; }
-.alpha-readout { margin-left: 7px; color: #a1a1aa; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.alpha-readout, .beta-readout { margin-left: 7px; color: #a1a1aa; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
 .layer-note { color: #a1a1aa; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; }
-#alpha-slider { padding: 0 !important; border: 0 !important; background: transparent !important; }
-#alpha-slider input[type="range"] { accent-color: var(--st-orange); }
-#alpha-guide {
-  min-height: 25px;
-  padding: 6px 0;
-  border-top: 1px solid #f1f5f9;
-  border-bottom: 1px solid #f1f5f9;
+#alpha-slider, #beta-slider { padding: 0 !important; border: 0 !important; background: transparent !important; }
+#alpha-slider input[type="range"], #beta-slider input[type="range"] { accent-color: var(--st-orange); }
+.control-group { gap: 2px !important; }
+.control-group + .control-group { padding-top: 5px; border-top: 1px solid #f1f5f9; }
+.parameter-guide {
+  min-height: 18px;
+  padding: 2px 0 4px;
 }
-#alpha-guide p { margin: 0; color: #71717a; font-size: 10px; line-height: 1.3; }
+.parameter-guide p {
+  margin: 0;
+  color: #71717a;
+  font-size: 9.5px;
+  line-height: 1.25;
+}
+#beta-guide {
+  border-top: 1px solid #f1f5f9;
+}
 .warning { color: #b45309; font-weight: 600; }
 #action-row { gap: 8px; }
 #reset-button, #generate-button { min-height: 34px; border-radius: 5px !important; font-size: 11px; font-weight: 600; }
@@ -199,9 +235,10 @@ footer { display: none !important; }
 #output-toolbar { padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
 .output-toolbar { width: 100%; height: 100%; }
 .output-context { display: flex; align-items: center; gap: 9px; }
+.parameter-chips { display: flex; align-items: center; }
 .toolbar-divider { color: #d4d4d8; }
 .output-description { color: #a1a1aa; font-size: 11px; }
-.alpha-chip {
+.alpha-chip, .beta-chip {
   padding: 3px 7px;
   border: 1px solid #fed7aa;
   border-radius: 5px;
@@ -209,10 +246,36 @@ footer { display: none !important; }
   color: var(--st-orange-hover);
   font: 10px ui-monospace, SFMono-Regular, Menlo, monospace;
 }
-.response-card { height: 100%; padding: 0 16px !important; }
+.beta-chip { margin-left: 5px; }
+.response-card {
+  display: grid !important;
+  grid-template-rows: 40px minmax(0, 1fr);
+  height: 100%;
+  padding: 0 16px !important;
+  gap: 0 !important;
+}
+.card-header-shell {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.card-header-shell > div,
+.card-header-shell .prose {
+  height: 100% !important;
+  min-height: 40px !important;
+  overflow: visible !important;
+}
 .card-heading {
-  flex: 0 0 40px;
+  box-sizing: border-box;
+  height: 40px;
   min-height: 40px;
+  position: relative;
+  z-index: 2;
+  background: var(--st-panel);
   border-bottom: 1px solid #f1f5f9;
 }
 .card-identity { display: flex; align-items: center; gap: 8px; }
@@ -223,6 +286,8 @@ footer { display: none !important; }
 .response-output {
   flex: 1 1 auto;
   min-height: 0;
+  position: relative;
+  z-index: 1;
   padding: 0 !important;
   border: 0 !important;
   background: white !important;
@@ -256,8 +321,8 @@ footer { display: none !important; }
   #workbench { height: auto; min-height: 0; padding: 16px; flex-wrap: wrap; overflow: visible; }
   #controls-column, #outputs-column { display: flex !important; width: 100%; min-width: 0; height: auto; }
   #source-panel { min-height: 360px; }
-  #control-panel { min-height: 198px; }
-  .response-card { min-height: 280px; }
+  #control-panel { min-height: 286px; }
+  .response-card { min-height: 220px; }
   .header-right .active-view, .model-name, .panel-note, .direction-label { display: none; }
 }
 """
@@ -296,15 +361,34 @@ def alpha_guidance(alpha: float) -> str:
     )
 
 
-def output_toolbar(alpha: float) -> str:
+def beta_guidance(beta: float) -> str:
+    beta = float(beta)
+    if beta < 0:
+        return "**Negative detox steering** · may retain or amplify toxic language."
+    if beta == 0:
+        return "**Prompt-only baseline** · no detox vector is applied."
+    if beta <= 0.5:
+        return "**Light detox steering** · small movement toward neutral language."
+    if beta <= 1.0:
+        return "**Moderate detox steering** · verify meaning and emotional intensity."
+    return (
+        '<span class="warning">⚠ Experimental region · strong detox steering can '
+        "change meaning or drift off topic.</span>"
+    )
+
+
+def output_toolbar(alpha: float, beta: float) -> str:
     return (
         '<div class="output-toolbar">'
         '<div class="output-context">'
-        '<span class="output-kicker">Steering outputs</span>'
+        '<span class="output-kicker">Model outputs</span>'
         '<span class="toolbar-divider">·</span>'
-        '<span class="output-description">Dual layer comparison</span>'
+        '<span class="output-description">2 fine-tuned · 1 mixed steering</span>'
         "</div>"
+        '<div class="parameter-chips">'
         f'<span class="alpha-chip">α {float(alpha):+.1f}</span>'
+        f'<span class="beta-chip">β {float(beta):+.1f}</span>'
+        "</div>"
         "</div>"
     )
 
@@ -312,17 +396,20 @@ def output_toolbar(alpha: float) -> str:
 def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
     """Build the functional subset of the Stitch comparison workbench."""
 
-    service = rewriter or SteeredQwenRewriter()
+    service = rewriter or ComparisonRewriter()
 
-    def generate(message: str, alpha: float):
+    def generate(message: str, alpha: float, beta: float):
         try:
-            responses = service.rewrite_all(message, alpha)
+            responses = service.rewrite_all(message, alpha, beta)
         except ValueError as error:
             raise gr.Error(str(error)) from error
-        return tuple(responses[variant.key] for variant in STEERING_VARIANTS)
+        return tuple(responses[variant.key] for variant in OUTPUT_VARIANTS)
 
-    def update_alpha(alpha: float):
-        return alpha_guidance(alpha), output_toolbar(alpha)
+    def update_alpha(alpha: float, beta: float):
+        return alpha_guidance(alpha), output_toolbar(alpha, beta)
+
+    def update_beta(beta: float, alpha: float):
+        return beta_guidance(beta), output_toolbar(alpha, beta)
 
     with gr.Blocks(
         theme=APP_THEME,
@@ -340,10 +427,10 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 <span class="header-divider">/</span>
                 <span class="product-area">Steering Lab</span>
                 <span class="header-divider">·</span>
-                <span class="model-name">Qwen 2.5 0.5B</span>
+                <span class="model-name">Qwen 2.5 0.5B · T5-small</span>
               </div>
               <div class="header-right">
-                <span class="active-view">Activation Steering</span>
+                <span class="active-view">Rewrite Comparison</span>
                 <span class="ready-pill"><span class="ready-dot"></span>Ready</span>
               </div>
             </div>
@@ -359,7 +446,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                         """
                         <div class="panel-heading">
                           <span class="panel-kicker">Source prompt</span>
-                          <span class="panel-note">Same input · two directions</span>
+                          <span class="panel-note">Same input · three outputs</span>
                         </div>
                         """,
                         padding=False,
@@ -377,26 +464,54 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                     gr.HTML(
                         """
                         <div class="control-heading">
-                          <span class="control-title">Formality strength <span class="alpha-readout">−2.0 TO +2.0</span></span>
+                          <span class="control-title">Steering controls</span>
                           <span class="layer-note">LAYER 4 / 11</span>
                         </div>
                         """,
                         padding=False,
                     )
-                    alpha = gr.Slider(
-                        minimum=-2.0,
-                        maximum=2.0,
-                        value=0.5,
-                        step=0.5,
-                        show_label=False,
-                        container=False,
-                        elem_id="alpha-slider",
-                    )
-                    guide = gr.Markdown(
-                        alpha_guidance(0.5),
-                        elem_id="alpha-guide",
-                        container=False,
-                    )
+                    with gr.Column(elem_classes=["control-group"]):
+                        gr.HTML(
+                            '<span class="control-title">Formality α '
+                            '<span class="alpha-readout">−2.0 TO +2.0 · L4</span></span>',
+                            padding=False,
+                        )
+                        alpha = gr.Slider(
+                            minimum=-2.0,
+                            maximum=2.0,
+                            value=0.5,
+                            step=0.5,
+                            show_label=False,
+                            container=False,
+                            elem_id="alpha-slider",
+                        )
+                        alpha_guide = gr.Markdown(
+                            alpha_guidance(0.5),
+                            elem_id="alpha-guide",
+                            elem_classes=["parameter-guide"],
+                            container=False,
+                        )
+                    with gr.Column(elem_classes=["control-group"]):
+                        gr.HTML(
+                            '<span class="control-title">Detoxification β '
+                            '<span class="beta-readout">−2.0 TO +2.0 · L11</span></span>',
+                            padding=False,
+                        )
+                        beta = gr.Slider(
+                            minimum=-2.0,
+                            maximum=2.0,
+                            value=0.5,
+                            step=0.5,
+                            show_label=False,
+                            container=False,
+                            elem_id="beta-slider",
+                        )
+                        beta_guide = gr.Markdown(
+                            beta_guidance(0.5),
+                            elem_id="beta-guide",
+                            elem_classes=["parameter-guide"],
+                            container=False,
+                        )
                     with gr.Row(elem_id="action-row"):
                         clear = gr.Button("Reset", elem_id="reset-button")
                         generate_button = gr.Button(
@@ -407,20 +522,14 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
 
             with gr.Column(scale=64, elem_id="outputs-column"):
                 toolbar = gr.HTML(
-                    output_toolbar(0.5),
+                    output_toolbar(0.5, 0.5),
                     elem_id="output-toolbar",
                     padding=False,
                 )
 
                 response_outputs = []
-                for index, variant in enumerate(STEERING_VARIANTS):
+                for index, variant in enumerate(OUTPUT_VARIANTS):
                     response_letter = chr(ord("A") + index)
-                    extraction = (
-                        "FINAL-TOKEN DIRECTION"
-                        if "final" in variant.key
-                        else "MEAN-POOLED DIRECTION"
-                    )
-                    layer_name = "Layer 4 steering" if index == 0 else "Layer 11 steering"
                     with gr.Column(elem_classes=["st-panel", "response-card"]):
                         gr.HTML(
                             f"""
@@ -428,12 +537,13 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                               <div class="card-identity">
                                 <span class="response-label">RESPONSE {response_letter}</span>
                                 <span class="card-divider">·</span>
-                                <span class="method-name">{layer_name}</span>
+                                <span class="method-name">{variant.title}</span>
                               </div>
-                              <span class="direction-label">{extraction}</span>
+                              <span class="direction-label">{variant.detail}</span>
                             </div>
                             """,
                             padding=False,
+                            elem_classes=["card-header-shell"],
                         )
                         response_outputs.append(
                             gr.Textbox(
@@ -450,20 +560,26 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
 
         alpha.change(
             update_alpha,
-            inputs=alpha,
-            outputs=[guide, toolbar],
+            inputs=[alpha, beta],
+            outputs=[alpha_guide, toolbar],
+            queue=False,
+        )
+        beta.change(
+            update_beta,
+            inputs=[beta, alpha],
+            outputs=[beta_guide, toolbar],
             queue=False,
         )
         generate_button.click(
             generate,
-            inputs=[message, alpha],
+            inputs=[message, alpha, beta],
             outputs=response_outputs,
             concurrency_limit=1,
             concurrency_id="steering-generation",
         )
         message.submit(
             generate,
-            inputs=[message, alpha],
+            inputs=[message, alpha, beta],
             outputs=response_outputs,
             concurrency_limit=1,
             concurrency_id="steering-generation",
@@ -472,15 +588,20 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
             lambda: (
                 "",
                 0.5,
+                0.5,
                 alpha_guidance(0.5),
-                output_toolbar(0.5),
+                beta_guidance(0.5),
+                output_toolbar(0.5, 0.5),
+                "",
                 "",
                 "",
             ),
             outputs=[
                 message,
                 alpha,
-                guide,
+                beta,
+                alpha_guide,
+                beta_guide,
                 toolbar,
                 *response_outputs,
             ],
