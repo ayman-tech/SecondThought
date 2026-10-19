@@ -249,6 +249,8 @@ class SteeredQwenRewriter:
         message: str,
         alpha: float,
         beta: float,
+        formality_enabled: bool = True,
+        detoxification_enabled: bool = True,
     ) -> dict[str, str]:
         """Generate one rewrite with both independently controlled directions."""
 
@@ -262,8 +264,13 @@ class SteeredQwenRewriter:
         if not -2.0 <= beta <= 2.0:
             raise ValueError("Beta must be between -2.0 and +2.0.")
 
+        effective_alpha = alpha if formality_enabled else 0.0
+        effective_beta = beta if detoxification_enabled else 0.0
+
         with self._generation_lock:
             inputs = self._encode_prompt(message)
             return {
-                "combined_steering": self._generate(inputs, alpha, beta),
+                "combined_steering": self._generate(
+                    inputs, effective_alpha, effective_beta
+                ),
             }

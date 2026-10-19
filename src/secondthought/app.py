@@ -6,28 +6,44 @@ from typing import Protocol
 
 import gradio as gr
 
+from .encoder_decoder_steering import (
+    ENCODER_DECODER_STEERING_VARIANTS,
+    T5FeatureSteeringRewriter,
+)
 from .fine_tuned_rewriter import FINE_TUNED_VARIANTS, FineTunedT5Rewriter
 from .steering_rewriter import STEERING_VARIANTS, SteeredQwenRewriter
 
 
-OUTPUT_VARIANTS = (*FINE_TUNED_VARIANTS, *STEERING_VARIANTS)
+OUTPUT_VARIANTS = (
+    *FINE_TUNED_VARIANTS,
+    *STEERING_VARIANTS,
+    *ENCODER_DECODER_STEERING_VARIANTS,
+)
 
 
 class Rewriter(Protocol):
     def rewrite_all(
-        self, message: str, alpha: float, beta: float
+        self,
+        message: str,
+        alpha: float,
+        beta: float,
+        formality_enabled: bool,
+        detoxification_enabled: bool,
+        t5_intervention_site: str,
     ) -> dict[str, str]: ...
 
 
 class ComparisonRewriter:
-    """Combine two fine-tuned responses with one mixed-steering response."""
+    """Compare fine-tuning with decoder-only and encoder-decoder steering."""
 
     def __init__(
         self,
         steering: SteeredQwenRewriter | None = None,
+        encoder_decoder: T5FeatureSteeringRewriter | None = None,
         fine_tuned: FineTunedT5Rewriter | None = None,
     ) -> None:
         self.steering = steering or SteeredQwenRewriter()
+        self.encoder_decoder = encoder_decoder or T5FeatureSteeringRewriter()
         self.fine_tuned = fine_tuned or FineTunedT5Rewriter()
 
     def rewrite_all(
@@ -35,9 +51,30 @@ class ComparisonRewriter:
         message: str,
         alpha: float,
         beta: float,
+        formality_enabled: bool = True,
+        detoxification_enabled: bool = True,
+        t5_intervention_site: str = "decoder",
     ) -> dict[str, str]:
         responses = self.fine_tuned.rewrite_all(message)
-        responses.update(self.steering.rewrite_all(message, alpha, beta))
+        responses.update(
+            self.steering.rewrite_all(
+                message,
+                alpha,
+                beta,
+                formality_enabled,
+                detoxification_enabled,
+            )
+        )
+        responses.update(
+            self.encoder_decoder.rewrite_all(
+                message,
+                alpha,
+                beta,
+                formality_enabled,
+                detoxification_enabled,
+                candidate_set=t5_intervention_site,
+            )
+        )
         return responses
 
 
@@ -130,7 +167,7 @@ footer { display: none !important; }
 }
 #controls-column {
   display: grid !important;
-  grid-template-rows: minmax(0, 1fr) 286px;
+  grid-template-rows: minmax(0, 1fr) 318px;
   width: 36%;
   min-width: 320px;
   height: 100%;
@@ -138,7 +175,7 @@ footer { display: none !important; }
 }
 #outputs-column {
   display: grid !important;
-  grid-template-rows: 28px repeat(3, minmax(0, 1fr));
+  grid-template-rows: 28px repeat(4, minmax(0, 1fr));
   width: 64%;
   min-width: 0;
   height: 100%;
@@ -225,6 +262,23 @@ footer { display: none !important; }
 #beta-guide {
   border-top: 1px solid #f1f5f9;
 }
+#feature-switches { gap: 8px; align-items: center; }
+#feature-switches .form { min-width: 0 !important; }
+.feature-switch {
+  min-width: 0 !important;
+  padding: 2px 7px !important;
+  border: 1px solid var(--st-border) !important;
+  border-radius: 5px !important;
+  background: var(--st-recessed) !important;
+}
+.feature-switch label { font-size: 10px !important; color: #52525b !important; }
+#t5-site {
+  min-width: 118px !important;
+  max-width: 132px !important;
+  min-height: 28px !important;
+  border-color: var(--st-border) !important;
+  font-size: 10px !important;
+}
 .warning { color: #b45309; font-weight: 600; }
 #action-row { gap: 8px; }
 #reset-button, #generate-button { min-height: 34px; border-radius: 5px !important; font-size: 11px; font-weight: 600; }
@@ -238,7 +292,7 @@ footer { display: none !important; }
 .parameter-chips { display: flex; align-items: center; }
 .toolbar-divider { color: #d4d4d8; }
 .output-description { color: #a1a1aa; font-size: 11px; }
-.alpha-chip, .beta-chip {
+.alpha-chip, .beta-chip, .site-chip {
   padding: 3px 7px;
   border: 1px solid #fed7aa;
   border-radius: 5px;
@@ -247,6 +301,7 @@ footer { display: none !important; }
   font: 10px ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 .beta-chip { margin-left: 5px; }
+.site-chip { margin-left: 5px; border-color: var(--st-border); background: white; color: var(--st-muted); }
 .response-card {
   display: grid !important;
   grid-template-rows: 40px minmax(0, 1fr);
@@ -321,7 +376,7 @@ footer { display: none !important; }
   #workbench { height: auto; min-height: 0; padding: 16px; flex-wrap: wrap; overflow: visible; }
   #controls-column, #outputs-column { display: flex !important; width: 100%; min-width: 0; height: auto; }
   #source-panel { min-height: 360px; }
-  #control-panel { min-height: 286px; }
+  #control-panel { min-height: 318px; }
   .response-card { min-height: 220px; }
   .header-right .active-view, .model-name, .panel-note, .direction-label { display: none; }
 }
@@ -377,17 +432,18 @@ def beta_guidance(beta: float) -> str:
     )
 
 
-def output_toolbar(alpha: float, beta: float) -> str:
+def output_toolbar(alpha: float, beta: float, t5_site: str = "decoder") -> str:
     return (
         '<div class="output-toolbar">'
         '<div class="output-context">'
         '<span class="output-kicker">Model outputs</span>'
         '<span class="toolbar-divider">·</span>'
-        '<span class="output-description">2 fine-tuned · 1 mixed steering</span>'
+        '<span class="output-description">2 fine-tuned · Qwen vs FLAN-T5 steering</span>'
         "</div>"
         '<div class="parameter-chips">'
         f'<span class="alpha-chip">α {float(alpha):+.1f}</span>'
         f'<span class="beta-chip">β {float(beta):+.1f}</span>'
+        f'<span class="site-chip">T5 {t5_site.upper()}</span>'
         "</div>"
         "</div>"
     )
@@ -398,18 +454,35 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
 
     service = rewriter or ComparisonRewriter()
 
-    def generate(message: str, alpha: float, beta: float):
+    def generate(
+        message: str,
+        alpha: float,
+        beta: float,
+        formality_enabled: bool,
+        detoxification_enabled: bool,
+        t5_intervention_site: str,
+    ):
         try:
-            responses = service.rewrite_all(message, alpha, beta)
+            responses = service.rewrite_all(
+                message,
+                alpha,
+                beta,
+                formality_enabled,
+                detoxification_enabled,
+                t5_intervention_site,
+            )
         except ValueError as error:
             raise gr.Error(str(error)) from error
         return tuple(responses[variant.key] for variant in OUTPUT_VARIANTS)
 
-    def update_alpha(alpha: float, beta: float):
-        return alpha_guidance(alpha), output_toolbar(alpha, beta)
+    def update_alpha(alpha: float, beta: float, t5_site: str):
+        return alpha_guidance(alpha), output_toolbar(alpha, beta, t5_site)
 
-    def update_beta(beta: float, alpha: float):
-        return beta_guidance(beta), output_toolbar(alpha, beta)
+    def update_beta(beta: float, alpha: float, t5_site: str):
+        return beta_guidance(beta), output_toolbar(alpha, beta, t5_site)
+
+    def update_t5_site(t5_site: str, alpha: float, beta: float):
+        return output_toolbar(alpha, beta, t5_site)
 
     with gr.Blocks(
         theme=APP_THEME,
@@ -427,7 +500,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 <span class="header-divider">/</span>
                 <span class="product-area">Steering Lab</span>
                 <span class="header-divider">·</span>
-                <span class="model-name">Qwen 2.5 0.5B · T5-small</span>
+                <span class="model-name">Qwen 2.5 0.5B · FLAN-T5-small · T5-small</span>
               </div>
               <div class="header-right">
                 <span class="active-view">Rewrite Comparison</span>
@@ -446,7 +519,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                         """
                         <div class="panel-heading">
                           <span class="panel-kicker">Source prompt</span>
-                          <span class="panel-note">Same input · three outputs</span>
+                          <span class="panel-note">Same input · four outputs</span>
                         </div>
                         """,
                         padding=False,
@@ -465,7 +538,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                         """
                         <div class="control-heading">
                           <span class="control-title">Steering controls</span>
-                          <span class="layer-note">LAYER 4 / 11</span>
+                          <span class="layer-note">QWEN L4/L11 · T5 SITE SELECTABLE</span>
                         </div>
                         """,
                         padding=False,
@@ -473,7 +546,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                     with gr.Column(elem_classes=["control-group"]):
                         gr.HTML(
                             '<span class="control-title">Formality α '
-                            '<span class="alpha-readout">−2.0 TO +2.0 · L4</span></span>',
+                            '<span class="alpha-readout">−2.0 TO +2.0 · QWEN L4 · T5 ENC L4 / DEC L6</span></span>',
                             padding=False,
                         )
                         alpha = gr.Slider(
@@ -494,7 +567,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                     with gr.Column(elem_classes=["control-group"]):
                         gr.HTML(
                             '<span class="control-title">Detoxification β '
-                            '<span class="beta-readout">−2.0 TO +2.0 · L11</span></span>',
+                            '<span class="beta-readout">−2.0 TO +2.0 · QWEN L11 · T5 ENC L5 / DEC L6</span></span>',
                             padding=False,
                         )
                         beta = gr.Slider(
@@ -512,6 +585,26 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                             elem_classes=["parameter-guide"],
                             container=False,
                         )
+                    with gr.Row(elem_id="feature-switches"):
+                        formality_enabled = gr.Checkbox(
+                            value=True,
+                            label="Formality on",
+                            container=False,
+                            elem_classes=["feature-switch"],
+                        )
+                        detoxification_enabled = gr.Checkbox(
+                            value=True,
+                            label="Detoxification on",
+                            container=False,
+                            elem_classes=["feature-switch"],
+                        )
+                        t5_intervention_site = gr.Dropdown(
+                            choices=[("T5 encoder", "encoder"), ("T5 decoder", "decoder")],
+                            value="decoder",
+                            label="Intervention site",
+                            container=False,
+                            elem_id="t5-site",
+                        )
                     with gr.Row(elem_id="action-row"):
                         clear = gr.Button("Reset", elem_id="reset-button")
                         generate_button = gr.Button(
@@ -522,7 +615,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
 
             with gr.Column(scale=64, elem_id="outputs-column"):
                 toolbar = gr.HTML(
-                    output_toolbar(0.5, 0.5),
+                    output_toolbar(0.5, 0.5, "decoder"),
                     elem_id="output-toolbar",
                     padding=False,
                 )
@@ -560,26 +653,46 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
 
         alpha.change(
             update_alpha,
-            inputs=[alpha, beta],
+            inputs=[alpha, beta, t5_intervention_site],
             outputs=[alpha_guide, toolbar],
             queue=False,
         )
         beta.change(
             update_beta,
-            inputs=[beta, alpha],
+            inputs=[beta, alpha, t5_intervention_site],
             outputs=[beta_guide, toolbar],
+            queue=False,
+        )
+        t5_intervention_site.change(
+            update_t5_site,
+            inputs=[t5_intervention_site, alpha, beta],
+            outputs=toolbar,
             queue=False,
         )
         generate_button.click(
             generate,
-            inputs=[message, alpha, beta],
+            inputs=[
+                message,
+                alpha,
+                beta,
+                formality_enabled,
+                detoxification_enabled,
+                t5_intervention_site,
+            ],
             outputs=response_outputs,
             concurrency_limit=1,
             concurrency_id="steering-generation",
         )
         message.submit(
             generate,
-            inputs=[message, alpha, beta],
+            inputs=[
+                message,
+                alpha,
+                beta,
+                formality_enabled,
+                detoxification_enabled,
+                t5_intervention_site,
+            ],
             outputs=response_outputs,
             concurrency_limit=1,
             concurrency_id="steering-generation",
@@ -589,9 +702,13 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 "",
                 0.5,
                 0.5,
+                True,
+                True,
+                "decoder",
                 alpha_guidance(0.5),
                 beta_guidance(0.5),
-                output_toolbar(0.5, 0.5),
+                output_toolbar(0.5, 0.5, "decoder"),
+                "",
                 "",
                 "",
                 "",
@@ -600,6 +717,9 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 message,
                 alpha,
                 beta,
+                formality_enabled,
+                detoxification_enabled,
+                t5_intervention_site,
                 alpha_guide,
                 beta_guide,
                 toolbar,

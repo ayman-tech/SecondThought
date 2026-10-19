@@ -64,9 +64,10 @@ Launch the local Gradio interface from the repository root:
 secondthought-app
 ```
 
-The app loads `Qwen/Qwen2.5-0.5B-Instruct`, the two local fine-tuned T5-small
-models, and the saved directions from `steering_experimentation/artifacts/`. It
-displays three vertically stacked responses in this order:
+The app loads `Qwen/Qwen2.5-0.5B-Instruct`, `google/flan-t5-small`, the two local
+fine-tuned T5-small models, and the saved directions from
+`steering_experimentation/artifacts/`. It displays four vertically stacked
+responses in this order:
 
 1. **Detox Fine-Tuned:** T5-small trained on ParaDetox.
 2. **Formality Fine-Tuned:** T5-small trained for formal rewriting.
@@ -74,16 +75,30 @@ displays three vertically stacked responses in this order:
    applied at Layer 4 by alpha and the unit-normalized ParaDetox mean-pooled
    direction applied at Layer 11 by beta. The detox direction's sign is oriented
    from the causal sweep so positive beta uses the empirically detoxifying side.
+4. **Combined Steering · FLAN-T5:** one encoder-decoder rewrite with a selectable
+   intervention site. The decoder candidates use mean-pooled directions at block
+   6 for both features. The encoder candidates use a final-token direction at
+   block 4 for formality and block 5 for detoxification (zero-indexed blocks).
 
-Both controls range from `-2` to `+2` in `0.5` increments. The combined response
-uses a fixed minimal-rewrite prompt, while alpha and beta independently control
-the two activation interventions in the same generation. Values above `+1`
-remain experimental because strong interventions can alter meaning or drift off
-topic.
+Both controls range from `-2` to `+2` in `0.5` increments and have independent
+on/off switches. A separate T5 selector switches the FLAN-T5 response between
+encoder and decoder candidates; it does not affect Qwen or the fine-tuned models.
+The two steering architectures use the same fixed minimal-rewrite prompt and
+control settings. Values above `+1` remain experimental, especially for the T5
+encoder, because strong interventions can delete facts, change meaning, repeat
+text, or drift off topic.
 
-The first launch may download the Qwen model from Hugging Face. Later launches use
-the local cache. Apple Silicon uses MPS automatically; CUDA is used when available,
-with CPU as the fallback. The steering demo does not require an OpenAI API key.
+The reproducible FLAN-T5 extraction and 35-message evaluation are in
+`steering_experimentation/t5_feature_steering.ipynb`. It extracts each feature
+from 8,000 pairs, evaluates geometry on 2,000 held-out pairs, and compares encoder
+and decoder interventions on the full alpha/beta grid. Its artifact uses a feature
+registry so more directions and intervention sites can be added without changing
+the generic hook runtime.
+
+The first launch may download Qwen and FLAN-T5 from Hugging Face. Later launches
+use the local cache. Apple Silicon uses MPS automatically; CUDA is used when
+available, with CPU as the fallback. The steering demo does not require an OpenAI
+API key.
 
 ## Run the OpenAI baseline
 
