@@ -1,4 +1,4 @@
-"""Compact Gradio workbench for comparing activation-steered rewrites."""
+"""Compact Gradio workbench for comparing steered and fine-tuned rewrites."""
 
 from __future__ import annotations
 
@@ -6,11 +6,32 @@ from typing import Protocol
 
 import gradio as gr
 
+from .fine_tuned_rewriter import FINE_TUNED_VARIANTS, FineTunedT5Rewriter
 from .steering_rewriter import STEERING_VARIANTS, SteeredQwenRewriter
+
+
+OUTPUT_VARIANTS = (*FINE_TUNED_VARIANTS, *STEERING_VARIANTS)
 
 
 class Rewriter(Protocol):
     def rewrite_all(self, message: str, alpha: float) -> dict[str, str]: ...
+
+
+class ComparisonRewriter:
+    """Combine activation-steered Qwen and alpha-independent T5 outputs."""
+
+    def __init__(
+        self,
+        steering: SteeredQwenRewriter | None = None,
+        fine_tuned: FineTunedT5Rewriter | None = None,
+    ) -> None:
+        self.steering = steering or SteeredQwenRewriter()
+        self.fine_tuned = fine_tuned or FineTunedT5Rewriter()
+
+    def rewrite_all(self, message: str, alpha: float) -> dict[str, str]:
+        responses = self.steering.rewrite_all(message, alpha)
+        responses.update(self.fine_tuned.rewrite_all(message))
+        return responses
 
 
 APP_CSS = """
@@ -110,11 +131,11 @@ footer { display: none !important; }
 }
 #outputs-column {
   display: grid !important;
-  grid-template-rows: 28px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: 28px repeat(4, minmax(0, 1fr));
   width: 64%;
   min-width: 0;
   height: 100%;
-  gap: 12px;
+  gap: 9px;
 }
 
 .st-panel {
@@ -125,7 +146,7 @@ footer { display: none !important; }
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
   overflow: hidden;
 }
-#source-panel, #control-panel, .response-card {
+#source-panel, #control-panel {
   display: flex !important;
   flex-direction: column !important;
 }
@@ -209,10 +230,35 @@ footer { display: none !important; }
   color: var(--st-orange-hover);
   font: 10px ui-monospace, SFMono-Regular, Menlo, monospace;
 }
-.response-card { height: 100%; padding: 0 16px !important; }
+.response-card {
+  display: grid !important;
+  grid-template-rows: 40px minmax(0, 1fr);
+  height: 100%;
+  padding: 0 16px !important;
+  gap: 0 !important;
+}
+.card-header-shell {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.card-header-shell > div,
+.card-header-shell .prose {
+  height: 100% !important;
+  min-height: 40px !important;
+  overflow: visible !important;
+}
 .card-heading {
-  flex: 0 0 40px;
+  box-sizing: border-box;
+  height: 40px;
   min-height: 40px;
+  position: relative;
+  z-index: 2;
+  background: var(--st-panel);
   border-bottom: 1px solid #f1f5f9;
 }
 .card-identity { display: flex; align-items: center; gap: 8px; }
@@ -223,6 +269,8 @@ footer { display: none !important; }
 .response-output {
   flex: 1 1 auto;
   min-height: 0;
+  position: relative;
+  z-index: 1;
   padding: 0 !important;
   border: 0 !important;
   background: white !important;
@@ -257,7 +305,7 @@ footer { display: none !important; }
   #controls-column, #outputs-column { display: flex !important; width: 100%; min-width: 0; height: auto; }
   #source-panel { min-height: 360px; }
   #control-panel { min-height: 198px; }
-  .response-card { min-height: 280px; }
+  .response-card { min-height: 220px; }
   .header-right .active-view, .model-name, .panel-note, .direction-label { display: none; }
 }
 """
@@ -300,9 +348,9 @@ def output_toolbar(alpha: float) -> str:
     return (
         '<div class="output-toolbar">'
         '<div class="output-context">'
-        '<span class="output-kicker">Steering outputs</span>'
+        '<span class="output-kicker">Model outputs</span>'
         '<span class="toolbar-divider">·</span>'
-        '<span class="output-description">Dual layer comparison</span>'
+        '<span class="output-description">2 fine-tuned · 2 steered</span>'
         "</div>"
         f'<span class="alpha-chip">α {float(alpha):+.1f}</span>'
         "</div>"
@@ -312,14 +360,14 @@ def output_toolbar(alpha: float) -> str:
 def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
     """Build the functional subset of the Stitch comparison workbench."""
 
-    service = rewriter or SteeredQwenRewriter()
+    service = rewriter or ComparisonRewriter()
 
     def generate(message: str, alpha: float):
         try:
             responses = service.rewrite_all(message, alpha)
         except ValueError as error:
             raise gr.Error(str(error)) from error
-        return tuple(responses[variant.key] for variant in STEERING_VARIANTS)
+        return tuple(responses[variant.key] for variant in OUTPUT_VARIANTS)
 
     def update_alpha(alpha: float):
         return alpha_guidance(alpha), output_toolbar(alpha)
@@ -340,10 +388,10 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 <span class="header-divider">/</span>
                 <span class="product-area">Steering Lab</span>
                 <span class="header-divider">·</span>
-                <span class="model-name">Qwen 2.5 0.5B</span>
+                <span class="model-name">Qwen 2.5 0.5B · T5-small</span>
               </div>
               <div class="header-right">
-                <span class="active-view">Activation Steering</span>
+                <span class="active-view">Rewrite Comparison</span>
                 <span class="ready-pill"><span class="ready-dot"></span>Ready</span>
               </div>
             </div>
@@ -359,7 +407,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                         """
                         <div class="panel-heading">
                           <span class="panel-kicker">Source prompt</span>
-                          <span class="panel-note">Same input · two directions</span>
+                          <span class="panel-note">Same input · four models</span>
                         </div>
                         """,
                         padding=False,
@@ -413,14 +461,20 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 )
 
                 response_outputs = []
-                for index, variant in enumerate(STEERING_VARIANTS):
+                for index, variant in enumerate(OUTPUT_VARIANTS):
                     response_letter = chr(ord("A") + index)
-                    extraction = (
-                        "FINAL-TOKEN DIRECTION"
-                        if "final" in variant.key
-                        else "MEAN-POOLED DIRECTION"
-                    )
-                    layer_name = "Layer 4 steering" if index == 0 else "Layer 11 steering"
+                    if variant.key == "detox_t5":
+                        method_name = "Detox Fine Tuned"
+                        method_detail = "PARADETOX · T5-SMALL"
+                    elif variant.key == "formalize_t5":
+                        method_name = "Formality Fine Tuned"
+                        method_detail = "FORMAL REWRITE · T5-SMALL"
+                    elif variant.key == "alternative_layer4_final":
+                        method_name = "Formality Steering · Layer 4"
+                        method_detail = "FINAL-TOKEN DIRECTION"
+                    else:
+                        method_name = "Formality Steering · Layer 11"
+                        method_detail = "MEAN-POOLED DIRECTION"
                     with gr.Column(elem_classes=["st-panel", "response-card"]):
                         gr.HTML(
                             f"""
@@ -428,12 +482,13 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                               <div class="card-identity">
                                 <span class="response-label">RESPONSE {response_letter}</span>
                                 <span class="card-divider">·</span>
-                                <span class="method-name">{layer_name}</span>
+                                <span class="method-name">{method_name}</span>
                               </div>
-                              <span class="direction-label">{extraction}</span>
+                              <span class="direction-label">{method_detail}</span>
                             </div>
                             """,
                             padding=False,
+                            elem_classes=["card-header-shell"],
                         )
                         response_outputs.append(
                             gr.Textbox(
@@ -474,6 +529,8 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 0.5,
                 alpha_guidance(0.5),
                 output_toolbar(0.5),
+                "",
+                "",
                 "",
                 "",
             ),
