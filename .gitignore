@@ -11,7 +11,7 @@ build/
 flagged/
 tests/
 models/
-testing/results/
+testing/
 
 # Generated experiment artifacts
 outputs/*.jsonl
