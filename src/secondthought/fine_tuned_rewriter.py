@@ -30,16 +30,16 @@ class FineTunedVariant:
 FINE_TUNED_VARIANTS = (
     FineTunedVariant(
         key="detox_t5",
-        title="Detox fine-tune",
-        detail="T5-small fine-tuned on ParaDetox.",
+        title="Detox Fine-Tuned",
+        detail="PARADETOX · T5-SMALL",
         model_directory="t5-small-paradetox",
         archive_name="detox-t5.zip",
         prefix="detoxify: ",
     ),
     FineTunedVariant(
         key="formalize_t5",
-        title="Formality fine-tune",
-        detail="T5-small fine-tuned for formal rewriting.",
+        title="Formality Fine-Tuned",
+        detail="FORMAL REWRITE · T5-SMALL",
         model_directory="formalize-t5",
         archive_name="formalize-t5.zip",
         prefix="formalize: ",
@@ -110,10 +110,7 @@ class FineTunedT5Rewriter:
 
         for variant in FINE_TUNED_VARIANTS:
             model_path = resolve_model_directory(variant)
-            tokenizer = AutoTokenizer.from_pretrained(
-                model_path,
-                local_files_only=True,
-            )
+            tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
             model = AutoModelForSeq2SeqLM.from_pretrained(
                 model_path,
                 local_files_only=True,
@@ -144,22 +141,17 @@ class FineTunedT5Rewriter:
                 num_beams=self.num_beams,
                 do_sample=False,
             )
-        rewritten = tokenizer.decode(
-            output_ids[0],
-            skip_special_tokens=True,
-        ).strip()
+        rewritten = tokenizer.decode(output_ids[0], skip_special_tokens=True).strip()
         if not rewritten:
             raise RuntimeError(f"{variant.title} returned an empty rewrite")
         return rewritten
 
     def rewrite_all(self, message: str) -> dict[str, str]:
-        """Generate one alpha-independent rewrite from each fine-tuned model."""
+        """Generate one control-independent rewrite from each fine-tuned model."""
 
         message = message.strip()
         if not message:
             raise ValueError("Enter a message to rewrite.")
-
-        # Keep model generation serialized if Gradio later enables concurrency.
         with self._generation_lock:
             return {
                 variant.key: self._generate(message, variant)
