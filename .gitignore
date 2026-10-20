@@ -25,3 +25,6 @@ __pycache__/
 # License-restricted corpus (Yahoo/Grammarly) - do not commit or redistribute
 data/GYAFC_Corpus/
 data/GYAFC_Corpus.zip
+
+GYAFC_Corpus/
+__MACOSX/
