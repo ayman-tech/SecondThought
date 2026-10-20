@@ -56,7 +56,7 @@ The final model and tokenizer are exported to `./epoch5`; the last cell download
 
 The notebook includes a reusable `detoxify(text)` function and instructions for loading the exported model later. Training runs locally within your Colab runtime; the notebook does not publish the model to Hugging Face or enable external experiment tracking.
 
-## Run the steering demo
+## Run the model comparison demo
 
 Launch the local Gradio interface from the repository root:
 

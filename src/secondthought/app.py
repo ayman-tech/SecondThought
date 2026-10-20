@@ -41,6 +41,23 @@ class ComparisonRewriter:
         return responses
 
 
+class ComparisonRewriter:
+    """Combine activation-steered Qwen and alpha-independent T5 outputs."""
+
+    def __init__(
+        self,
+        steering: SteeredQwenRewriter | None = None,
+        fine_tuned: FineTunedT5Rewriter | None = None,
+    ) -> None:
+        self.steering = steering or SteeredQwenRewriter()
+        self.fine_tuned = fine_tuned or FineTunedT5Rewriter()
+
+    def rewrite_all(self, message: str, alpha: float) -> dict[str, str]:
+        responses = self.steering.rewrite_all(message, alpha)
+        responses.update(self.fine_tuned.rewrite_all(message))
+        return responses
+
+
 APP_CSS = """
 :root {
   --st-page: #fafafa;
@@ -592,6 +609,8 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 alpha_guidance(0.5),
                 beta_guidance(0.5),
                 output_toolbar(0.5, 0.5),
+                "",
+                "",
                 "",
                 "",
                 "",
