@@ -1,4 +1,4 @@
-"""Run local CPU detoxification and existing diagnostics on a JSONL dataset."""
+"""Run local CPU rewriting (detoxify, formalize, or both in sequence) and diagnostics on a JSONL dataset."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
+from typing import Mapping, Sequence
 
 from .data import write_csv
 from .evaluation import (
@@ -23,7 +24,9 @@ from .evaluation import (
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL = PROJECT_ROOT / "models/epoch3/t5-small-paradetox"
 DEFAULT_ARCHIVE = PROJECT_ROOT / "models/epoch5/epoch3.zip"
-PREFIX = "detoxify: "
+# Learned task tokens: each must match the string used in training exactly, trailing space included.
+TASK_PREFIXES = {"detoxify": "detoxify: ", "formalize": "formalize: "}
+PREFIX = TASK_PREFIXES["detoxify"]
 MAX_INPUT_TOKENS = 128
 
 
@@ -81,17 +84,20 @@ def validate_model_files(model_dir: Path) -> None:
         raise FileNotFoundError(f"Model folder {model_dir} is missing: {', '.join(missing)}")
 
 
-def encode_input(tokenizer, record):
-    encoded = tokenizer(PREFIX + record["original_text"].strip(), return_tensors="pt", truncation=False)
+def encode_input(tokenizer, record, *, prefix=PREFIX, text=None):
+    """Tokenize one record under a task prefix; ``text`` overrides the record's own text (for later stages)."""
+    body = record["original_text"] if text is None else text
+    encoded = tokenizer(prefix + body.strip(), return_tensors="pt", truncation=False)
     count = encoded["input_ids"].shape[1]
     if count > MAX_INPUT_TOKENS:
         raise ValueError(f"Input {record['id']!r} has {count} tokens; limit is {MAX_INPUT_TOKENS}. Shorten it first.")
     return encoded
 
 
-def prediction_row(record, rewritten, latency_ms, input_tokens, output_tokens, model_dir):
+def prediction_row(record, rewritten, latency_ms, input_tokens, output_tokens, model_dir, extra=None):
     return {
         **record,
+        **(extra or {}),
         "rewritten_text": rewritten,
         "latency_ms": round(latency_ms, 2),
         "input_tokens": input_tokens,
@@ -99,6 +105,18 @@ def prediction_row(record, rewritten, latency_ms, input_tokens, output_tokens, m
         "model_info": f"local-t5:{model_dir}",
         "timestamp_utc": datetime.now(UTC).isoformat(),
     }
+
+
+def validate_tasks(tasks: Sequence[str]) -> tuple[str, ...]:
+    tasks = tuple(tasks)
+    if not tasks:
+        raise ValueError("At least one task is required")
+    unknown = [task for task in tasks if task not in TASK_PREFIXES]
+    if unknown:
+        raise ValueError(f"Unknown task {unknown[0]!r}; choose from {', '.join(TASK_PREFIXES)}")
+    if len(set(tasks)) != len(tasks):
+        raise ValueError("Each task may appear only once in a pipeline")
+    return tasks
 
 
 def run(
@@ -110,7 +128,9 @@ def run(
     toxicity_model: str = "original",
     similarity_model: str = "sentence-transformers/all-mpnet-base-v2",
     device: str = "cpu",
+    tasks: Sequence[str] = ("detoxify",),
 ) -> None:
+    tasks = validate_tasks(tasks)
     records = read_inputs(dataset)
     selected = prepare_model(
         model_dir if model_dir is not None else DEFAULT_MODEL,
@@ -122,24 +142,39 @@ def run(
     tokenizer = AutoTokenizer.from_pretrained(selected, local_files_only=True)
     model = AutoModelForSeq2SeqLM.from_pretrained(selected, local_files_only=True).to("cpu")
     model.eval()
-    # Validate every input before generating anything or replacing an output file.
+    # Validate every input before generating anything or replacing an output file. Only the first
+    # stage can be checked up front; later stages read the previous stage's output.
     for record in records:
-        encode_input(tokenizer, record)
-    print(f"Loaded {selected}; processing {len(records)} messages on CPU.", flush=True)
+        encode_input(tokenizer, record, prefix=TASK_PREFIXES[tasks[0]])
+    print(
+        f"Loaded {selected}; processing {len(records)} messages on CPU "
+        f"with pipeline {' > '.join(tasks)}.",
+        flush=True,
+    )
     predictions = []
     with torch.inference_mode():
         for index, record in enumerate(records, 1):
             started = perf_counter()
-            inputs = encode_input(tokenizer, record)
-            generated = model.generate(**inputs, max_new_tokens=128, num_beams=4, do_sample=False)
-            rewritten = tokenizer.decode(generated[0], skip_special_tokens=True).strip()
+            text = record["original_text"]
+            stage_texts = {}
+            first_input_tokens = None
+            for stage, task in enumerate(tasks):
+                inputs = encode_input(tokenizer, record, prefix=TASK_PREFIXES[task], text=text)
+                if first_input_tokens is None:
+                    first_input_tokens = inputs["input_ids"].shape[1]
+                generated = model.generate(**inputs, max_new_tokens=128, num_beams=4, do_sample=False)
+                text = tokenizer.decode(generated[0], skip_special_tokens=True).strip()
+                if not text:
+                    raise ValueError(f"Model produced an empty {task} rewrite for {record['id']!r}")
+                if stage < len(tasks) - 1:
+                    stage_texts[f"after_{task}"] = text
+            rewritten = text
             elapsed_ms = (perf_counter() - started) * 1000
-            if not rewritten:
-                raise ValueError(f"Model produced an empty rewrite for {record['id']!r}")
             # Exclude the decoder's initial token and padding; include generated EOS.
             output_tokens = sum(token != tokenizer.pad_token_id for token in generated[0, 1:].tolist())
+            extra = {"pipeline": " > ".join(tasks), **stage_texts}
             predictions.append(prediction_row(
-                record, rewritten, elapsed_ms, inputs["input_ids"].shape[1], output_tokens, selected,
+                record, rewritten, elapsed_ms, first_input_tokens, output_tokens, selected, extra,
             ))
             print(f"[{index}/{len(records)}] {record['id']}", flush=True)
     metric_rows = evaluate_records(
@@ -183,6 +218,14 @@ def main() -> None:
         "--similarity-model", default="sentence-transformers/all-mpnet-base-v2"
     )
     parser.add_argument("--device", default="cpu")
+    parser.add_argument(
+        "--tasks",
+        nargs="+",
+        default=["detoxify"],
+        metavar="TASK",
+        help=f"Task prefixes to apply in order ({', '.join(TASK_PREFIXES)}); "
+        "e.g. '--tasks detoxify formalize' feeds each stage's output into the next",
+    )
     args = parser.parse_args()
     try:
         run(
@@ -193,6 +236,7 @@ def main() -> None:
             toxicity_model=args.toxicity_model,
             similarity_model=args.similarity_model,
             device=args.device,
+            tasks=args.tasks,
         )
     except (OSError, ValueError, zipfile.BadZipFile) as error:
         parser.exit(1, f"Error: {error}\n")
