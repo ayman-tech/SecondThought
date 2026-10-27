@@ -21,8 +21,9 @@ DEFAULT_ARTIFACT_PATH = (
     PROJECT_ROOT
     / "steering_experimentation"
     / "artifacts"
-    / "flan_t5_small_feature_directions.pt"
+    / "google_flan_t5_base_formality_directions.pt"
 )
+DEFAULT_FORMALITY_CANDIDATE = "rank2_mean_layer10"
 
 
 @dataclass(frozen=True)
@@ -35,8 +36,8 @@ class EncoderDecoderSteeringVariant:
 ENCODER_DECODER_STEERING_VARIANTS = (
     EncoderDecoderSteeringVariant(
         key="t5_combined_steering",
-        title="Combined steering · FLAN-T5",
-        detail="ENCODER–DECODER · α FORMALITY · β DETOXIFICATION",
+        title="Formality steering · FLAN-T5-base",
+        detail="ENCODER–DECODER · LAYER 10 · α FORMALITY",
     ),
 )
 
@@ -64,9 +65,29 @@ def load_feature_artifact(path: str | Path) -> dict:
     if not artifact_path.is_file():
         raise FileNotFoundError(
             f"Encoder-decoder steering artifact not found: {artifact_path}. "
-            "Run steering_experimentation/t5_feature_steering.ipynb first."
+            "Run steering_experimentation/run_t5_formality_experiment.py first."
         )
     artifact = torch.load(artifact_path, map_location="cpu", weights_only=True)
+    # The focused formality experiment stores its shortlisted directions as a
+    # flat candidate list. Normalize that result to the generic feature registry
+    # consumed by the runtime, without duplicating the tensors in another file.
+    if artifact.get("feature") == "formality" and "candidates" in artifact:
+        artifact = {
+            **artifact,
+            "intervention_site": "decoder_blocks",
+            "features": {
+                "formality": {
+                    "candidates": {
+                        candidate["candidate"]: {
+                            **candidate,
+                            "site": "decoder_blocks",
+                        }
+                        for candidate in artifact["candidates"]
+                    }
+                }
+            },
+        }
+
     required = {"format_version", "model_id", "intervention_site", "features"}
     missing = required - set(artifact)
     if missing:
@@ -91,7 +112,7 @@ class EncoderDecoderFeatureSteerer:
         max_input_tokens: int = 192,
         max_new_tokens: int = 80,
         num_beams: int = 4,
-        default_candidate: str = "decoder",
+        default_candidate: str = DEFAULT_FORMALITY_CANDIDATE,
     ) -> None:
         artifact = load_feature_artifact(artifact_path)
         self.model_id = str(artifact["model_id"])
@@ -250,15 +271,15 @@ class EncoderDecoderFeatureSteerer:
         return rewritten
 
 
-class T5FeatureSteeringRewriter:
-    """App adapter for the initial formality and detoxification feature registry."""
+class T5FormalitySteeringRewriter:
+    """App adapter for the selected FLAN-T5-base formality intervention."""
 
     def __init__(
         self,
         steerer: EncoderDecoderFeatureSteerer | None = None,
     ) -> None:
         self.steerer = steerer or EncoderDecoderFeatureSteerer()
-        required = {"formality", "detoxification"}
+        required = {"formality"}
         missing = required - set(self.steerer.features)
         if missing:
             raise ValueError(
@@ -272,16 +293,16 @@ class T5FeatureSteeringRewriter:
         beta: float,
         formality_enabled: bool = True,
         detoxification_enabled: bool = True,
-        candidate_set: str = "decoder",
     ) -> dict[str, str]:
-        controls = {
-            "formality": float(alpha) if formality_enabled else 0.0,
-            "detoxification": float(beta) if detoxification_enabled else 0.0,
-        }
+        del beta, detoxification_enabled
+        controls = {"formality": float(alpha) if formality_enabled else 0.0}
         return {
             "t5_combined_steering": self.steerer.rewrite(
                 message,
                 controls,
-                candidate_set=candidate_set,
             )
         }
+
+
+# Preserve the earlier import while callers migrate to the more accurate name.
+T5FeatureSteeringRewriter = T5FormalitySteeringRewriter
