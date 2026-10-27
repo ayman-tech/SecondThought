@@ -56,7 +56,8 @@ class T5Rewriter:
         self.max_new_tokens = max_new_tokens
         self.num_beams = num_beams
         self.facts_guard = facts_guard
-        self.model = "t5-small: " + " -> ".join(step.name for step in steps)
+        folders = dict.fromkeys(Path(step.model_dir).name for step in steps)
+        self.model = " + ".join(folders) + ": " + " -> ".join(step.name for step in steps)
         self._steps = []
         # A multi-task model (e.g. both-t5) serves several steps under different
         # prefixes, so each folder is loaded only once.
