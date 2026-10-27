@@ -92,6 +92,29 @@ red note saying the server can't be reached.
 You can also select text on a page (a Gmail draft, a Slack message box) before
 opening the popup, and it will be filled in for you.
 
+## The "SecondThought?" nudge
+
+On Gmail, Slack, Teams, Outlook, LinkedIn and GitHub you don't need to open
+the popup. Type as usual. If the message has swearing, insults, texting
+shorthand ("u", "ur", "gonna") or shouting, a small **SecondThought?** pill
+appears in the corner of the text box.
+
+- **Spotting is local.** `triggers.js` is a word list and a few patterns
+  that run inside the page about 0.6 s after you stop typing. Nothing you type
+  leaves the page, and no model runs, until you click the pill.
+- **Clicking the pill** sends that text to the local server, and a card shows
+  the suggestion with removed words struck out and new ones highlighted.
+  **Replace** swaps it in (Ctrl+Z or **Undo** brings yours back), **Copy**
+  copies it, **Dismiss** hides the pill until new trigger words show up.
+- **Select part of your message first** to rewrite only that part. Handy in
+  Gmail, where the box can also hold a quoted reply.
+- **Turn it off per site** with "Don't suggest on this site" in the card, and
+  back on with the checkbox at the bottom of the popup.
+
+The page can't call the local server directly (sites block requests to
+`127.0.0.1`), so the request goes through the extension's background worker
+(`background.js`).
+
 ## Using OpenAI instead
 
 To compare against the GPT baseline, start the server with the default config
@@ -115,7 +138,13 @@ fails, and 503 when the server couldn't load its models. Only
 
 ## Not done yet
 
-- No pre-send nudge inside Gmail or Slack yet. This is the popup only.
+- The nudge only runs on the six sites above, and it suggests rather than
+  intercepting the Send button.
+- The trigger list is hand-written, and the last few insults were added after
+  looking at our own 35-message set, so expect misses on new kinds of
+  hostility (sarcasm, passive aggression).
+- Gmail and Slack were tested with a stand-in page, not on the live sites.
+  Their editors are complex, so Replace there needs a real-world check.
 - The T5 models only make word-level edits, so rhetorical jabs ("Did you even
   test this?", "Stop ignoring me") get through.
 - The facts guard only protects values it can extract (numbers, dates,
