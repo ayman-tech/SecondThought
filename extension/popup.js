@@ -157,5 +157,33 @@ messageEl.addEventListener("keydown", (event) => {
 });
 
 messageEl.focus();
+// On sites where the in-page nudge runs, let the user switch it back on or off.
+async function setupSiteToggle() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const host = tab?.url ? new URL(tab.url).hostname : "";
+    const nudgeHosts = chrome.runtime
+      .getManifest()
+      .content_scripts.flatMap((script) => script.matches)
+      .map((pattern) => new URL(pattern.replace("/*", "/")).hostname);
+    if (!nudgeHosts.includes(host)) return;
+
+    const { disabledSites } = await chrome.storage.local.get({ disabledSites: [] });
+    const toggle = document.getElementById("site-toggle");
+    document.getElementById("site-name").textContent = host;
+    toggle.checked = !disabledSites.includes(host);
+    document.getElementById("site-row").hidden = false;
+    toggle.addEventListener("change", async () => {
+      const { disabledSites: current } = await chrome.storage.local.get({ disabledSites: [] });
+      const next = current.filter((site) => site !== host);
+      if (!toggle.checked) next.push(host);
+      await chrome.storage.local.set({ disabledSites: next });
+    });
+  } catch {
+    // No URL access on this tab; nothing to show.
+  }
+}
+
 prefillFromSelection();
 checkServer();
+setupSiteToggle();

@@ -125,3 +125,18 @@ button:disabled { opacity: 0.6; cursor: default; }
 }
 .banner.info { background: var(--surface); color: var(--muted); }
 .banner code { font-family: ui-monospace, Consolas, monospace; }
+
+.site-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.site-row strong { color: var(--text); font-weight: 600; }
+.site-row input { accent-color: var(--accent); margin: 0; }
