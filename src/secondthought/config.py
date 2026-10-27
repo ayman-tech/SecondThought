@@ -22,6 +22,7 @@ class Settings:
     t5_max_input_tokens: int = 128
     t5_max_new_tokens: int = 128
     t5_num_beams: int = 4
+    t5_facts_guard: bool = True
 
 
 def _resolve(project_root: Path, value: str) -> Path:
@@ -61,6 +62,7 @@ def load_settings(config_path: str | Path = "config/default.toml") -> Settings:
             t5_max_input_tokens=int(t5.get("max_input_tokens", 128)),
             t5_max_new_tokens=int(t5.get("max_new_tokens", 128)),
             t5_num_beams=int(t5.get("num_beams", 4)),
+            t5_facts_guard=bool(t5.get("facts_guard", True)),
         )
 
     prompt_value = os.getenv("SECONDTHOUGHT_PROMPT", raw["prompt"]["path"])

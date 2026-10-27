@@ -26,6 +26,7 @@ def build_rewriter(settings: Settings) -> OpenAIRewriter | T5Rewriter:
             max_input_tokens=settings.t5_max_input_tokens,
             max_new_tokens=settings.t5_max_new_tokens,
             num_beams=settings.t5_num_beams,
+            facts_guard=settings.t5_facts_guard,
         )
     return OpenAIRewriter(
         model=settings.model,
