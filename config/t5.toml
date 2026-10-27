@@ -9,16 +9,24 @@ backend = "t5"
 max_input_tokens = 128
 max_new_tokens = 128
 num_beams = 4
+# Keep a sentence as it was if a step drops or changes a number, date, amount,
+# etc. On the 35 workplace messages this takes critical-value recall from
+# 93% to 100% at no noticeable cost.
+facts_guard = true
 
-# Steps run in order on every sentence. ParaDetox removes insults first,
-# then the GYAFC model makes the wording formal. The prefix must match the
-# one each model was trained with.
+# Steps run in order on every sentence. both-t5 (train_both.ipynb) is one
+# model that does both jobs; the prefix picks which, and must match training
+# exactly, trailing space included. Detox runs first so the formalizer never
+# sees the insult.
 [[t5.steps]]
 name = "detox"
-model_dir = "models/t5-small-paradetox"
+model_dir = "models/both-t5"
 prefix = "detoxify: "
 
 [[t5.steps]]
 name = "formal"
-model_dir = "models/t5-small-gyafc-formal"
+model_dir = "models/both-t5"
 prefix = "formalize: "
+
+# To go back to the separate single-task models, point the steps at
+# models/t5-small-paradetox and models/t5-small-gyafc-formal instead.
