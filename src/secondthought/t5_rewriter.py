@@ -55,13 +55,19 @@ class T5Rewriter:
         self.num_beams = num_beams
         self.model = "t5-small: " + " -> ".join(step.name for step in steps)
         self._steps = []
+        # A multi-task model (e.g. both-t5) serves several steps under different
+        # prefixes, so each folder is loaded only once.
+        loaded: dict[Path, tuple] = {}
         for step in steps:
-            validate_model_files(step.model_dir)
-            tokenizer = AutoTokenizer.from_pretrained(step.model_dir, local_files_only=True)
-            model = AutoModelForSeq2SeqLM.from_pretrained(step.model_dir, local_files_only=True)
-            model.to("cpu")
-            model.eval()
-            self._steps.append((step, tokenizer, model))
+            model_dir = Path(step.model_dir).resolve()
+            if model_dir not in loaded:
+                validate_model_files(model_dir)
+                tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
+                model = AutoModelForSeq2SeqLM.from_pretrained(model_dir, local_files_only=True)
+                model.to("cpu")
+                model.eval()
+                loaded[model_dir] = (tokenizer, model)
+            self._steps.append((step, *loaded[model_dir]))
         # Fast tokenizers can't be shared across threads, and the API serves
         # requests from a thread pool.
         self._lock = threading.Lock()
