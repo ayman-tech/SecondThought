@@ -1,8 +1,8 @@
 """Local T5 rewrite service.
 
-Loading and generation follow notebooks/inference_detox.ipynb and
-notebooks/inference_formal.ipynb: local files only, CPU, beam search without
-sampling, and inputs over the token limit are rejected instead of truncated.
+Loading and generation follow the notebooks/inference_*.ipynb notebooks:
+local files only, CPU, beam search without sampling, and inputs over the token
+limit are rejected instead of truncated.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
 
+from .evaluation import critical_value_metrics
 from .inference_from_jsonl import validate_model_files
 from .rewriter import RewriteResult
 
@@ -43,6 +44,7 @@ class T5Rewriter:
         max_input_tokens: int = 128,
         max_new_tokens: int = 128,
         num_beams: int = 4,
+        facts_guard: bool = True,
     ) -> None:
         if not steps:
             raise ValueError("T5Rewriter needs at least one model step")
@@ -53,6 +55,7 @@ class T5Rewriter:
         self.max_input_tokens = max_input_tokens
         self.max_new_tokens = max_new_tokens
         self.num_beams = num_beams
+        self.facts_guard = facts_guard
         self.model = "t5-small: " + " -> ".join(step.name for step in steps)
         self._steps = []
         # A multi-task model (e.g. both-t5) serves several steps under different
@@ -125,4 +128,12 @@ class T5Rewriter:
         outputs = [text.strip() for text in tokenizer.batch_decode(generated, skip_special_tokens=True)]
         if not all(outputs):
             raise RuntimeError(f"The {step.name} model returned an empty rewrite")
+        if self.facts_guard:
+            # Numbers, dates, amounts and the like must survive every step. If a
+            # step drops or changes one (e.g. "2.5%" -> "2,5%"), keep that
+            # sentence as it was before the step.
+            outputs = [
+                after if critical_value_metrics(before, after)["critical_value_exact"] else before
+                for before, after in zip(sentences, outputs, strict=True)
+            ]
         return outputs
