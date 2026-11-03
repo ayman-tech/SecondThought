@@ -13,7 +13,7 @@
   let checkTimer = null;
   let ui = null; // built on first use, so most pages are never touched
   let pending = null; // the text the open card is working on
-  const dismissed = new WeakMap(); // field -> trigger words the user waved off
+  const wavedOff = new WeakMap(); // field -> sentences the user already decided about
 
   chrome.storage.local.get({ disabledSites: [] }).then(({ disabledSites }) => {
     enabled = !disabledSites.includes(SITE);
@@ -94,7 +94,21 @@
   }
 
   const ownText = (el) => ownLines(el).map((line) => line.text).join("\n");
-  const reasonKey = (found) => found.map((r) => r.word.toLowerCase()).sort().join("|");
+
+  const flaggedSentences = (text) =>
+    text
+      .split(/\n|(?<=[.!?])\s+/)
+      .map((sentence) => sentence.trim())
+      .filter((sentence) => sentence && SecondThoughtTriggers.check(sentence).length);
+
+  // Still typing the same sentence stays quiet; a new sentence or a new trigger
+  // word in this one doesn't.
+  const isNewSentence = (sentence, seen) =>
+    !seen.some((old) => sentence.startsWith(old) && !SecondThoughtTriggers.check(sentence.slice(old.length)).length);
+
+  function waveOff() {
+    wavedOff.set(field, [...(wavedOff.get(field) || []), ...flaggedSentences(ownText(field))]);
+  }
 
   document.addEventListener(
     "input",
@@ -114,7 +128,13 @@
     "focusin",
     (event) => {
       const el = editableRoot(event.target);
-      if (el && el !== field && !cardOpen()) hidePill();
+      if (!el || cardOpen()) return;
+      if (el !== field) hidePill();
+      // Coming back to a box brings its pill back too.
+      if (enabled) {
+        clearTimeout(checkTimer);
+        checkTimer = setTimeout(() => runCheck(el), CHECK_DELAY_MS);
+      }
     },
     true,
   );
@@ -140,12 +160,14 @@
       return;
     }
     const found = SecondThoughtTriggers.check(text);
-    if (!found.length || dismissed.get(el) === reasonKey(found)) {
+    const seen = wavedOff.get(el) || [];
+    const fresh = flaggedSentences(text).filter((sentence) => isNewSentence(sentence, seen));
+    if (!found.length || (seen.length && !fresh.length)) {
       if (el === field) hidePill();
       return;
     }
     field = el;
-    reasons = found;
+    reasons = seen.length ? SecondThoughtTriggers.check(fresh.join(" ")) : found;
     showPill();
   }
 
@@ -272,7 +294,7 @@
   }
 
   function dismiss() {
-    if (field) dismissed.set(field, reasonKey(reasons));
+    if (field) waveOff();
     closeAll();
   }
 
@@ -470,7 +492,7 @@
       }
     }
     // Don't nag about whatever the rewrite still contains.
-    dismissed.set(field, reasonKey(SecondThoughtTriggers.check(ownText(field))));
+    waveOff();
     setBody("Replaced. Press Undo to bring your original back.", { muted: true });
     setActions([
       { label: "Undo", onClick: () => undo(target, changed.length), primary: true },
