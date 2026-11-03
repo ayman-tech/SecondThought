@@ -201,6 +201,8 @@
     .chip b { color: var(--text); font-weight: 600; }
     .body { padding: 8px 10px; border-radius: 6px; background: var(--surface); white-space: pre-wrap; word-wrap: break-word; max-height: 220px; overflow: auto; }
     .body.muted { color: var(--muted); }
+    .note { margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .note b { color: var(--text); font-weight: 600; }
     del { color: var(--del); background: var(--del-bg); text-decoration: line-through; border-radius: 3px; padding: 0 2px; }
     ins { color: var(--ins); background: var(--ins-bg); text-decoration: none; border-radius: 3px; padding: 0 2px; }
     .actions { display: flex; gap: 6px; margin-top: 10px; }
@@ -223,12 +225,13 @@
         <div class="head"><strong>SecondThought</strong><button class="close" type="button" aria-label="Close">×</button></div>
         <div class="reasons"></div>
         <div class="body"></div>
+        <div class="note" hidden></div>
         <div class="actions"></div>
         <button class="mute" type="button"></button>
       </div>`;
     document.documentElement.appendChild(host);
     const $ = (selector) => shadow.querySelector(selector);
-    ui = { host, pill: $(".pill"), card: $(".card"), reasons: $(".reasons"), body: $(".body"), actions: $(".actions"), mute: $(".mute") };
+    ui = { host, pill: $(".pill"), card: $(".card"), reasons: $(".reasons"), body: $(".body"), note: $(".note"), actions: $(".actions"), mute: $(".mute") };
     ui.mute.textContent = `Don't suggest on ${SITE}`;
 
     // Keep focus and the selection in the text box while our buttons are used.
@@ -341,7 +344,9 @@
       } else if (lcs[i + 1][j] >= lcs[i][j + 1]) {
         out.push(removed(a[i++]));
       } else {
-        out.push(added(b[j++]));
+        // A word swapped at the very start has no space of its own to show.
+        const gap = !b[j].space && out.length && /\w/.test(b[j].token) ? " " : "";
+        out.push(gap + added(b[j++]));
       }
     }
     while (i < a.length) out.push(removed(a[i++]));
@@ -366,6 +371,7 @@
     if (html) ui.body.innerHTML = content;
     else ui.body.textContent = content;
     ui.body.classList.toggle("muted", muted);
+    ui.note.hidden = true;
   }
 
   // --- Rewriting -------------------------------------------------------------
@@ -440,7 +446,12 @@
         { label: "Dismiss", onClick: dismiss },
       ]);
     } else if (!changed.length) {
-      setBody("This already reads fine. No changes suggested.", { muted: true });
+      setBody(
+        stillHarsh(target).length
+          ? "The model couldn't find a better way to say this, so you may want to reword it yourself."
+          : "This already reads fine. No changes suggested.",
+        { muted: true },
+      );
       setActions([{ label: "Close", onClick: dismiss }]);
     } else {
       setBody(changed.map((piece) => diffHtml(piece.text, piece.rewrite)).join("\n"), { html: true });
@@ -449,8 +460,20 @@
         { label: "Copy", onClick: () => copy(copyText(target)) },
         { label: "Dismiss", onClick: dismiss },
       ]);
+      const leftover = stillHarsh(target);
+      if (leftover.length) {
+        ui.note.innerHTML = `Still sounds harsh: <b>${leftover.map(escapeHtml).join(", ")}</b>. The model couldn't soften this, so you may want to reword it yourself.`;
+        ui.note.hidden = false;
+      }
     }
     place();
+  }
+
+  // Trigger words the model left in place. Texting shorthand doesn't count here.
+  function stillHarsh(target) {
+    const found = target.pieces.flatMap((piece) => SecondThoughtTriggers.check(piece.rewrite ?? piece.text));
+    const words = found.filter((reason) => reason.label !== "casual").map((reason) => reason.word);
+    return [...new Set(words)];
   }
 
   function copyText(target) {
