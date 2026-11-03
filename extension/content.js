@@ -39,6 +39,61 @@
   const isPlainField = (el) => el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
   const fieldText = (el) => (isPlainField(el) ? el.value : el.innerText);
   const cardOpen = () => ui && !ui.card.hidden;
+
+  // Signatures and quoted replies aren't the user's message, so they're neither
+  // checked nor rewritten.
+  const NOT_THEIR_TEXT = ".gmail_signature, .gmail_quote, blockquote, #Signature, #divRplyFwdMsg, [data-smartmail]";
+  const BLOCK_TAGS = new Set(["DIV", "P", "LI", "UL", "OL", "SECTION", "ARTICLE", "PRE", "TABLE", "TR", "H1", "H2", "H3", "H4", "H5", "H6"]);
+  const isSignatureMark = (text) => /^--\s*$/.test(text);
+
+  function plainLines(el) {
+    const lines = [];
+    let offset = 0;
+    for (const text of el.value.split("\n")) {
+      if (isSignatureMark(text)) break;
+      lines.push({ text, start: offset, end: offset + text.length });
+      offset += text.length + 1;
+    }
+    return lines;
+  }
+
+  function richLines(el) {
+    const lines = [];
+    let current = null;
+    const flush = () => {
+      if (current) lines.push(current);
+      current = null;
+    };
+    const walk = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        current ??= { text: "", first: node };
+        current.text += node.nodeValue;
+        current.last = node;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.matches(NOT_THEIR_TEXT)) return flush();
+        if (node.tagName === "BR") {
+          if (current) flush();
+          else lines.push({ text: "" });
+          return;
+        }
+        const block = BLOCK_TAGS.has(node.tagName);
+        if (block) flush();
+        node.childNodes.forEach(walk);
+        if (block) flush();
+      }
+    };
+    el.childNodes.forEach(walk);
+    flush();
+    const mark = lines.findIndex((line) => isSignatureMark(line.text));
+    return mark === -1 ? lines : lines.slice(0, mark);
+  }
+
+  function ownLines(el) {
+    const lines = isPlainField(el) ? plainLines(el) : richLines(el);
+    return lines.filter((line) => !line.text.trimStart().startsWith(">"));
+  }
+
+  const ownText = (el) => ownLines(el).map((line) => line.text).join("\n");
   const reasonKey = (found) => found.map((r) => r.word.toLowerCase()).sort().join("|");
 
   document.addEventListener(
@@ -79,7 +134,7 @@
 
   function runCheck(el) {
     if (cardOpen() && el === field) return; // don't disturb an open suggestion
-    const text = fieldText(el);
+    const text = ownText(el);
     if (!text.trim() || text.length > MAX_CHARS) {
       if (el === field) hidePill();
       return;
@@ -284,25 +339,46 @@
 
   // --- Rewriting -------------------------------------------------------------
 
-  // If the user selected part of their message, only that part is rewritten.
-  // That matters in Gmail, where the box can also hold a quoted reply.
+  // What to rewrite: the selection if there is one, otherwise only the lines that
+  // set off a trigger. Every other line, its formatting included, stays as it is.
   function captureTarget() {
     if (isPlainField(field)) {
       const { selectionStart: start, selectionEnd: end, value } = field;
-      if (start !== end) return { text: value.slice(start, end), start, end };
-      return { text: value, start: 0, end: value.length };
+      if (start !== end) return { pieces: [{ text: value.slice(start, end), start, end }] };
+    } else {
+      const selection = getSelection();
+      if (selection.rangeCount && !selection.isCollapsed) {
+        const range = selection.getRangeAt(0);
+        if (field.contains(range.commonAncestorContainer)) {
+          return { pieces: [{ text: selection.toString(), range: range.cloneRange() }] };
+        }
+      }
     }
-    const selection = getSelection();
-    if (selection.rangeCount && !selection.isCollapsed) {
-      const range = selection.getRangeAt(0);
-      if (field.contains(range.commonAncestorContainer)) return { text: selection.toString(), range: range.cloneRange() };
+    const lines = ownLines(field);
+    const written = lines.filter((line) => line.text.trim());
+    const flagged = written.filter((line) => SecondThoughtTriggers.check(line.text).length);
+    const pieces = flagged.length ? flagged : written;
+    if (!isPlainField(field)) {
+      for (const piece of pieces) {
+        piece.range = document.createRange();
+        piece.range.setStart(piece.first, 0);
+        piece.range.setEnd(piece.last, piece.last.length);
+      }
     }
-    return { text: field.innerText, range: null };
+    return { pieces, lines };
+  }
+
+  async function requestRewrite(message) {
+    try {
+      return await chrome.runtime.sendMessage({ type: "secondthought:rewrite", message });
+    } catch {
+      return { ok: false, error: "SecondThought was updated. Reload this page to keep using it." };
+    }
   }
 
   async function openCard() {
     const target = captureTarget();
-    if (!target.text.trim()) return;
+    if (!target.pieces.length) return;
     pending = target;
     ui.pill.hidden = true;
     ui.card.hidden = false;
@@ -314,81 +390,101 @@
     setActions([{ label: "Cancel", onClick: dismiss }]);
     place();
 
-    let reply;
-    try {
-      reply = await chrome.runtime.sendMessage({ type: "secondthought:rewrite", message: target.text.trim() });
-    } catch {
-      reply = { ok: false, error: "SecondThought was updated. Reload this page to keep using it." };
+    let failure = null;
+    for (const piece of target.pieces) {
+      const reply = await requestRewrite(piece.text.trim());
+      if (pending !== target) return; // closed while waiting
+      if (!reply?.ok) {
+        failure = reply?.error || "Something went wrong.";
+        break;
+      }
+      piece.rewrite = reply.result.rewritten_text;
     }
-    if (pending !== target) return; // closed while waiting
 
-    if (!reply?.ok) {
-      setBody(reply?.error || "Something went wrong.", { muted: true });
+    const changed = target.pieces.filter((piece) => piece.rewrite && piece.rewrite.trim() !== piece.text.trim());
+    if (failure) {
+      setBody(failure, { muted: true });
       setActions([
         { label: "Try again", onClick: openCard, primary: true },
         { label: "Dismiss", onClick: dismiss },
       ]);
+    } else if (!changed.length) {
+      setBody("This already reads fine. No changes suggested.", { muted: true });
+      setActions([{ label: "Close", onClick: dismiss }]);
     } else {
-      const rewrite = reply.result.rewritten_text;
-      target.rewrite = rewrite;
-      if (rewrite.trim() === target.text.trim()) {
-        setBody("This already reads fine. No changes suggested.", { muted: true });
-        setActions([{ label: "Close", onClick: dismiss }]);
-      } else {
-        setBody(diffHtml(target.text, rewrite), { html: true });
-        setActions([
-          { label: "Replace", onClick: () => replace(target), primary: true },
-          { label: "Copy", onClick: () => copy(rewrite) },
-          { label: "Dismiss", onClick: dismiss },
-        ]);
-      }
+      setBody(changed.map((piece) => diffHtml(piece.text, piece.rewrite)).join("\n"), { html: true });
+      setActions([
+        { label: "Replace", onClick: () => replace(target, changed), primary: true },
+        { label: "Copy", onClick: () => copy(copyText(target)) },
+        { label: "Dismiss", onClick: dismiss },
+      ]);
     }
     place();
   }
 
-  function selectTarget(target) {
-    field.focus();
+  function copyText(target) {
+    const all = target.lines || target.pieces;
+    return all.map((line) => line.rewrite ?? line.text).join("\n").trim();
+  }
+
+  const isStale = (piece) =>
+    isPlainField(field)
+      ? field.value.slice(piece.start, piece.end) !== piece.text
+      : piece.range.toString() !== piece.text;
+
+  function selectPiece(piece) {
     if (isPlainField(field)) {
-      field.setSelectionRange(target.start, target.end);
+      field.setSelectionRange(piece.start, piece.end);
       return;
-    }
-    let range = target.range;
-    if (!range || !field.contains(range.commonAncestorContainer)) {
-      range = document.createRange();
-      range.selectNodeContents(field);
     }
     const selection = getSelection();
     selection.removeAllRanges();
-    selection.addRange(range);
+    selection.addRange(piece.range);
   }
 
-  function replace(target) {
-    selectTarget(target);
-    // insertText goes through the browser's editing pipeline, so the site's own
-    // editor (Gmail, Slack) sees a normal edit and Ctrl+Z still works.
-    if (!document.execCommand("insertText", false, target.rewrite)) {
-      if (isPlainField(field)) {
-        field.setRangeText(target.rewrite, target.start, target.end, "end");
-      } else {
-        const range = getSelection().getRangeAt(0);
-        range.deleteContents();
-        range.insertNode(document.createTextNode(target.rewrite));
+  function replace(target, changed) {
+    field.focus();
+    if (changed.some(isStale)) {
+      setBody("Your text changed while this card was open. Try again to get a fresh suggestion.", { muted: true });
+      setActions([
+        { label: "Try again", onClick: openCard, primary: true },
+        { label: "Dismiss", onClick: dismiss },
+      ]);
+      return place();
+    }
+    target.before = fieldText(field);
+    // Last line first, so earlier positions in a plain text box stay valid.
+    for (const piece of [...changed].reverse()) {
+      selectPiece(piece);
+      // insertText goes through the browser's editing pipeline, so the site's own
+      // editor (Gmail, Slack) sees a normal edit and Ctrl+Z still works.
+      if (!document.execCommand("insertText", false, piece.rewrite)) {
+        if (isPlainField(field)) {
+          field.setRangeText(piece.rewrite, piece.start, piece.end, "end");
+        } else {
+          const range = getSelection().getRangeAt(0);
+          range.deleteContents();
+          range.insertNode(document.createTextNode(piece.rewrite));
+        }
+        field.dispatchEvent(new Event("input", { bubbles: true }));
       }
-      field.dispatchEvent(new Event("input", { bubbles: true }));
     }
     // Don't nag about whatever the rewrite still contains.
-    dismissed.set(field, reasonKey(SecondThoughtTriggers.check(fieldText(field))));
-    setBody("Replaced. Press Undo or Ctrl+Z to bring your original back.", { muted: true });
+    dismissed.set(field, reasonKey(SecondThoughtTriggers.check(ownText(field))));
+    setBody("Replaced. Press Undo to bring your original back.", { muted: true });
     setActions([
-      { label: "Undo", onClick: undo, primary: true },
+      { label: "Undo", onClick: () => undo(target, changed.length), primary: true },
       { label: "Close", onClick: closeAll },
     ]);
     place();
   }
 
-  function undo() {
+  // Each replaced line is its own step in the browser's undo history.
+  function undo(target, steps) {
     field.focus();
-    document.execCommand("undo");
+    for (let step = 0; step < steps && fieldText(field) !== target.before; step++) {
+      document.execCommand("undo");
+    }
     closeAll();
   }
 
