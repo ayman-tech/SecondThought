@@ -1,0 +1,3 @@
+alpha,examples,mean_word_length_ratio,mean_word_set_jaccard,mean_contraction_count,mean_slang_count,mean_exclamation_count,mean_word_overlap,mean_edit_ratio,mean_number_recall,mean_critical_value_recall,exact_copy_rate,empty_output_rate,critical_value_exact_rate,missing_critical_values,unsupported_critical_values
+1.0,35,0.8797956375532668,0.8555474700001459,0.45714285714285713,0.0,0.0,0.8555485714285714,0.10459142857142857,0.9714285714285714,0.9857142857142858,0.5142857142857142,0.0,0.9714285714285714,1,0
+2.0,35,0.8278908756485049,0.802544288970649,0.45714285714285713,0.0,0.0,0.8025457142857142,0.14408285714285715,0.9380942857142858,0.95238,0.4,0.0,0.9142857142857143,4,0
