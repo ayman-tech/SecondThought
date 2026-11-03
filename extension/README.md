@@ -102,12 +102,14 @@ appears in the corner of the text box.
 - **Spotting is local.** `triggers.js` is a word list and a few patterns
   that run inside the page about 0.6 s after you stop typing. Nothing you type
   leaves the page, and no model runs, until you click the pill.
-- **Clicking the pill** sends that text to the local server, and a card shows
-  the suggestion with removed words struck out and new ones highlighted.
-  **Replace** swaps it in (Ctrl+Z or **Undo** brings yours back), **Copy**
-  copies it, **Dismiss** hides the pill until new trigger words show up.
-- **Select part of your message first** to rewrite only that part. Handy in
-  Gmail, where the box can also hold a quoted reply.
+- **Clicking the pill** sends only the lines that set off a trigger to the local
+  server, and a card shows the suggestion with removed words struck out and new
+  ones highlighted. Signatures, quoted replies and every other line stay
+  exactly as they are.
+- **Replace** swaps it in, and **Undo** brings it all back in one click (Ctrl+Z
+  also works, one line at a time). **Copy** copies it. **Dismiss** quiets the
+  pill until you write a new sentence with a trigger in it.
+- **Select part of your message first** to rewrite just that part instead.
 - **Turn it off per site** with "Don't suggest on this site" in the card, and
   back on with the checkbox at the bottom of the popup.
 
@@ -147,6 +149,9 @@ fails, and 503 when the server couldn't load its models. Only
   Their editors are complex, so Replace there needs a real-world check.
 - The T5 models only make word-level edits, so rhetorical jabs ("Did you even
   test this?", "Stop ignoring me") get through.
+- A sentence that's only an insult ("IDIOT!") is dropped when the message says
+  something else too. If it's the whole message, the model still answers with
+  something odd ("I do not like it.").
 - The facts guard only protects values it can extract (numbers, dates,
   amounts…). Meaning changes in plain words, like "b4 the mtg" becoming "with
   the Mtg", still slip through.
