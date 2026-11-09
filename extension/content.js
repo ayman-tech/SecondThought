@@ -12,6 +12,7 @@
   let checkTimer = null;
   let ui = null; // built on first use, so most pages are never touched
   let pending = null; // the text the open card is working on
+  let keepPill = false; // card was closed by a click outside, so the pill stays
   const wavedOff = new WeakMap(); // field -> sentences the user already decided about
 
   SecondThoughtSettings.load().then((loaded) => {
@@ -131,7 +132,10 @@
     (event) => {
       const el = editableRoot(event.target);
       if (!el || cardOpen()) return;
-      if (el !== field) hidePill();
+      if (el !== field) {
+        keepPill = false;
+        hidePill();
+      }
       // Coming back to a box brings its pill back too.
       if (isOn()) {
         clearTimeout(checkTimer);
@@ -146,7 +150,7 @@
     () => {
       // Our buttons keep focus in the text box, so a real blur means the user moved on.
       setTimeout(() => {
-        if (!cardOpen() && field && document.activeElement !== field && !field.contains(document.activeElement)) {
+        if (!cardOpen() && !keepPill && field && document.activeElement !== field && !field.contains(document.activeElement)) {
           hidePill();
         }
       }, 150);
@@ -231,6 +235,19 @@
     ui.pill.addEventListener("click", openCard);
     window.addEventListener("scroll", place, true);
     window.addEventListener("resize", place);
+    // A click anywhere outside the card closes it without dismissing: the pill
+    // stays so the suggestion is one click away.
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (!cardOpen() || event.composedPath().includes(host)) return;
+        pending = null;
+        ui.card.hidden = true;
+        keepPill = true;
+        showPill();
+      },
+      true,
+    );
     document.addEventListener(
       "keydown",
       (event) => {
@@ -278,6 +295,7 @@
   }
 
   function closeAll() {
+    keepPill = false;
     if (!ui) return;
     ui.pill.hidden = true;
     ui.card.hidden = true;
@@ -359,6 +377,7 @@
     const target = captureTarget();
     if (!target.pieces.length) return;
     pending = target;
+    keepPill = false;
     ui.pill.hidden = true;
     ui.card.hidden = false;
     setBody("Rethinking…", { muted: true });
