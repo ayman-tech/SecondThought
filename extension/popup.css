@@ -9,6 +9,10 @@
   --error-bg: #fdecec;
   --error-text: #a61b1b;
   --ok: #2b9a4a;
+  --del: #c92a2a;
+  --del-bg: #fff0f0;
+  --ins: #2b8a3e;
+  --ins-bg: #ebfbee;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +27,10 @@
     --error-bg: #3a1f22;
     --error-text: #ff9c9c;
     --ok: #4cc26d;
+    --del: #ff8787;
+    --del-bg: #3a1f22;
+    --ins: #69db7c;
+    --ins-bg: #1d3324;
   }
 }
 
@@ -140,3 +148,10 @@ button:disabled { opacity: 0.6; cursor: default; }
 }
 .site-row strong { color: var(--text); font-weight: 600; }
 .site-row input { accent-color: var(--accent); margin: 0; }
+
+.output del { color: var(--del); background: var(--del-bg); text-decoration: line-through; border-radius: 3px; padding: 0 2px; }
+.output ins { color: var(--ins); background: var(--ins-bg); text-decoration: none; border-radius: 3px; padding: 0 2px; }
+
+.kept { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 8px; }
+.kept-label { font-size: 11px; color: var(--muted); margin-right: 2px; }
+.chip { padding: 1px 7px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: 11px; color: var(--text); }

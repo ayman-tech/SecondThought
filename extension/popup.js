@@ -8,6 +8,8 @@ const rewriteBtn = document.getElementById("rewrite");
 const resultEl = document.getElementById("result");
 const rewrittenEl = document.getElementById("rewritten");
 const metaEl = document.getElementById("meta");
+const keptEl = document.getElementById("kept");
+let lastRewrite = "";
 const copyBtn = document.getElementById("copy");
 const bannerEl = document.getElementById("banner");
 const statusDot = document.getElementById("server-status");
@@ -115,8 +117,12 @@ async function rewrite() {
       return;
     }
 
-    rewrittenEl.textContent = body.rewritten_text;
+    lastRewrite = body.rewritten_text;
     const unchanged = body.rewritten_text.trim() === message;
+    // Show what changed: removed words struck out, new ones highlighted.
+    if (unchanged) rewrittenEl.textContent = body.rewritten_text;
+    else rewrittenEl.innerHTML = SecondThoughtDiff.html(message, body.rewritten_text);
+    showKept(body.kept_values || []);
     metaEl.textContent = (unchanged ? "Already professional, so no changes. · " : "") +
       `${body.model_info} · ${(body.latency_ms / 1000).toFixed(1)}s`;
     resultEl.hidden = false;
@@ -134,8 +140,16 @@ async function rewrite() {
   }
 }
 
+// The numbers, dates and amounts the rewrite kept exactly as written.
+function showKept(values) {
+  keptEl.hidden = !values.length;
+  if (!values.length) return;
+  keptEl.innerHTML = '<span class="kept-label">Kept as written</span>' +
+    values.map((value) => `<span class="chip">${escapeHtml(value)}</span>`).join("");
+}
+
 async function copyResult() {
-  const text = rewrittenEl.textContent;
+  const text = lastRewrite;
   try {
     await navigator.clipboard.writeText(text);
   } catch {
