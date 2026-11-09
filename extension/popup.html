@@ -23,6 +23,7 @@
   </div>
 
   <section id="result" hidden>
+    <div id="spotted" class="kept" hidden></div>
     <div class="result-head">
       <label>Suggested rewrite</label>
       <button id="copy" type="button" class="secondary">Copy</button>
@@ -36,7 +37,11 @@
     <input id="site-toggle" type="checkbox">
     <span>Suggest while typing on <strong id="site-name"></strong></span>
   </label>
+  <p id="nudge-off" class="site-row" hidden>Suggestions while typing are off everywhere.</p>
 
+  <button id="settings-link" type="button" class="link">More settings</button>
+
+  <script src="triggers.js"></script>
   <script src="settings.js"></script>
   <script src="diff.js"></script>
   <script src="popup.js"></script>

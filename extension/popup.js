@@ -9,6 +9,7 @@ const resultEl = document.getElementById("result");
 const rewrittenEl = document.getElementById("rewritten");
 const metaEl = document.getElementById("meta");
 const keptEl = document.getElementById("kept");
+const spottedEl = document.getElementById("spotted");
 let lastRewrite = "";
 const copyBtn = document.getElementById("copy");
 const bannerEl = document.getElementById("banner");
@@ -123,8 +124,13 @@ async function rewrite() {
     if (unchanged) rewrittenEl.textContent = body.rewritten_text;
     else rewrittenEl.innerHTML = SecondThoughtDiff.html(message, body.rewritten_text);
     showKept(body.kept_values || []);
-    metaEl.textContent = (unchanged ? "Already professional, so no changes. · " : "") +
-      `${body.model_info} · ${(body.latency_ms / 1000).toFixed(1)}s`;
+    const spotted = await showSpotted(message);
+    // Unchanged only means "fine" if nothing was spotted; otherwise the model
+    // just couldn't improve it.
+    const verdict = !unchanged ? "" : spotted
+      ? "The model couldn't find a better way to say this. · "
+      : "Already professional, so no changes. · ";
+    metaEl.textContent = verdict + `${body.model_info} · ${(body.latency_ms / 1000).toFixed(1)}s`;
     resultEl.hidden = false;
     copyBtn.textContent = "Copy";
     statusDot.className = "status-dot ok";
@@ -146,6 +152,16 @@ function showKept(values) {
   if (!values.length) return;
   keptEl.innerHTML = '<span class="kept-label">Kept as written</span>' +
     values.map((value) => `<span class="chip">${escapeHtml(value)}</span>`).join("");
+}
+
+// What made the message worth a second thought, e.g. "lazy · harsh".
+async function showSpotted(message) {
+  const { triggerKinds } = await SecondThoughtSettings.load();
+  const found = SecondThoughtTriggers.check(message).filter((reason) => triggerKinds[reason.label]);
+  spottedEl.hidden = !found.length;
+  spottedEl.innerHTML = '<span class="kept-label">Spotted</span>' +
+    found.map((r) => `<span class="chip">${escapeHtml(r.word)} · ${r.label}</span>`).join("");
+  return found.length > 0;
 }
 
 async function copyResult() {
@@ -179,7 +195,11 @@ async function setupSiteToggle() {
     if (!url || !["http:", "https:"].includes(url.protocol)) return;
 
     const host = url.hostname;
-    const { disabledSites } = await SecondThoughtSettings.load();
+    const { disabledSites, nudgeEnabled } = await SecondThoughtSettings.load();
+    if (!nudgeEnabled) {
+      document.getElementById("nudge-off").hidden = false;
+      return;
+    }
     const toggle = document.getElementById("site-toggle");
     document.getElementById("site-name").textContent = host;
     toggle.checked = !disabledSites.includes(host);
@@ -193,3 +213,4 @@ async function setupSiteToggle() {
 prefillFromSelection();
 checkServer();
 setupSiteToggle();
+document.getElementById("settings-link").addEventListener("click", () => chrome.runtime.openOptionsPage());
