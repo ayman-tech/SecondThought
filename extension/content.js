@@ -314,46 +314,6 @@
     return div.innerHTML;
   }
 
-  // Words and punctuation are compared separately, so adding a full stop doesn't
-  // make "lazy" look like it was replaced by "lazy.".
-  function diffTokens(text) {
-    return [...text.matchAll(/(\s*)([\w'\u2019-]+|\S)/g)].map(([, space, token]) => ({ token, space: space ? " " : "" }));
-  }
-
-  // Word-level diff: struck-out words were removed, highlighted ones added.
-  function diffHtml(before, after) {
-    const a = diffTokens(before);
-    const b = diffTokens(after);
-    const lcs = Array.from({ length: a.length + 1 }, () => new Uint16Array(b.length + 1));
-    for (let i = a.length - 1; i >= 0; i--) {
-      for (let j = b.length - 1; j >= 0; j--) {
-        lcs[i][j] = a[i].token === b[j].token ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
-      }
-    }
-    const kept = ({ token, space }) => space + escapeHtml(token);
-    const removed = ({ token, space }) => `${space}<del>${escapeHtml(token)}</del>`;
-    const added = ({ token, space }) => `${space}<ins>${escapeHtml(token)}</ins>`;
-    const out = [];
-    let i = 0;
-    let j = 0;
-    while (i < a.length && j < b.length) {
-      if (a[i].token === b[j].token) {
-        out.push(kept(b[j]));
-        i++;
-        j++;
-      } else if (lcs[i + 1][j] >= lcs[i][j + 1]) {
-        out.push(removed(a[i++]));
-      } else {
-        // A word swapped at the very start has no space of its own to show.
-        const gap = !b[j].space && out.length && /\w/.test(b[j].token) ? " " : "";
-        out.push(gap + added(b[j++]));
-      }
-    }
-    while (i < a.length) out.push(removed(a[i++]));
-    while (j < b.length) out.push(added(b[j++]));
-    return out.join("").trim();
-  }
-
   function setActions(buttons) {
     ui.actions.replaceChildren(
       ...buttons.map(({ label, onClick, primary = false }) => {
@@ -454,7 +414,7 @@
       );
       setActions([{ label: "Close", onClick: dismiss }]);
     } else {
-      setBody(changed.map((piece) => diffHtml(piece.text, piece.rewrite)).join("\n"), { html: true });
+      setBody(changed.map((piece) => SecondThoughtDiff.html(piece.text, piece.rewrite)).join("\n"), { html: true });
       setActions([
         { label: "Replace", onClick: () => replace(target, changed), primary: true },
         { label: "Copy", onClick: () => copy(copyText(target)) },

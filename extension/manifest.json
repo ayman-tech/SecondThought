@@ -32,7 +32,7 @@
         "https://www.linkedin.com/*",
         "https://github.com/*"
       ],
-      "js": ["triggers.js", "content.js"],
+      "js": ["triggers.js", "diff.js", "content.js"],
       "run_at": "document_idle"
     }
   ],
