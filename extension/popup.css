@@ -36,6 +36,9 @@
 
 * { box-sizing: border-box; }
 
+/* Layout rules like display: flex would otherwise override the hidden attribute. */
+[hidden] { display: none !important; }
+
 body {
   width: 380px;
   margin: 0;
