@@ -9,7 +9,6 @@
 
   let settings = SecondThoughtSettings.DEFAULTS;
   let field = null; // the text box the nudge is attached to
-  let reasons = [];
   let checkTimer = null;
   let ui = null; // built on first use, so most pages are never touched
   let pending = null; // the text the open card is working on
@@ -170,7 +169,6 @@
       return;
     }
     field = el;
-    reasons = seen.length ? triggers(fresh.join(" ")) : found;
     showPill();
   }
 
@@ -192,16 +190,10 @@
       animation: pop .15s ease-out; }
     .pill:hover { border-color: var(--accent); color: var(--accent); }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-    .card { position: fixed; width: min(380px, calc(100vw - 16px)); padding: 12px 14px 10px;
+    .card { position: fixed; width: min(380px, calc(100vw - 16px)); padding: 10px 12px;
       border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text);
       font-size: 13px; line-height: 1.45; box-shadow: 0 8px 28px rgba(0,0,0,.22); animation: pop .15s ease-out; }
     @keyframes pop { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-    .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-    .head strong { font-size: 13px; }
-    .close { border: none; background: none; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
-    .reasons { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
-    .chip { padding: 1px 7px; border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 11px; }
-    .chip b { color: var(--text); font-weight: 600; }
     .body { padding: 8px 10px; border-radius: 6px; background: var(--surface); white-space: pre-wrap; word-wrap: break-word; max-height: 220px; overflow: auto; }
     .body.muted { color: var(--muted); }
     .note { margin-top: 8px; color: var(--muted); font-size: 12px; }
@@ -215,7 +207,6 @@
     .actions .primary { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 600; }
     .actions .primary:hover { background: var(--accent-hover); }
     .actions button:disabled { opacity: .5; cursor: default; }
-    .mute { margin-top: 8px; border: none; background: none; color: var(--muted); font-size: 11px; cursor: pointer; padding: 0; text-decoration: underline; }
   `;
 
   function buildUi() {
@@ -225,25 +216,19 @@
     shadow.innerHTML = `<style>${STYLES}</style>
       <button class="pill" type="button" hidden><span class="dot"></span>SecondThought?</button>
       <div class="card" role="dialog" aria-label="SecondThought suggestion" hidden>
-        <div class="head"><strong>SecondThought</strong><button class="close" type="button" aria-label="Close">×</button></div>
-        <div class="reasons"></div>
         <div class="body"></div>
         <div class="note" hidden></div>
         <div class="actions"></div>
-        <button class="mute" type="button"></button>
       </div>`;
     document.documentElement.appendChild(host);
     const $ = (selector) => shadow.querySelector(selector);
-    ui = { host, pill: $(".pill"), card: $(".card"), reasons: $(".reasons"), body: $(".body"), note: $(".note"), actions: $(".actions"), mute: $(".mute") };
-    ui.mute.textContent = `Don't suggest on ${SITE}`;
+    ui = { host, pill: $(".pill"), card: $(".card"), body: $(".body"), note: $(".note"), actions: $(".actions") };
 
     // Keep focus and the selection in the text box while our buttons are used.
     shadow.addEventListener("mousedown", (event) => {
       if (event.target.closest("button")) event.preventDefault();
     });
     ui.pill.addEventListener("click", openCard);
-    $(".close").addEventListener("click", dismiss);
-    ui.mute.addEventListener("click", muteSite);
     window.addEventListener("scroll", place, true);
     window.addEventListener("resize", place);
     document.addEventListener(
@@ -284,7 +269,7 @@
     if (!ui) buildUi();
     ui.card.hidden = true;
     ui.pill.hidden = false;
-    ui.pill.title = `Spotted: ${reasons.map((r) => r.word).join(", ")}`;
+    ui.pill.title = "See a calmer way to say this";
     place();
   }
 
@@ -304,12 +289,6 @@
     closeAll();
   }
 
-  async function muteSite() {
-    const { disabledSites } = await chrome.storage.local.get({ disabledSites: [] });
-    if (!disabledSites.includes(SITE)) disabledSites.push(SITE);
-    await chrome.storage.local.set({ disabledSites });
-    closeAll();
-  }
 
   function escapeHtml(text) {
     const div = document.createElement("div");
@@ -382,10 +361,6 @@
     pending = target;
     ui.pill.hidden = true;
     ui.card.hidden = false;
-    ui.reasons.innerHTML = reasons
-      .slice(0, 4)
-      .map((r) => `<span class="chip"><b>${escapeHtml(r.word)}</b> · ${r.label}</span>`)
-      .join("");
     setBody("Rethinking…", { muted: true });
     setActions([{ label: "Cancel", onClick: dismiss }]);
     place();
