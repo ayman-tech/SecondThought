@@ -7,7 +7,7 @@
   const MAX_CHARS = 4000;
   const SITE = location.hostname;
 
-  let enabled = true;
+  let settings = SecondThoughtSettings.DEFAULTS;
   let field = null; // the text box the nudge is attached to
   let reasons = [];
   let checkTimer = null;
@@ -15,14 +15,17 @@
   let pending = null; // the text the open card is working on
   const wavedOff = new WeakMap(); // field -> sentences the user already decided about
 
-  chrome.storage.local.get({ disabledSites: [] }).then(({ disabledSites }) => {
-    enabled = !disabledSites.includes(SITE);
+  SecondThoughtSettings.load().then((loaded) => {
+    settings = loaded;
   });
-  chrome.storage.onChanged.addListener((changes) => {
-    if (!changes.disabledSites) return;
-    enabled = !(changes.disabledSites.newValue || []).includes(SITE);
-    if (!enabled) closeAll();
+  chrome.storage.onChanged.addListener(async () => {
+    settings = await SecondThoughtSettings.load();
+    if (!isOn()) closeAll();
   });
+
+  const isOn = () => settings.nudgeEnabled && !settings.disabledSites.includes(SITE);
+  // Only the kinds of wording the user wants flagged (see the settings page).
+  const triggers = (text) => SecondThoughtTriggers.check(text).filter((reason) => settings.triggerKinds[reason.label]);
 
   // --- Finding the text box ---------------------------------------------
 
@@ -99,12 +102,12 @@
     text
       .split(/\n|(?<=[.!?])\s+/)
       .map((sentence) => sentence.trim())
-      .filter((sentence) => sentence && SecondThoughtTriggers.check(sentence).length);
+      .filter((sentence) => sentence && triggers(sentence).length);
 
   // Still typing the same sentence stays quiet; a new sentence or a new trigger
   // word in this one doesn't.
   const isNewSentence = (sentence, seen) =>
-    !seen.some((old) => sentence.startsWith(old) && !SecondThoughtTriggers.check(sentence.slice(old.length)).length);
+    !seen.some((old) => sentence.startsWith(old) && !triggers(sentence.slice(old.length)).length);
 
   function waveOff() {
     wavedOff.set(field, [...(wavedOff.get(field) || []), ...flaggedSentences(ownText(field))]);
@@ -113,7 +116,7 @@
   document.addEventListener(
     "input",
     (event) => {
-      if (!enabled) return;
+      if (!isOn()) return;
       const el = editableRoot(event.target);
       if (!el) return;
       clearTimeout(checkTimer);
@@ -131,7 +134,7 @@
       if (!el || cardOpen()) return;
       if (el !== field) hidePill();
       // Coming back to a box brings its pill back too.
-      if (enabled) {
+      if (isOn()) {
         clearTimeout(checkTimer);
         checkTimer = setTimeout(() => runCheck(el), CHECK_DELAY_MS);
       }
@@ -159,7 +162,7 @@
       if (el === field) hidePill();
       return;
     }
-    const found = SecondThoughtTriggers.check(text);
+    const found = triggers(text);
     const seen = wavedOff.get(el) || [];
     const fresh = flaggedSentences(text).filter((sentence) => isNewSentence(sentence, seen));
     if (!found.length || (seen.length && !fresh.length)) {
@@ -167,7 +170,7 @@
       return;
     }
     field = el;
-    reasons = seen.length ? SecondThoughtTriggers.check(fresh.join(" ")) : found;
+    reasons = seen.length ? triggers(fresh.join(" ")) : found;
     showPill();
   }
 
@@ -353,7 +356,7 @@
     }
     const lines = ownLines(field);
     const written = lines.filter((line) => line.text.trim());
-    const flagged = written.filter((line) => SecondThoughtTriggers.check(line.text).length);
+    const flagged = written.filter((line) => triggers(line.text).length);
     const pieces = flagged.length ? flagged : written;
     if (!isPlainField(field)) {
       for (const piece of pieces) {
@@ -431,7 +434,7 @@
 
   // Trigger words the model left in place. Texting shorthand doesn't count here.
   function stillHarsh(target) {
-    const found = target.pieces.flatMap((piece) => SecondThoughtTriggers.check(piece.rewrite ?? piece.text));
+    const found = target.pieces.flatMap((piece) => triggers(piece.rewrite ?? piece.text));
     const words = found.filter((reason) => reason.label !== "casual").map((reason) => reason.word);
     return [...new Set(words)];
   }

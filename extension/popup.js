@@ -171,28 +171,20 @@ messageEl.addEventListener("keydown", (event) => {
 });
 
 messageEl.focus();
-// On sites where the in-page nudge runs, let the user switch it back on or off.
+// The nudge runs on every web page, so any http(s) tab gets an on/off switch.
 async function setupSiteToggle() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const host = tab?.url ? new URL(tab.url).hostname : "";
-    const nudgeHosts = chrome.runtime
-      .getManifest()
-      .content_scripts.flatMap((script) => script.matches)
-      .map((pattern) => new URL(pattern.replace("/*", "/")).hostname);
-    if (!nudgeHosts.includes(host)) return;
+    const url = tab?.url ? new URL(tab.url) : null;
+    if (!url || !["http:", "https:"].includes(url.protocol)) return;
 
-    const { disabledSites } = await chrome.storage.local.get({ disabledSites: [] });
+    const host = url.hostname;
+    const { disabledSites } = await SecondThoughtSettings.load();
     const toggle = document.getElementById("site-toggle");
     document.getElementById("site-name").textContent = host;
     toggle.checked = !disabledSites.includes(host);
     document.getElementById("site-row").hidden = false;
-    toggle.addEventListener("change", async () => {
-      const { disabledSites: current } = await chrome.storage.local.get({ disabledSites: [] });
-      const next = current.filter((site) => site !== host);
-      if (!toggle.checked) next.push(host);
-      await chrome.storage.local.set({ disabledSites: next });
-    });
+    toggle.addEventListener("change", () => SecondThoughtSettings.setSiteEnabled(host, toggle.checked));
   } catch {
     // No URL access on this tab; nothing to show.
   }
