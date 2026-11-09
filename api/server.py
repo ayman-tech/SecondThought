@@ -8,8 +8,10 @@ in which case the API key stays in the server's environment.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +22,7 @@ from pydantic import BaseModel, Field
 
 from secondthought.cli import build_rewriter
 from secondthought.config import load_settings
+from secondthought.evaluation import critical_value_metrics, extract_critical_values
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = REPO_ROOT / "config" / "t5.toml"
@@ -37,6 +40,8 @@ class RewriteResponse(BaseModel):
     rewritten_text: str
     model_info: str
     latency_ms: float
+    # Numbers, dates, amounts and the like from the message that the rewrite kept.
+    kept_values: list[str] = []
 
 
 def load_dotenv(path: Path) -> None:
@@ -52,6 +57,20 @@ def load_dotenv(path: Path) -> None:
         value = value.strip().strip("'\"")
         if key and value:
             os.environ.setdefault(key, value)
+
+
+def kept_values(original: str, rewritten: str) -> list[str]:
+    missing = Counter(
+        value["raw"]
+        for value in json.loads(critical_value_metrics(original, rewritten)["critical_value_missing"])
+    )
+    kept = []
+    for value in extract_critical_values(original):
+        if missing[value.raw]:
+            missing[value.raw] -= 1
+        else:
+            kept.append(value.raw)
+    return list(dict.fromkeys(kept))
 
 
 def create_app(rewriter: Any | None = None, config_path: str | Path | None = None) -> FastAPI:
@@ -102,6 +121,7 @@ def create_app(rewriter: Any | None = None, config_path: str | Path | None = Non
             rewritten_text=result.rewritten_text,
             model_info=result.model_info,
             latency_ms=result.latency_ms,
+            kept_values=kept_values(result.original_text, result.rewritten_text),
         )
 
     return app
