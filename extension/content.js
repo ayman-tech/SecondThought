@@ -7,22 +7,25 @@
   const MAX_CHARS = 4000;
   const SITE = location.hostname;
 
-  let enabled = true;
+  let settings = SecondThoughtSettings.DEFAULTS;
   let field = null; // the text box the nudge is attached to
-  let reasons = [];
   let checkTimer = null;
   let ui = null; // built on first use, so most pages are never touched
   let pending = null; // the text the open card is working on
+  let keepPill = false; // card was closed by a click outside, so the pill stays
   const wavedOff = new WeakMap(); // field -> sentences the user already decided about
 
-  chrome.storage.local.get({ disabledSites: [] }).then(({ disabledSites }) => {
-    enabled = !disabledSites.includes(SITE);
+  SecondThoughtSettings.load().then((loaded) => {
+    settings = loaded;
   });
-  chrome.storage.onChanged.addListener((changes) => {
-    if (!changes.disabledSites) return;
-    enabled = !(changes.disabledSites.newValue || []).includes(SITE);
-    if (!enabled) closeAll();
+  chrome.storage.onChanged.addListener(async () => {
+    settings = await SecondThoughtSettings.load();
+    if (!isOn()) closeAll();
   });
+
+  const isOn = () => settings.nudgeEnabled && !settings.disabledSites.includes(SITE);
+  // Only the kinds of wording the user wants flagged (see the settings page).
+  const triggers = (text) => SecondThoughtTriggers.check(text).filter((reason) => settings.triggerKinds[reason.label]);
 
   // --- Finding the text box ---------------------------------------------
 
@@ -99,12 +102,12 @@
     text
       .split(/\n|(?<=[.!?])\s+/)
       .map((sentence) => sentence.trim())
-      .filter((sentence) => sentence && SecondThoughtTriggers.check(sentence).length);
+      .filter((sentence) => sentence && triggers(sentence).length);
 
   // Still typing the same sentence stays quiet; a new sentence or a new trigger
   // word in this one doesn't.
   const isNewSentence = (sentence, seen) =>
-    !seen.some((old) => sentence.startsWith(old) && !SecondThoughtTriggers.check(sentence.slice(old.length)).length);
+    !seen.some((old) => sentence.startsWith(old) && !triggers(sentence.slice(old.length)).length);
 
   function waveOff() {
     wavedOff.set(field, [...(wavedOff.get(field) || []), ...flaggedSentences(ownText(field))]);
@@ -113,7 +116,7 @@
   document.addEventListener(
     "input",
     (event) => {
-      if (!enabled) return;
+      if (!isOn()) return;
       const el = editableRoot(event.target);
       if (!el) return;
       clearTimeout(checkTimer);
@@ -129,9 +132,12 @@
     (event) => {
       const el = editableRoot(event.target);
       if (!el || cardOpen()) return;
-      if (el !== field) hidePill();
+      if (el !== field) {
+        keepPill = false;
+        hidePill();
+      }
       // Coming back to a box brings its pill back too.
-      if (enabled) {
+      if (isOn()) {
         clearTimeout(checkTimer);
         checkTimer = setTimeout(() => runCheck(el), CHECK_DELAY_MS);
       }
@@ -144,7 +150,7 @@
     () => {
       // Our buttons keep focus in the text box, so a real blur means the user moved on.
       setTimeout(() => {
-        if (!cardOpen() && field && document.activeElement !== field && !field.contains(document.activeElement)) {
+        if (!cardOpen() && !keepPill && field && document.activeElement !== field && !field.contains(document.activeElement)) {
           hidePill();
         }
       }, 150);
@@ -159,7 +165,7 @@
       if (el === field) hidePill();
       return;
     }
-    const found = SecondThoughtTriggers.check(text);
+    const found = triggers(text);
     const seen = wavedOff.get(el) || [];
     const fresh = flaggedSentences(text).filter((sentence) => isNewSentence(sentence, seen));
     if (!found.length || (seen.length && !fresh.length)) {
@@ -167,7 +173,6 @@
       return;
     }
     field = el;
-    reasons = seen.length ? SecondThoughtTriggers.check(fresh.join(" ")) : found;
     showPill();
   }
 
@@ -189,16 +194,10 @@
       animation: pop .15s ease-out; }
     .pill:hover { border-color: var(--accent); color: var(--accent); }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-    .card { position: fixed; width: min(380px, calc(100vw - 16px)); padding: 12px 14px 10px;
+    .card { position: fixed; width: min(380px, calc(100vw - 16px)); padding: 10px 12px;
       border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text);
       font-size: 13px; line-height: 1.45; box-shadow: 0 8px 28px rgba(0,0,0,.22); animation: pop .15s ease-out; }
     @keyframes pop { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-    .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-    .head strong { font-size: 13px; }
-    .close { border: none; background: none; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
-    .reasons { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
-    .chip { padding: 1px 7px; border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 11px; }
-    .chip b { color: var(--text); font-weight: 600; }
     .body { padding: 8px 10px; border-radius: 6px; background: var(--surface); white-space: pre-wrap; word-wrap: break-word; max-height: 220px; overflow: auto; }
     .body.muted { color: var(--muted); }
     .note { margin-top: 8px; color: var(--muted); font-size: 12px; }
@@ -212,7 +211,6 @@
     .actions .primary { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 600; }
     .actions .primary:hover { background: var(--accent-hover); }
     .actions button:disabled { opacity: .5; cursor: default; }
-    .mute { margin-top: 8px; border: none; background: none; color: var(--muted); font-size: 11px; cursor: pointer; padding: 0; text-decoration: underline; }
   `;
 
   function buildUi() {
@@ -222,27 +220,34 @@
     shadow.innerHTML = `<style>${STYLES}</style>
       <button class="pill" type="button" hidden><span class="dot"></span>SecondThought?</button>
       <div class="card" role="dialog" aria-label="SecondThought suggestion" hidden>
-        <div class="head"><strong>SecondThought</strong><button class="close" type="button" aria-label="Close">×</button></div>
-        <div class="reasons"></div>
         <div class="body"></div>
         <div class="note" hidden></div>
         <div class="actions"></div>
-        <button class="mute" type="button"></button>
       </div>`;
     document.documentElement.appendChild(host);
     const $ = (selector) => shadow.querySelector(selector);
-    ui = { host, pill: $(".pill"), card: $(".card"), reasons: $(".reasons"), body: $(".body"), note: $(".note"), actions: $(".actions"), mute: $(".mute") };
-    ui.mute.textContent = `Don't suggest on ${SITE}`;
+    ui = { host, pill: $(".pill"), card: $(".card"), body: $(".body"), note: $(".note"), actions: $(".actions") };
 
     // Keep focus and the selection in the text box while our buttons are used.
     shadow.addEventListener("mousedown", (event) => {
       if (event.target.closest("button")) event.preventDefault();
     });
     ui.pill.addEventListener("click", openCard);
-    $(".close").addEventListener("click", dismiss);
-    ui.mute.addEventListener("click", muteSite);
     window.addEventListener("scroll", place, true);
     window.addEventListener("resize", place);
+    // A click anywhere outside the card closes it without dismissing: the pill
+    // stays so the suggestion is one click away.
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (!cardOpen() || event.composedPath().includes(host)) return;
+        pending = null;
+        ui.card.hidden = true;
+        keepPill = true;
+        showPill();
+      },
+      true,
+    );
     document.addEventListener(
       "keydown",
       (event) => {
@@ -281,7 +286,7 @@
     if (!ui) buildUi();
     ui.card.hidden = true;
     ui.pill.hidden = false;
-    ui.pill.title = `Spotted: ${reasons.map((r) => r.word).join(", ")}`;
+    ui.pill.title = "See a calmer way to say this";
     place();
   }
 
@@ -290,6 +295,7 @@
   }
 
   function closeAll() {
+    keepPill = false;
     if (!ui) return;
     ui.pill.hidden = true;
     ui.card.hidden = true;
@@ -301,57 +307,11 @@
     closeAll();
   }
 
-  async function muteSite() {
-    const { disabledSites } = await chrome.storage.local.get({ disabledSites: [] });
-    if (!disabledSites.includes(SITE)) disabledSites.push(SITE);
-    await chrome.storage.local.set({ disabledSites });
-    closeAll();
-  }
 
   function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
-  }
-
-  // Words and punctuation are compared separately, so adding a full stop doesn't
-  // make "lazy" look like it was replaced by "lazy.".
-  function diffTokens(text) {
-    return [...text.matchAll(/(\s*)([\w'\u2019-]+|\S)/g)].map(([, space, token]) => ({ token, space: space ? " " : "" }));
-  }
-
-  // Word-level diff: struck-out words were removed, highlighted ones added.
-  function diffHtml(before, after) {
-    const a = diffTokens(before);
-    const b = diffTokens(after);
-    const lcs = Array.from({ length: a.length + 1 }, () => new Uint16Array(b.length + 1));
-    for (let i = a.length - 1; i >= 0; i--) {
-      for (let j = b.length - 1; j >= 0; j--) {
-        lcs[i][j] = a[i].token === b[j].token ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
-      }
-    }
-    const kept = ({ token, space }) => space + escapeHtml(token);
-    const removed = ({ token, space }) => `${space}<del>${escapeHtml(token)}</del>`;
-    const added = ({ token, space }) => `${space}<ins>${escapeHtml(token)}</ins>`;
-    const out = [];
-    let i = 0;
-    let j = 0;
-    while (i < a.length && j < b.length) {
-      if (a[i].token === b[j].token) {
-        out.push(kept(b[j]));
-        i++;
-        j++;
-      } else if (lcs[i + 1][j] >= lcs[i][j + 1]) {
-        out.push(removed(a[i++]));
-      } else {
-        // A word swapped at the very start has no space of its own to show.
-        const gap = !b[j].space && out.length && /\w/.test(b[j].token) ? " " : "";
-        out.push(gap + added(b[j++]));
-      }
-    }
-    while (i < a.length) out.push(removed(a[i++]));
-    while (j < b.length) out.push(added(b[j++]));
-    return out.join("").trim();
   }
 
   function setActions(buttons) {
@@ -393,7 +353,7 @@
     }
     const lines = ownLines(field);
     const written = lines.filter((line) => line.text.trim());
-    const flagged = written.filter((line) => SecondThoughtTriggers.check(line.text).length);
+    const flagged = written.filter((line) => triggers(line.text).length);
     const pieces = flagged.length ? flagged : written;
     if (!isPlainField(field)) {
       for (const piece of pieces) {
@@ -417,12 +377,9 @@
     const target = captureTarget();
     if (!target.pieces.length) return;
     pending = target;
+    keepPill = false;
     ui.pill.hidden = true;
     ui.card.hidden = false;
-    ui.reasons.innerHTML = reasons
-      .slice(0, 4)
-      .map((r) => `<span class="chip"><b>${escapeHtml(r.word)}</b> · ${r.label}</span>`)
-      .join("");
     setBody("Rethinking…", { muted: true });
     setActions([{ label: "Cancel", onClick: dismiss }]);
     place();
@@ -454,7 +411,7 @@
       );
       setActions([{ label: "Close", onClick: dismiss }]);
     } else {
-      setBody(changed.map((piece) => diffHtml(piece.text, piece.rewrite)).join("\n"), { html: true });
+      setBody(changed.map((piece) => SecondThoughtDiff.html(piece.text, piece.rewrite)).join("\n"), { html: true });
       setActions([
         { label: "Replace", onClick: () => replace(target, changed), primary: true },
         { label: "Copy", onClick: () => copy(copyText(target)) },
@@ -471,7 +428,7 @@
 
   // Trigger words the model left in place. Texting shorthand doesn't count here.
   function stillHarsh(target) {
-    const found = target.pieces.flatMap((piece) => SecondThoughtTriggers.check(piece.rewrite ?? piece.text));
+    const found = target.pieces.flatMap((piece) => triggers(piece.rewrite ?? piece.text));
     const words = found.filter((reason) => reason.label !== "casual").map((reason) => reason.word);
     return [...new Set(words)];
   }

@@ -94,8 +94,7 @@ opening the popup, and it will be filled in for you.
 
 ## The "SecondThought?" nudge
 
-On Gmail, Slack, Teams, Outlook, LinkedIn and GitHub you don't need to open
-the popup. Type as usual. If the message has swearing, insults, texting
+On any website you don't need to open the popup. Type as usual. If the message has swearing, insults, texting
 shorthand ("u", "ur", "gonna") or shouting, a small **SecondThought?** pill
 appears in the corner of the text box.
 
@@ -110,8 +109,20 @@ appears in the corner of the text box.
   also works, one line at a time). **Copy** copies it. **Dismiss** quiets the
   pill until you write a new sentence with a trigger in it.
 - **Select part of your message first** to rewrite just that part instead.
-- **Turn it off per site** with "Don't suggest on this site" in the card, and
-  back on with the checkbox at the bottom of the popup.
+- **Turn it off for a site** with the "Suggest while typing on <site>" switch
+  in the popup. It's on by default everywhere.
+
+## The popup and settings
+
+- **The popup** shows the suggestion with the same struck-out and highlighted
+  words, a **Spotted** row with what was flagged ("lazy · harsh"), and a
+  **Kept as written** row with the numbers, dates and amounts the rewrite kept.
+- **More settings** (or Chrome's extension options) opens a settings page to
+  switch the pill off everywhere, choose what triggers it (swearing, harsh
+  words, texting shorthand, shouting), turn sites back on, and check whether
+  the server is running.
+- All of these read the same values from `settings.js`, so a change in one
+  shows up in the others straight away.
 
 The page can't call the local server directly (sites block requests to
 `127.0.0.1`), so the request goes through the extension's background worker
@@ -131,7 +142,7 @@ SECONDTHOUGHT_CONFIG=config/default.toml python -m api.server
 | Method | Path       | Body                              | Returns |
 |--------|------------|-----------------------------------|---------|
 | GET    | `/health`  | nothing                           | `{"status": "ok", "model": ...}` or `{"status": "error", "detail": ...}` |
-| POST   | `/rewrite` | `{"message": "..."}` (1–4000 chars) | `{"original_text", "rewritten_text", "model_info", "latency_ms"}` |
+| POST   | `/rewrite` | `{"message": "..."}` (1–4000 chars) | `{"original_text", "rewritten_text", "model_info", "latency_ms", "kept_values"}` |
 
 Errors come back as `{"detail": "..."}`: 400 for a blank message or a sentence
 over the T5 limit (128 tokens), 422 for a malformed body, 502 when the model
@@ -140,13 +151,15 @@ fails, and 503 when the server couldn't load its models. Only
 
 ## Not done yet
 
-- The nudge only runs on the six sites above, and it suggests rather than
-  intercepting the Send button.
+- The nudge suggests rather than intercepting the Send button. Because it can
+  run on every site, Chrome warns at install that it can read and change data
+  on all websites; spotting stays inside the page, and text only goes to your
+  local server when you click the pill.
 - The trigger list is hand-written, and the last few insults were added after
   looking at our own 35-message set, so expect misses on new kinds of
   hostility (sarcasm, passive aggression).
-- Gmail and Slack were tested with a stand-in page, not on the live sites.
-  Their editors are complex, so Replace there needs a real-world check.
+- Replace was checked in live Gmail. Slack and other sites have only been
+  tested on a stand-in page.
 - The T5 models only make word-level edits, so rhetorical jabs ("Did you even
   test this?", "Stop ignoring me") get through.
 - A sentence that's only an insult ("IDIOT!") is dropped when the message says

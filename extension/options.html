@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SecondThought settings</title>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>SecondThought settings</h1>
+      <p class="hint">Changes save as soon as you make them.</p>
+    </header>
+
+    <section>
+      <h2>Suggestions while typing</h2>
+      <label class="row">
+        <input id="nudge-enabled" type="checkbox">
+        <span>
+          <strong>Show the "SecondThought?" pill while typing</strong>
+          <small>On every website, unless you turn a site off below or from the popup.</small>
+        </span>
+      </label>
+    </section>
+
+    <section id="kinds-section">
+      <h2>What to look out for</h2>
+      <p class="hint">The pill appears when your message has any of these.</p>
+      <div id="kinds"></div>
+    </section>
+
+    <section>
+      <h2>Sites where suggestions are off</h2>
+      <ul id="sites"></ul>
+      <p id="no-sites" class="hint">None. You can turn suggestions off for a site from the popup.</p>
+    </section>
+
+    <section>
+      <h2>Rewriting server</h2>
+      <p class="server"><span id="server-dot" class="status-dot"></span><span id="server-text">Checking…</span></p>
+      <p class="hint">Rewrites run on your own computer at <code>http://127.0.0.1:8000</code>. Start the server with <code>python -m api.server</code> from the repo root.</p>
+    </section>
+  </main>
+
+  <p id="saved" class="saved" hidden>Saved</p>
+
+  <script src="settings.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

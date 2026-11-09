@@ -12,6 +12,10 @@
       "128": "icons/icon128.png"
     }
   },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -23,19 +27,24 @@
   "content_scripts": [
     {
       "matches": [
-        "https://mail.google.com/*",
-        "https://app.slack.com/*",
-        "https://teams.microsoft.com/*",
-        "https://teams.live.com/*",
-        "https://outlook.office.com/*",
-        "https://outlook.live.com/*",
-        "https://www.linkedin.com/*",
-        "https://github.com/*"
+        "http://*/*",
+        "https://*/*"
       ],
-      "js": ["triggers.js", "content.js"],
+      "js": [
+        "triggers.js",
+        "diff.js",
+        "settings.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
-  "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["http://127.0.0.1:8000/*"]
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*"
+  ]
 }
