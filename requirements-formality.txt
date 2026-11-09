@@ -1,0 +1,6 @@
+# Extra dependencies for the formality evals (src/secondthought/formality_evaluation.py).
+# CPU-only torch: pip install -r requirements-formality.txt --extra-index-url https://download.pytorch.org/whl/cpu
+# Versions are the ones the evals were built and tested with (Python 3.14).
+torch==2.15.0
+transformers==5.22.2
+pytest==8.4.2
