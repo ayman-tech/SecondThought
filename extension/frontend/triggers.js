@@ -28,6 +28,17 @@ const SecondThoughtTriggers = (() => {
     /\b(?:is|was|are) a (?:joke|disaster|mess)\b/i,
     /\bknow-it-all\b/i,
   ];
+  // The open bad-word list (badwords.js), if it's loaded: single words go in a
+  // set, phrases and symbols into one pattern.
+  const LISTED = typeof SecondThoughtBadWords === "undefined" ? [] : SecondThoughtBadWords;
+  const isWord = (entry) => /^[a-z0-9']+$/i.test(entry);
+  const LISTED_WORDS = new Set(LISTED.filter(isWord).map((entry) => entry.toLowerCase()));
+  const escape = (entry) => entry.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const listedPhrases = LISTED.filter((entry) => !isWord(entry)).map(escape);
+  const LISTED_PATTERN = listedPhrases.length
+    ? new RegExp(`(?<![\\p{L}\\p{N}])(?:${listedPhrases.join("|")})(?![\\p{L}\\p{N}])`, "giu")
+    : null;
+
   // Common all-caps words that aren't shouting.
   const ACRONYMS = new Set(["ASAP", "FYI", "TODO", "NOTE", "EOD", "JSON", "HTML", "HTTP", "HTTPS", "UTC", "CEST", "PST", "EST"]);
 
@@ -39,10 +50,11 @@ const SecondThoughtTriggers = (() => {
 
     for (const word of text.match(/[A-Za-z0-9']+/g) || []) {
       const lower = word.toLowerCase();
-      if (SWEARING.has(lower)) add("swearing", word);
+      if (SWEARING.has(lower) || LISTED_WORDS.has(lower)) add("swearing", word);
       else if (INSULTS.has(lower)) add("harsh", word);
       else if (word === lower && TEXTING.has(word)) add("casual", word);
     }
+    for (const match of LISTED_PATTERN ? text.matchAll(LISTED_PATTERN) : []) add("swearing", match[0]);
     for (const pattern of PHRASES) {
       const match = text.match(pattern);
       if (match) add("harsh", match[0]);
