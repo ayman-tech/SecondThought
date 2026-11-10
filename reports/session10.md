@@ -31,6 +31,8 @@ members:
 - In progress, not merged: moving `evaluation.py` and `evaluation_v2.py` into a new `src/evaluation/` package, with every reference updated (branch `aym/evaluation-package`).
 - Built a MVP of main website for product.
 
+![steering_screenshot](../assets/steer_ss.jpeg  )
+
 ## Formality evaluation results
 
 The scorer is [`s-nlp/roberta-base-formality-ranker`](https://huggingface.co/s-nlp/roberta-base-formality-ranker), run on each sentence of the original and the rewrite (0 is informal, 1 is formal). Register markers are rules with no model: texting words, ALL-CAPS words, repeated `!!` or `??`, emoji and a lowercase "i". There are no thresholds and no pass/fail, so the values are raw.
@@ -87,8 +89,6 @@ Measured on one machine (16 GB RAM, 10 cores) with the real `both-t5` model behi
 | CPU | about 0% | about one core (90-110%) |
 
 Over 9 requests (three messages, one a paragraph of about 90 tokens), the median latency was 300 ms and the range 217 ms to 1.4 s. macOS compresses idle memory, so `ps` shows only about 12 MB for the idle process and understates the real cost.
-
-![steering_screenshot](../assets/steer_ss.jpeg  )
 
 ## User / validation learning
 
