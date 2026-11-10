@@ -10,7 +10,7 @@ and 6 (nothing added, fluent) are not built yet, so every verdict is
 provisional. All thresholds are placeholders until fitted to human labels.
 
 Usage:
-    python -m secondthought.sendable_gate outputs/both_detox_formalize.csv ...
+    python -m secondthought.sendable_gate research/outputs/both_detox_formalize.csv ...
     python -m secondthought.sendable_gate --self-test
 """
 
@@ -32,7 +32,7 @@ TOXICITY_MAX = 0.2   # Detoxify score above this counts as still hostile.
 MIN_LENGTH_RATIO = 0.75  # Shorter than this suggests a clause was deleted, not rephrased.
 CONTROL_MAX_EDIT = 0.1   # A non-hostile input must come back nearly unchanged.
 
-# Workplace hostility that Detoxify misses. Copied from extension/triggers.js,
+# Workplace hostility that Detoxify misses. Copied from extension/frontend/triggers.js,
 # which was written while looking at the 35-message dev set, so it flatters that set.
 # ponytail: word list; replace with a trained or LLM-judge hostility score.
 HOSTILE_WORDS = {

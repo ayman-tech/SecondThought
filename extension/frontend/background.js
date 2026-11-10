@@ -34,7 +34,7 @@ async function rewrite(message) {
     if (err.name === "AbortError") {
       return { ok: false, error: `The rewrite took longer than ${REQUEST_TIMEOUT_MS / 1000}s. Try again.` };
     }
-    return { ok: false, error: "Can't reach the SecondThought server. Start it with python -m api.server." };
+    return { ok: false, error: "Can't reach the SecondThought server. Start it with python -m extension.api.server." };
   } finally {
     clearTimeout(timer);
   }

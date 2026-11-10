@@ -30,12 +30,29 @@ def _resolve(project_root: Path, value: str) -> Path:
     return path if path.is_absolute() else project_root / path
 
 
+def _find_project_root(config_file: Path) -> Path:
+    """Where relative paths in a config (model_dir, the prompt path) are resolved from.
+
+    SECONDTHOUGHT_ROOT wins when set, which suits a container that has no pyproject.toml.
+    Otherwise it is the nearest ancestor of the config file holding pyproject.toml, so a config
+    can live anywhere in the repo (config/, extension/api/, ...). The last resort is the old
+    rule: the config file's grandparent.
+    """
+    override = os.getenv("SECONDTHOUGHT_ROOT")
+    if override:
+        return Path(override).expanduser().resolve()
+    for parent in config_file.parents:
+        if (parent / "pyproject.toml").is_file():
+            return parent
+    return config_file.parent.parent
+
+
 def load_settings(config_path: str | Path = "config/default.toml") -> Settings:
     config_file = Path(config_path).resolve()
     with config_file.open("rb") as handle:
         raw = tomllib.load(handle)
 
-    project_root = config_file.parent.parent
+    project_root = _find_project_root(config_file)
     backend = raw.get("rewriter", {}).get("backend", "openai")
     if backend not in ("openai", "t5"):
         raise ValueError(f"Unknown rewriter backend {backend!r}; use 'openai' or 't5'")

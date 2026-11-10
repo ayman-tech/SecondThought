@@ -35,7 +35,7 @@ Never commit `.env` or an API key.
 
 ## Try the saved model
 
-Open [notebooks/inference.ipynb](notebooks/inference.ipynb) in VS Code and choose **Select Kernel → Python Environments → .venv/bin/python**. Run the cells in order, then type a sentence when the last cell prompts you. Rerun that cell for each new sentence; no retraining is needed.
+Open [research/notebooks/inference_detox.ipynb](research/notebooks/inference_detox.ipynb) in VS Code and choose **Select Kernel → Python Environments → .venv/bin/python**. Run the cells in order, then type a sentence when the last cell prompts you. Rerun that cell for each new sentence; no retraining is needed.
 
 Set `MODEL_DIR` to your extracted model folder, using an absolute path if necessary (relative paths are resolved from the notebook kernel’s working directory). The notebook can also extract a matching ZIP whose top-level folder has the same name. Inference uses the local CPU and local model files; no NVIDIA GPU is required. Review outputs for neutral tone and preservation of meaning.
 
@@ -43,7 +43,7 @@ Set `MODEL_DIR` to your extracted model folder, using an absolute path if necess
 
 ## Fine-tune T5-small
 
-Open [notebooks/train.ipynb](notebooks/train.ipynb) in [Google Colab](https://colab.research.google.com/) using **File → Upload notebook**, or Colab's GitHub tab. Select **Runtime → Change runtime type → GPU** and run the cells in order. Use a fresh Python 3.10+ runtime; the first cell installs pinned dependencies alongside Colab's existing PyTorch.
+Open [research/notebooks/train_detox.ipynb](research/notebooks/train_detox.ipynb) in [Google Colab](https://colab.research.google.com/) using **File → Upload notebook**, or Colab's GitHub tab. Select **Runtime → Change runtime type → GPU** and run the cells in order. Use a fresh Python 3.10+ runtime; the first cell installs pinned dependencies alongside Colab's existing PyTorch.
 
 The notebook fine-tunes `google-t5/t5-small` on [ParaDetox](https://huggingface.co/datasets/s-nlp/paradetox), mapping toxic comments to neutral rewrites. It explains data preparation, tokenization, training, evaluation, and inference. Repeated toxic inputs stay in the same split to prevent leakage.
 
@@ -65,7 +65,7 @@ secondthought-app
 ```
 
 The app loads `Qwen/Qwen2.5-0.5B-Instruct`, the two local fine-tuned T5-small
-models, and the saved directions from `steering_experimentation/artifacts/`. It
+models, and the saved directions from `artifacts/`. It
 displays three vertically stacked responses in this order:
 
 1. **Detox Fine-Tuned:** T5-small trained on ParaDetox.
@@ -93,24 +93,24 @@ Rewrite one message:
 secondthought rewrite "This implementation is careless. Fix the timeout before merging."
 ```
 
-Or try it from Chrome. Start the local API with `python -m api.server`, then
-load `extension/` as an unpacked extension. The steps are in
-[extension/README.md](extension/README.md).
+Or try it from Chrome. Start the extension's local API with `make` (or
+`python -m extension.api.server`), then load `extension/frontend/` as an unpacked
+extension. The steps are in [extension/README.md](extension/README.md).
 
 Generate baseline predictions for the sample dataset:
 
 ```bash
 secondthought batch \
   --dataset data/workplace_eval/sample.jsonl \
-  --output outputs/baseline.csv
+  --output research/outputs/baseline.csv
 ```
 
 Run the deterministic metrics, including typed critical-value preservation:
 
 ```bash
 secondthought evaluate \
-  --predictions outputs/baseline.csv \
-  --output outputs/baseline_evaluated.csv
+  --predictions research/outputs/baseline.csv \
+  --output research/outputs/baseline_evaluated.csv
 ```
 
 To include the two optional learned evaluators, install their dependencies and add
@@ -120,8 +120,8 @@ the flag:
 uv sync --extra evaluation
 
 secondthought evaluate \
-  --predictions outputs/baseline.csv \
-  --output outputs/baseline_evaluated.csv \
+  --predictions research/outputs/baseline.csv \
+  --output research/outputs/baseline_evaluated.csv \
   --with-learned-metrics
 ```
 
@@ -169,22 +169,33 @@ export SECONDTHOUGHT_PROMPT="prompts/another-prompt.txt"
 
 ## Repository layout
 
+Each product has a frontend and its own backend. Both backends use the shared core
+in `src/secondthought/` and never import each other.
+
 ```text
-config/                 Runtime configuration
+extension/              The Chrome extension (see extension/README.md)
+  frontend/               the extension itself: load this folder as "unpacked" in Chrome
+  api/                    its local backend, runs on the user's machine (config.toml picks the model)
+website/                The website (not built yet; the tech stack is undecided)
+  frontend/               empty for now
+  api/                    backend for EC2 / Lambda, empty for now
+src/secondthought/      Shared core: rewriters, facts guard, config, evaluation. No HTTP, no UI
+config/  prompts/       Shared baseline config and model instructions (default.toml, constrained.txt)
+artifacts/              Runtime assets the code loads (steering vectors); see artifacts/README.md
 data/workplace_eval/    Versioned evaluation inputs
-prompts/                Versioned model instructions
-src/secondthought/      Application and evaluation code
-api/                    Local HTTP API used by the Chrome extension
-extension/              Chrome extension (see extension/README.md)
 tests/                  Offline unit tests
-outputs/                Generated artifacts (ignored by Git)
-reports/                Course reports
+infra/                  Deployment and CI definitions (empty for now)
+research/               Not shipped: notebooks/, steering_experimentation/, reports/, outputs/
+models/                 Exported model weights (ignored by Git)
 ```
+
+A quick way to see where a change belongs: UI code goes in a `frontend/`, HTTP code in
+that product's `api/`, and anything both backends need goes in `src/secondthought/`.
 
 ## Test
 
-Tests do not call the OpenAI API.
+Tests do not call the OpenAI API or load any model.
 
 ```bash
-pytest
+make test    # same as: pytest
 ```

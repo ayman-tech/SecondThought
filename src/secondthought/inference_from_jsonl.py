@@ -206,7 +206,7 @@ def run(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", type=Path, default=PROJECT_ROOT / "data/workplace_eval/input.jsonl")
-    parser.add_argument("--output", type=Path, default=PROJECT_ROOT / "outputs/epoch3_evaluated.csv")
+    parser.add_argument("--output", type=Path, default=PROJECT_ROOT / "research/outputs/epoch3_evaluated.csv")
     parser.add_argument("--model-dir", type=Path, help="Extracted local model folder; skips default ZIP extraction")
     parser.add_argument(
         "--without-learned-metrics",

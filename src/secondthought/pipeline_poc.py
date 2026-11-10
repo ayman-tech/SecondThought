@@ -1,6 +1,6 @@
 """Proof of concept for the live check loop: scan -> rewrite -> verify -> repair.
 
-Runs in shadow. Nothing in the product (extension, api/server.py, config/t5.toml,
+Runs in shadow. Nothing in the product (extension, extension/api/server.py, extension/api/config.toml,
 T5Rewriter) calls this module. It takes rewrites the product already made and
 shows what the new pipeline would have done with them, next to what the user
 sees today: every rewrite, shown with no checks and no warnings.
@@ -16,7 +16,7 @@ Facts and copies are hard checks (they block); everything else only warns,
 until the human labels in new_proposed_eval.md show which checks can be trusted.
 
 Usage:
-    PYTHONPATH=src python -m secondthought.pipeline_poc outputs/both_detox_formalize.csv
+    PYTHONPATH=src python -m secondthought.pipeline_poc research/outputs/both_detox_formalize.csv
     PYTHONPATH=src python -m secondthought.pipeline_poc --self-test
 """
 

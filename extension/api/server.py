@@ -2,8 +2,11 @@
 
 The rewriter, config, and prompt all come from the core package; this module
 only adds HTTP plumbing. By default it runs our local T5 models
-(config/t5.toml); set SECONDTHOUGHT_CONFIG=config/default.toml to use OpenAI,
-in which case the API key stays in the server's environment.
+(extension/api/config.toml, next to this file); set
+SECONDTHOUGHT_CONFIG=config/default.toml to use OpenAI, in which case the API
+key stays in the server's environment.
+
+Run it from the repo root with `python -m extension.api.server` (or `make`).
 """
 
 from __future__ import annotations
@@ -24,8 +27,8 @@ from secondthought.cli import build_rewriter
 from secondthought.config import load_settings
 from secondthought.evaluation import critical_value_metrics, extract_critical_values
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CONFIG = REPO_ROOT / "config" / "t5.toml"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_CONFIG = Path(__file__).resolve().parent / "config.toml"
 MAX_MESSAGE_CHARS = 4000
 
 logger = logging.getLogger("secondthought.api")

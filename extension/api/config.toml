@@ -1,11 +1,12 @@
-# Local T5 setup, used by the Chrome extension's API server (api/server.py).
+# Local T5 setup, used by the Chrome extension's API server (extension/api/server.py).
 # Nothing here calls OpenAI, so no API key is needed.
+# Relative paths below (model_dir) are resolved against the repo root, not this folder.
 
 [rewriter]
 backend = "t5"
 
 [t5]
-# Same generation settings as notebooks/inference_*.ipynb.
+# Same generation settings as research/notebooks/inference_*.ipynb.
 max_input_tokens = 128
 max_new_tokens = 128
 num_beams = 4
