@@ -1,0 +1,1 @@
+"""SecondThought website application."""

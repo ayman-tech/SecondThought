@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore more formal wording with SecondThought. Adjust a slider and compare real rewrites from Qwen activation steering.">
+  <meta name="theme-color" content="#f8fafc">
+  <title>SecondThought — Find the words you mean</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script type="module" src="/assets/steering.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#draft">Skip to the writing tool</a>
+  <header class="site-header">
+    <a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true"></span>SecondThought</a>
+    <nav aria-label="Main navigation">
+      <a href="#overview">Overview</a>
+      <a class="nav-active" href="#experimental">Try steering</a>
+      <a href="#extension">Extension</a>
+      <a href="#evaluation">Evaluation</a>
+      <a href="#about">About</a>
+    </nav>
+    <a class="button small primary" href="#experimental">Find your wording <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main>
+    <section id="overview" class="hero grid-paper">
+      <div class="hero-inner">
+        <p class="eyebrow"><span class="status-dot"></span> SECONDTHOUGHT <span class="eyebrow-separator">/</span> WORDS, WITH INTENTION</p>
+        <h1>Same thought.<br><span>A little more considered.</span></h1>
+        <p class="hero-description">Explore a more formal way to say what you mean. Start with your own words, move the slider, and see how a language model rewrites them.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#experimental">Try formality steering <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="#how-it-works">What moves behind the slider? <span aria-hidden="true">↓</span></a>
+        </div>
+        <p class="hero-footnote">An experimental writing tool. Review the result before you use it.</p>
+      </div>
+      <div class="spec-strip" aria-label="Current implementation">
+        <div><span class="spec-label">THE MODEL</span><strong>Qwen2.5 · 0.5B Instruct</strong></div>
+        <div><span class="spec-label">THE CONTROL</span><strong class="amber">Formality · α −2 to +2</strong></div>
+        <div><span class="spec-label">THE INTERVENTION</span><strong class="cyan">Decoder layer 11</strong></div>
+        <div><span class="spec-label">THE METHOD</span><strong>Activation steering</strong></div>
+      </div>
+    </section>
+
+    <section id="experimental" class="workspace section-wrap">
+      <div class="section-heading">
+        <div class="heading-with-icon"><span class="section-icon" aria-hidden="true">≋</span><div><p class="eyebrow">A DIFFERENT WAY TO REPHRASE</p><h2>Find your level of formality.</h2></div></div>
+        <div class="model-status"><span id="model-dot" class="status-dot loading"></span><span id="model-status">Loading model…</span><button id="reconnect" class="link-button" hidden>Reconnect</button></div>
+      </div>
+
+      <div class="output-card" id="output-card" aria-busy="false">
+        <div class="output-toolbar">
+          <div class="output-title"><span class="live-indicator" id="live-indicator"></span><span>MODEL REWRITE</span><span class="badge">FORMALITY</span></div>
+          <div class="output-tools"><button id="changes-toggle" type="button" aria-pressed="true">Highlight changes <span id="changes-check" aria-hidden="true">✓</span></button><button id="copy" type="button" disabled>Copy output <span aria-hidden="true">↗</span></button></div>
+        </div>
+        <div class="output-stage">
+          <div class="output-subheading"><span id="output-context">Your next wording starts here.</span><span id="output-parameters" class="parameter-label"></span></div>
+          <div id="output" class="big-output placeholder" aria-label="Generated rewrite">A small shift.<br>A new way to say it.</div>
+          <div class="output-bottom"><span id="change-note">Type a draft below. Your rewrite will appear automatically.</span><span id="latency"></span></div>
+        </div>
+        <div class="vector-strip">
+          <span class="code-label">h₁₁ + α · v<sub>formal</sub></span>
+          <div class="vector-axis" aria-hidden="true"><span class="axis-center"></span><span id="vector-line"></span><span id="vector-point"></span></div>
+          <span class="code-label" id="vector-description">Small positive intervention</span>
+        </div>
+      </div>
+
+      <div class="controller-card">
+        <div id="slider-panel" class="slider-panel">
+        <div class="slider-heading"><div><label for="alpha">Formality strength <span class="greek">α</span></label><p>Move the slider. A new rewrite starts automatically.</p></div><output for="alpha" id="alpha-value">+0.5</output></div>
+        <input id="alpha" type="range" min="-2" max="2" value="0.5" step="0.1" aria-describedby="slider-help">
+        <div class="slider-stops"><button type="button" data-alpha="-2">−2 <span>Against the direction</span></button><button type="button" data-alpha="0">0 <span>No formality vector</span></button><button type="button" data-alpha="2">+2 <span>A stronger intervention</span></button></div>
+        <p id="slider-help" class="slider-help">Positive values add the learned formality direction. Results vary by sentence.</p>
+        </div>
+
+        <div class="draft-heading"><label for="draft">YOUR DRAFT</label><div class="samples"><span>Try a sentence</span><button type="button" data-sample="its really hard when u want to know what happened">An everyday thought</button><button type="button" data-sample="hey can u send the report by 3 PM?">A work message</button><button type="button" data-sample="I can't make this meeting. Can we move it to Friday?">A change of plans</button></div></div>
+        <div class="draft-field"><textarea id="draft" rows="2" maxlength="2000" placeholder="Write something you want to rephrase…" aria-describedby="draft-help error-message" spellcheck="true"></textarea><button id="clear" type="button" title="Clear draft" aria-label="Clear draft">×</button></div>
+        <div class="draft-footer"><span id="draft-help">Processed by the Python server running this website. No draft history is saved.</span><span id="character-count">0 / 2,000</span></div>
+        <div id="error-box" class="error-box" hidden><p id="error-message" role="alert"></p><button id="retry" type="button">Retry this wording ↗</button></div>
+      </div>
+      <div class="workspace-footer"><p id="status" role="status" aria-live="polite">Waiting for a draft.</p><p>Review facts, names, deadlines, and who is doing what.</p></div>
+      <details class="experiment-notes"><summary>What should I expect from this slider?</summary><p>At α = 0, Qwen still follows a neutral rewrite instruction. It may rephrase or remove profanity without steering. Compare different alpha values to explore the added intervention. Nearby values can produce identical text. Strong values can change meaning, reverse an action, or produce awkward wording.</p><p>This version exposes formality only. The finalized backend also supports a separate detoxification direction, which is set to zero here. The animated line is a schematic of the requested strength, not a measurement of the model’s hidden states.</p></details>
+    </section>
+
+    <section id="how-it-works" class="explanation section-wrap">
+      <p class="eyebrow">BEHIND THE WORDING</p><h2>A different intervention.<br>The same need for a careful read.</h2>
+      <div class="explanation-grid"><article><span class="step-number">01 / A FIXED TASK</span><h3>Start with a rewrite.</h3><p>Qwen receives the same neutral instruction at every setting: rewrite the sentence while preserving its meaning. Moving the slider does not change that instruction.</p></article><article><span class="step-number">02 / AN INTERNAL SHIFT</span><h3>Add a learned direction.</h3><p>A vector extracted from paired informal and formal GYAFC sentences is added to the output of decoder layer 11 during generation. Alpha controls its sign and size; the model weights stay unchanged.</p></article><article><span class="step-number">03 / YOUR JUDGMENT</span><h3>Choose what still means you.</h3><p>More intervention does not always mean a better rewrite. Read the actual result, especially at stronger settings. The tool explores wording; it does not verify that every fact or intention survived.</p></article></div>
+    </section>
+
+    <section id="extension" class="secondary-section section-wrap"><div><p class="eyebrow">THE EVERYDAY REWRITING PATH</p><h2>There’s an extension, too.</h2><p>The repository includes a Chrome extension with a separate local Python API and fine-tuned T5 rewriting models. It is another way to explore rephrasing, with a different inference pipeline from this page.</p></div><aside><span class="badge">SEPARATE WORKFLOW</span><h3>Local service, browser interface.</h3><p>The current extension sends drafts to its local API. It does not run T5 inside the browser. Installation and model setup are documented in <code>extension/README.md</code> in the repository.</p></aside></section>
+
+    <section id="evaluation" class="secondary-section section-wrap"><div><p class="eyebrow">EVIDENCE BEFORE ASSURANCES</p><h2>Reliability is something we measure.</h2><p>The project includes evaluation tools for toxicity, formality, semantic similarity, and preservation of structured facts. These are diagnostic signals, not guarantees that an individual rewrite is correct.</p></div><aside><span class="badge">RESEARCH IN PROGRESS</span><h3>No score invented for your sentence.</h3><p>This page shows real generated text and measured generation time. It does not compute a live formality, safety, or meaning-preservation score. Broader evaluation and experiment reports will be brought into the website in a later iteration.</p></aside></section>
+
+    <section id="about" class="about section-wrap"><p class="eyebrow">ABOUT SECONDTHOUGHT</p><h2>Room for a second thought.</h2><p>We’re exploring ways to help people reconsider their wording while keeping what they mean. This first website connects our Qwen steering experiments to a writing interface. The browser extension explores a separate fine-tuned approach. The product direction will follow what we can demonstrate reliably.</p><a class="text-link" href="#experimental">Back to your words ↑</a></section>
+  </main>
+  <footer class="site-footer"><a class="brand" href="#overview">SecondThought</a><span>Consider the words. Keep the thought.</span><a href="/docs">API documentation ↗</a></footer>
+</body>
+</html>
