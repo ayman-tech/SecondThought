@@ -3,6 +3,7 @@
 const SecondThoughtSettings = (() => {
   const DEFAULTS = {
     nudgeEnabled: true,
+    idleCheck: true,
     disabledSites: [],
     triggerKinds: { swearing: true, harsh: true, casual: true, shouting: true },
   };

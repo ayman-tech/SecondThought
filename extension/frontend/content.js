@@ -5,15 +5,22 @@
 (() => {
   const CHECK_DELAY_MS = 600;
   const MAX_CHARS = 4000;
+  // The "Check tone?" pill: offered after a pause in typing, for anything the
+  // word lists can't judge. Nothing is sent until the user clicks it.
+  const IDLE_CHECK_MS = 5000;
+  const MIN_CHECK_WORDS = 4;
   const SITE = location.hostname;
 
   let settings = SecondThoughtSettings.DEFAULTS;
   let field = null; // the text box the nudge is attached to
   let checkTimer = null;
+  let idleTimer = null;
+  let pillMode = "trigger"; // "trigger" (listed words) or "check" (tone check on request)
   let ui = null; // built on first use, so most pages are never touched
   let pending = null; // the text the open card is working on
   let keepPill = false; // card was closed by a click outside, so the pill stays
   const wavedOff = new WeakMap(); // field -> sentences the user already decided about
+  const toneChecked = new WeakMap(); // field -> text that was already tone-checked
 
   SecondThoughtSettings.load().then((loaded) => {
     settings = loaded;
@@ -119,8 +126,11 @@
       if (!isOn()) return;
       const el = editableRoot(event.target);
       if (!el) return;
+      if (pillMode === "check" && !cardOpen()) hidePill();
       clearTimeout(checkTimer);
       checkTimer = setTimeout(() => runCheck(el), CHECK_DELAY_MS);
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => offerToneCheck(el), IDLE_CHECK_MS);
     },
     true,
   );
@@ -169,10 +179,25 @@
     const seen = wavedOff.get(el) || [];
     const fresh = flaggedSentences(text).filter((sentence) => isNewSentence(sentence, seen));
     if (!found.length || (seen.length && !fresh.length)) {
-      if (el === field) hidePill();
+      if (el === field && pillMode === "trigger") hidePill();
       return;
     }
     field = el;
+    pillMode = "trigger";
+    showPill();
+  }
+
+  // After a pause, offer a tone check for text the word lists found nothing in.
+  function offerToneCheck(el) {
+    if (!isOn() || !settings.idleCheck || cardOpen()) return;
+    if (ui && !ui.pill.hidden) return; // a pill is already showing
+    if (document.activeElement !== el && !el.contains(document.activeElement)) return;
+    const text = ownText(el);
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    if (words < MIN_CHECK_WORDS || text.length > MAX_CHARS) return;
+    if (triggers(text).length || toneChecked.get(el) === text) return;
+    field = el;
+    pillMode = "check";
     showPill();
   }
 
@@ -218,7 +243,7 @@
     host.style.cssText = "all: initial; position: fixed; top: 0; left: 0; z-index: 2147483647;";
     const shadow = host.attachShadow({ mode: "closed" });
     shadow.innerHTML = `<style>${STYLES}</style>
-      <button class="pill" type="button" hidden><span class="dot"></span>SecondThought?</button>
+      <button class="pill" type="button" hidden><span class="dot"></span><span class="label"></span></button>
       <div class="card" role="dialog" aria-label="SecondThought suggestion" hidden>
         <div class="body"></div>
         <div class="note" hidden></div>
@@ -286,7 +311,9 @@
     if (!ui) buildUi();
     ui.card.hidden = true;
     ui.pill.hidden = false;
-    ui.pill.title = "See a calmer way to say this";
+    const checking = pillMode === "check";
+    ui.pill.querySelector(".label").textContent = checking ? "Check tone?" : "SecondThought?";
+    ui.pill.title = checking ? "Check whether this sounds harsh or too casual" : "See a calmer way to say this";
     place();
   }
 
@@ -303,6 +330,7 @@
   }
 
   function dismiss() {
+    if (field && pillMode === "check") toneChecked.set(field, ownText(field));
     if (field) waveOff();
     closeAll();
   }
@@ -338,7 +366,7 @@
 
   // What to rewrite: the selection if there is one, otherwise only the lines that
   // set off a trigger. Every other line, its formatting included, stays as it is.
-  function captureTarget() {
+  function captureTarget({ allLines = false } = {}) {
     if (isPlainField(field)) {
       const { selectionStart: start, selectionEnd: end, value } = field;
       if (start !== end) return { pieces: [{ text: value.slice(start, end), start, end }] };
@@ -353,7 +381,7 @@
     }
     const lines = ownLines(field);
     const written = lines.filter((line) => line.text.trim());
-    const flagged = written.filter((line) => triggers(line.text).length);
+    const flagged = allLines ? [] : written.filter((line) => triggers(line.text).length);
     const pieces = flagged.length ? flagged : written;
     if (!isPlainField(field)) {
       for (const piece of pieces) {
@@ -374,14 +402,49 @@
   }
 
   async function openCard() {
-    const target = captureTarget();
+    const target = captureTarget({ allLines: pillMode === "check" });
     if (!target.pieces.length) return;
     pending = target;
     keepPill = false;
     ui.pill.hidden = true;
     ui.card.hidden = false;
-    setBody("Rethinking…", { muted: true });
     setActions([{ label: "Cancel", onClick: dismiss }]);
+
+    if (pillMode === "check") {
+      setBody("Checking your tone…", { muted: true });
+      place();
+      let reply;
+      try {
+        reply = await chrome.runtime.sendMessage({
+          type: "secondthought:check",
+          lines: target.pieces.map((piece) => piece.text.trim()),
+        });
+      } catch {
+        reply = { ok: false, error: "SecondThought was updated. Reload this page to keep using it." };
+      }
+      if (pending !== target) return; // closed while waiting
+      if (!reply?.ok) {
+        setBody(reply?.error || "Something went wrong.", { muted: true });
+        setActions([
+          { label: "Try again", onClick: openCard, primary: true },
+          { label: "Dismiss", onClick: dismiss },
+        ]);
+        return place();
+      }
+      const flagged = target.pieces.filter((_, index) => {
+        const line = reply.result.lines[index];
+        return line && (line.toxic || line.informal);
+      });
+      if (!flagged.length) {
+        toneChecked.set(field, ownText(field));
+        setBody("Looks good. Nothing harsh or too casual found.", { muted: true });
+        setActions([{ label: "Close", onClick: closeAll }]);
+        return place();
+      }
+      target.pieces = flagged;
+    }
+
+    setBody("Rethinking…", { muted: true });
     place();
 
     let failure = null;
@@ -482,6 +545,7 @@
     }
     // Don't nag about whatever the rewrite still contains.
     waveOff();
+    toneChecked.set(field, ownText(field));
     setBody("Replaced. Press Undo to bring your original back.", { muted: true });
     setActions([
       { label: "Undo", onClick: () => undo(target, changed.length), primary: true },
