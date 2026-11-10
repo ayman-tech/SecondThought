@@ -1,4 +1,4 @@
-"""Compact Gradio workbench for comparing fine-tuned and steered rewrites."""
+"""Gradio workbench for dual-direction Qwen activation steering."""
 
 from __future__ import annotations
 
@@ -6,56 +6,16 @@ from typing import Protocol
 
 import gradio as gr
 
-from .fine_tuned_rewriter import FINE_TUNED_VARIANTS, FineTunedT5Rewriter
 from .steering_rewriter import STEERING_VARIANTS, SteeredQwenRewriter
 
 
-OUTPUT_VARIANTS = (*FINE_TUNED_VARIANTS, *STEERING_VARIANTS)
+OUTPUT_VARIANTS = STEERING_VARIANTS
 
 
 class Rewriter(Protocol):
     def rewrite_all(
         self, message: str, alpha: float, beta: float
     ) -> dict[str, str]: ...
-
-
-class ComparisonRewriter:
-    """Combine two fine-tuned responses with one mixed-steering response."""
-
-    def __init__(
-        self,
-        steering: SteeredQwenRewriter | None = None,
-        fine_tuned: FineTunedT5Rewriter | None = None,
-    ) -> None:
-        self.steering = steering or SteeredQwenRewriter()
-        self.fine_tuned = fine_tuned or FineTunedT5Rewriter()
-
-    def rewrite_all(
-        self,
-        message: str,
-        alpha: float,
-        beta: float,
-    ) -> dict[str, str]:
-        responses = self.fine_tuned.rewrite_all(message)
-        responses.update(self.steering.rewrite_all(message, alpha, beta))
-        return responses
-
-
-class ComparisonRewriter:
-    """Combine activation-steered Qwen and alpha-independent T5 outputs."""
-
-    def __init__(
-        self,
-        steering: SteeredQwenRewriter | None = None,
-        fine_tuned: FineTunedT5Rewriter | None = None,
-    ) -> None:
-        self.steering = steering or SteeredQwenRewriter()
-        self.fine_tuned = fine_tuned or FineTunedT5Rewriter()
-
-    def rewrite_all(self, message: str, alpha: float) -> dict[str, str]:
-        responses = self.steering.rewrite_all(message, alpha)
-        responses.update(self.fine_tuned.rewrite_all(message))
-        return responses
 
 
 APP_CSS = """
@@ -155,7 +115,7 @@ footer { display: none !important; }
 }
 #outputs-column {
   display: grid !important;
-  grid-template-rows: 28px repeat(3, minmax(0, 1fr));
+  grid-template-rows: 28px minmax(0, 1fr);
   width: 64%;
   min-width: 0;
   height: 100%;
@@ -367,7 +327,7 @@ def alpha_guidance(alpha: float) -> str:
     if alpha < 0:
         return "**Conversational region** · stays closer to the source wording."
     if alpha == 0:
-        return "**Unsteered rewrite baseline** · no activation vector is applied."
+        return "**Formality off** · detox steering still follows β."
     if alpha <= 0.5:
         return "**Light steering** · conservative formalization."
     if alpha <= 1.0:
@@ -383,7 +343,7 @@ def beta_guidance(beta: float) -> str:
     if beta < 0:
         return "**Negative detox steering** · may retain or amplify toxic language."
     if beta == 0:
-        return "**Prompt-only baseline** · no detox vector is applied."
+        return "**Detox off** · formality steering still follows α."
     if beta <= 0.5:
         return "**Light detox steering** · small movement toward neutral language."
     if beta <= 1.0:
@@ -398,9 +358,9 @@ def output_toolbar(alpha: float, beta: float) -> str:
     return (
         '<div class="output-toolbar">'
         '<div class="output-context">'
-        '<span class="output-kicker">Model outputs</span>'
+        '<span class="output-kicker">Model output</span>'
         '<span class="toolbar-divider">·</span>'
-        '<span class="output-description">2 fine-tuned · 1 mixed steering</span>'
+        '<span class="output-description">Qwen 0.5B · dual activation steering</span>'
         "</div>"
         '<div class="parameter-chips">'
         f'<span class="alpha-chip">α {float(alpha):+.1f}</span>'
@@ -411,16 +371,16 @@ def output_toolbar(alpha: float, beta: float) -> str:
 
 
 def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
-    """Build the functional subset of the Stitch comparison workbench."""
+    """Build the Qwen formality and detoxification steering workbench."""
 
-    service = rewriter or ComparisonRewriter()
+    service = rewriter or SteeredQwenRewriter()
 
     def generate(message: str, alpha: float, beta: float):
         try:
             responses = service.rewrite_all(message, alpha, beta)
         except ValueError as error:
             raise gr.Error(str(error)) from error
-        return tuple(responses[variant.key] for variant in OUTPUT_VARIANTS)
+        return responses[OUTPUT_VARIANTS[0].key]
 
     def update_alpha(alpha: float, beta: float):
         return alpha_guidance(alpha), output_toolbar(alpha, beta)
@@ -444,10 +404,10 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 <span class="header-divider">/</span>
                 <span class="product-area">Steering Lab</span>
                 <span class="header-divider">·</span>
-                <span class="model-name">Qwen 2.5 0.5B · T5-small</span>
+                <span class="model-name">Qwen 2.5 0.5B</span>
               </div>
               <div class="header-right">
-                <span class="active-view">Rewrite Comparison</span>
+                <span class="active-view">Dual Steering</span>
                 <span class="ready-pill"><span class="ready-dot"></span>Ready</span>
               </div>
             </div>
@@ -463,7 +423,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                         """
                         <div class="panel-heading">
                           <span class="panel-kicker">Source prompt</span>
-                          <span class="panel-note">Same input · three outputs</span>
+                          <span class="panel-note">One input · one Qwen output</span>
                         </div>
                         """,
                         padding=False,
@@ -482,7 +442,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                         """
                         <div class="control-heading">
                           <span class="control-title">Steering controls</span>
-                          <span class="layer-note">LAYER 4 / 11</span>
+                          <span class="layer-note">LAYER 11 / 22</span>
                         </div>
                         """,
                         padding=False,
@@ -490,7 +450,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                     with gr.Column(elem_classes=["control-group"]):
                         gr.HTML(
                             '<span class="control-title">Formality α '
-                            '<span class="alpha-readout">−2.0 TO +2.0 · L4</span></span>',
+                            '<span class="alpha-readout">−2.0 TO +2.0 · L11</span></span>',
                             padding=False,
                         )
                         alpha = gr.Slider(
@@ -511,7 +471,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                     with gr.Column(elem_classes=["control-group"]):
                         gr.HTML(
                             '<span class="control-title">Detoxification β '
-                            '<span class="beta-readout">−2.0 TO +2.0 · L11</span></span>',
+                            '<span class="beta-readout">−2.0 TO +2.0 · L22</span></span>',
                             padding=False,
                         )
                         beta = gr.Slider(
@@ -532,7 +492,7 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                     with gr.Row(elem_id="action-row"):
                         clear = gr.Button("Reset", elem_id="reset-button")
                         generate_button = gr.Button(
-                            "Generate rewrites",
+                            "Generate rewrite",
                             variant="primary",
                             elem_id="generate-button",
                         )
@@ -545,14 +505,13 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 )
 
                 response_outputs = []
-                for index, variant in enumerate(OUTPUT_VARIANTS):
-                    response_letter = chr(ord("A") + index)
+                for variant in OUTPUT_VARIANTS:
                     with gr.Column(elem_classes=["st-panel", "response-card"]):
                         gr.HTML(
                             f"""
                             <div class="card-heading">
                               <div class="card-identity">
-                                <span class="response-label">RESPONSE {response_letter}</span>
+                                <span class="response-label">RESPONSE</span>
                                 <span class="card-divider">·</span>
                                 <span class="method-name">{variant.title}</span>
                               </div>
@@ -609,10 +568,6 @@ def create_app(rewriter: Rewriter | None = None) -> gr.Blocks:
                 alpha_guidance(0.5),
                 beta_guidance(0.5),
                 output_toolbar(0.5, 0.5),
-                "",
-                "",
-                "",
-                "",
                 "",
             ),
             outputs=[

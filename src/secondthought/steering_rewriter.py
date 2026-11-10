@@ -24,9 +24,8 @@ DEFAULT_DETOX_DIRECTION_PATH = (
 )
 
 BASE_REWRITE_PROMPT = (
-    "Rewrite the message with minimal wording changes. Preserve its meaning, "
-    "facts, names, numbers, deadlines, requested actions, and intent. Do not add "
-    "explanations, greetings, or new information. Return only the rewritten message."
+    "Rewrite the user's sentence while preserving its meaning. "
+    "Return only the rewritten sentence."
 )
 
 
@@ -42,7 +41,7 @@ class SteeringVariant:
 STEERING_VARIANTS = (
     SteeringVariant(
         key="combined_steering",
-        title="Combined steering · Layers 4 + 11",
+        title="Combined steering · Layers 11 + 22",
         detail="α FORMALITY · β DETOXIFICATION",
     ),
 )
@@ -128,11 +127,11 @@ class SteeredQwenRewriter:
         artifacts = {
             "formality": load_direction_artifact(
                 formality_direction_path,
-                required_candidate="alternative_layer4_final",
+                required_candidate="negative_layer11_mean",
             ),
             "toxicity": load_direction_artifact(
                 detox_direction_path,
-                required_candidate="layer11_mean",
+                required_candidate="best_final",
             ),
         }
         model_ids = {str(artifact["model_id"]) for artifact in artifacts.values()}
@@ -146,8 +145,11 @@ class SteeredQwenRewriter:
         self.device = torch.device(device) if device is not None else select_device()
         self.max_new_tokens = max_new_tokens
         self._generation_lock = Lock()
-        formality_key = "alternative_layer4_final"
-        detox_key = "layer11_mean"
+        # Match the causal runs reported in the two activation notebooks.
+        # The historical "negative" name denotes the original geometry control;
+        # the formality notebook subsequently found a visible causal effect here.
+        formality_key = "negative_layer11_mean"
+        detox_key = "best_final"
         self.candidates = {
             "formality": artifacts["formality"]["candidates"][formality_key],
             "toxicity": artifacts["toxicity"]["candidates"][detox_key],
@@ -160,9 +162,7 @@ class SteeredQwenRewriter:
         detox_direction = detox_direction / detox_direction.norm().clamp_min(1e-12)
         self.directions = {
             "formality": formality_direction.cpu(),
-            # The causal sweep found detoxification on the saved direction's
-            # negative side, so positive beta uses the empirically useful sign.
-            "toxicity": (-detox_direction).cpu(),
+            "toxicity": detox_direction.cpu(),
         }
 
         dtype = torch.float16 if self.device.type in {"mps", "cuda"} else torch.float32
@@ -208,9 +208,9 @@ class SteeredQwenRewriter:
             yield
 
     def _encode_prompt(self, message: str):
-        user_content = f"{BASE_REWRITE_PROMPT}\n\nMessage:\n{message}"
         messages = [
-            {"role": "user", "content": user_content},
+            {"role": "system", "content": BASE_REWRITE_PROMPT},
+            {"role": "user", "content": message},
         ]
         prompt = self.tokenizer.apply_chat_template(
             messages,

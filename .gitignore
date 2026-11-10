@@ -11,7 +11,6 @@ dist/
 build/
 *.egg-info/
 flagged/
-tests/
 models/
 testing/
 
