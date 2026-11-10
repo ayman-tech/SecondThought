@@ -5,13 +5,17 @@ from __future__ import annotations
 from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from threading import Lock
-from typing import Iterator
+from threading import Event, Lock
+from time import monotonic
+from typing import Callable, Iterator
 
 import torch
 from huggingface_hub import snapshot_download
 from huggingface_hub.errors import LocalEntryNotFoundError
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import (
+    AutoModelForCausalLM, AutoTokenizer, StoppingCriteria, StoppingCriteriaList,
+    TextStreamer,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -38,6 +42,36 @@ class SteeringVariant:
     key: str
     title: str
     detail: str
+
+
+@dataclass(frozen=True)
+class GenerationResult:
+    text: str
+    generated_tokens: int
+    finish_reason: str
+
+
+class GenerationCancelled(Exception):
+    """A superseded or disconnected request stopped at a decoding boundary."""
+
+
+class _StopGeneration(StoppingCriteria):
+    def __init__(self, cancelled: Event, deadline: float):
+        self.cancelled = cancelled
+        self.deadline = deadline
+
+    def __call__(self, input_ids, scores, **kwargs):
+        return self.cancelled.is_set() or monotonic() >= self.deadline
+
+
+class _CallbackStreamer(TextStreamer):
+    def __init__(self, tokenizer, callback: Callable[[str], None]):
+        super().__init__(tokenizer, skip_prompt=True, skip_special_tokens=True)
+        self.callback = callback
+
+    def on_finalized_text(self, text: str, stream_end: bool = False):
+        if text:
+            self.callback(text)
 
 
 STEERING_VARIANTS = (
@@ -227,6 +261,17 @@ class SteeredQwenRewriter:
         alpha: float,
         beta: float,
     ) -> str:
+        return self._generate_result(model_inputs, alpha, beta).text
+
+    def _generate_result(
+        self, model_inputs, alpha: float, beta: float, *,
+        streamer=None, stopping_criteria=None,
+    ) -> GenerationResult:
+        extra = {}
+        if streamer is not None:
+            extra["streamer"] = streamer
+        if stopping_criteria is not None:
+            extra["stopping_criteria"] = stopping_criteria
         with self._mixed_steering_context(alpha, beta), torch.inference_mode():
             generated_ids = self.model.generate(
                 **model_inputs,
@@ -237,6 +282,7 @@ class SteeredQwenRewriter:
                 top_k=None,
                 pad_token_id=self.tokenizer.pad_token_id,
                 eos_token_id=self.tokenizer.eos_token_id,
+                **extra,
             )
 
         prompt_length = model_inputs["input_ids"].shape[1]
@@ -244,7 +290,57 @@ class SteeredQwenRewriter:
         rewritten = self.tokenizer.decode(new_ids, skip_special_tokens=True).strip()
         if not rewritten:
             raise RuntimeError("The model returned an empty rewrite")
-        return rewritten
+        eos = self.tokenizer.eos_token_id
+        finished = bool(len(new_ids) and int(new_ids[-1]) == eos)
+        return GenerationResult(
+            text=rewritten, generated_tokens=len(new_ids),
+            finish_reason="stop" if finished else "length",
+        )
+
+    def stream_rewrite(
+        self, message: str, alpha: float, beta: float, *,
+        on_text: Callable[[str], None], cancelled: Event,
+        max_input_tokens: int = 384, timeout_seconds: float = 25.0,
+    ) -> GenerationResult:
+        """Stream the same deterministic generation with cooperative cancellation.
+
+        The lock covers encoding, all forward hooks, and the entire generation.
+        Partial/cancelled outputs are never returned as successful results.
+        """
+        message = message.strip()
+        if not message:
+            raise ValueError("Enter a message to rewrite.")
+        alpha, beta = float(alpha), float(beta)
+        if not -2 <= alpha <= 2 or not -2 <= beta <= 2:
+            raise ValueError("Steering strengths must be between -2 and +2.")
+        with self._generation_lock:
+            if cancelled.is_set():
+                raise GenerationCancelled()
+            inputs = self._encode_prompt(message)
+            if inputs["input_ids"].shape[1] > max_input_tokens:
+                raise ValueError(
+                    f"Please shorten the draft: the prompt exceeds {max_input_tokens} tokens."
+                )
+            deadline = monotonic() + timeout_seconds
+            try:
+                result = self._generate_result(
+                    inputs, alpha, beta,
+                    streamer=_CallbackStreamer(self.tokenizer, on_text),
+                    stopping_criteria=StoppingCriteriaList([_StopGeneration(cancelled, deadline)]),
+                )
+            except Exception:
+                # A stop before any decoded text can produce an empty-output
+                # error. Preserve the cancellation/timeout outcome in that case.
+                if cancelled.is_set():
+                    raise GenerationCancelled() from None
+                if monotonic() >= deadline:
+                    raise TimeoutError("Generation timed out. Please shorten the draft and retry.") from None
+                raise
+            if cancelled.is_set():
+                raise GenerationCancelled()
+            if monotonic() >= deadline:
+                raise TimeoutError("Generation timed out. Please shorten the draft and retry.")
+            return result
 
     def rewrite_all(
         self,

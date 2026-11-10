@@ -19,6 +19,8 @@
   },
   "max_next_token_logit_change": 3.654296875,
   "gradio_callback_matches": true,
+  "streaming_parity": true,
+  "cancellation_hook_cleanup": true,
   "cases": [
     {
       "text": "its really hard when u want to know what happened",

@@ -12,6 +12,7 @@ from contextlib import contextmanager, nullcontext
 import hashlib
 import json
 from pathlib import Path
+from threading import Event
 
 import torch
 
@@ -22,6 +23,7 @@ from secondthought.steering_rewriter import (
     DEFAULT_FORMALITY_DIRECTION_PATH,
     PROJECT_ROOT,
     SteeredQwenRewriter,
+    GenerationCancelled,
     load_direction_artifact,
 )
 
@@ -98,6 +100,26 @@ def verify(device: str | None) -> dict:
     finally:
         service.model.generate = original_generate
 
+    # Streaming must not introduce a different prompt or decoding behavior.
+    for case in (cases[2], cases[-1]):
+        chunks = []
+        result = service.stream_rewrite(
+            case["text"], case["alpha"], case["beta"],
+            on_text=chunks.append, cancelled=Event(),
+        )
+        assert result.text == case["output"]
+        assert "".join(chunks).strip() == result.text
+    cancelled = Event()
+    try:
+        service.stream_rewrite(
+            "its really hard when u want to know what happened", 1.0, 0.0,
+            on_text=lambda _text: cancelled.set(), cancelled=cancelled,
+        )
+        raise AssertionError("A cancelled generation was returned as successful")
+    except GenerationCancelled:
+        pass
+    assert all(not layer._forward_hooks for layer in service.decoder_layers)
+
     # Measure the exact additive shift on the real decoder outputs.
     audit = {}
     handles = []
@@ -142,7 +164,8 @@ def verify(device: str | None) -> dict:
     demo.close()
     return dict(model=service.model_id, device=str(service.device), dtype=str(service.model.dtype),
                 prompt=prompt, shifts=shifts, max_next_token_logit_change=logit_change,
-                gradio_callback_matches=True, cases=cases,
+                gradio_callback_matches=True, streaming_parity=True,
+                cancellation_hook_cleanup=True, cases=cases,
                 artifacts={p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                            for p in (DEFAULT_FORMALITY_DIRECTION_PATH, DEFAULT_DETOX_DIRECTION_PATH)})
 
