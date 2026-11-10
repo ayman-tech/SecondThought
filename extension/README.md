@@ -3,26 +3,35 @@
 A small Chrome extension for trying SecondThought on real messages. Paste or
 select a message, hit **Second thought?**, and copy the rewrite.
 
-The extension doesn't run any model itself. It sends the text to a tiny local
-server (`api/server.py`), which uses the same `build_rewriter()` as the CLI and
-the Gradio app. By default that server runs **our own fine-tuned `both-t5`
-model** on your CPU, so nothing leaves your machine and no API key is needed.
+This folder holds both halves of the extension:
 
 ```text
-popup  ──POST /rewrite──▶  api/server.py  ──▶  build_rewriter(load_settings("config/t5.toml"))
-                                               both-t5 "detoxify: "  ──▶  both-t5 "formalize: "
+extension/
+  frontend/    the Chrome extension itself (manifest, popup, content scripts)
+  api/         its local backend; runs on your machine, never in the cloud
+```
+
+The extension doesn't run any model itself. It sends the text to a tiny local
+server (`extension/api/server.py`), which uses the same `build_rewriter()` as
+the CLI and the Gradio app. By default that server runs **our own fine-tuned
+`both-t5` model** on your CPU, so nothing leaves your machine and no API key is
+needed.
+
+```text
+popup  ──POST /rewrite──▶  extension/api/server.py  ──▶  build_rewriter(load_settings("extension/api/config.toml"))
+                                                         both-t5 "detoxify: "  ──▶  both-t5 "formalize: "
 ```
 
 `both-t5` is one T5-small trained on ParaDetox and GYAFC together
-(`notebooks/train_both.ipynb`). The prefix picks the job, so each sentence goes
+(`research/notebooks/train_both.ipynb`). The prefix picks the job, so each sentence goes
 through it twice: first to drop insults and swearing, then to fix the wording
 and register.
 
 A **facts guard** runs after each step. If a step drops or changes a number,
 date, amount or similar (say "2.5%" becoming "2,5%"), that sentence keeps its
 previous wording. On the 35 workplace messages this keeps 100% of critical
-values. The steps and the guard live in `config/t5.toml`, so you can change
-them without touching code.
+values. The steps and the guard live in `extension/api/config.toml`, so you can
+change them without touching code.
 
 ## Running it
 
@@ -31,7 +40,7 @@ README (`uv sync` is the easiest route).
 
 **1. Put the model in place.** The server expects the exported `both-t5`
 folder (it's git-ignored, so get it from the team drive or from
-`train_both.ipynb`):
+`research/notebooks/train_both.ipynb`):
 
 ```text
 models/both-t5/    config.json, model.safetensors, tokenizer files...
@@ -40,8 +49,11 @@ models/both-t5/    config.json, model.safetensors, tokenizer files...
 **2. Start the server** from the repo root and leave it running:
 
 ```bash
-python -m api.server
+make                            # shortcut for the line below
+python -m extension.api.server
 ```
+
+`make extension-api-health` checks that it's up.
 
 Loading the model takes a few seconds. Then it listens on
 `http://127.0.0.1:8000`. A quick check:
@@ -58,7 +70,8 @@ missing model folder.
 
 1. Go to `chrome://extensions`
 2. Switch on **Developer mode** (top right)
-3. Click **Load unpacked** and pick this `extension/` folder
+3. Click **Load unpacked** and pick the **`extension/frontend/`** folder (the one
+   that contains `manifest.json`, not `extension/` itself)
 4. Pin SecondThought from the puzzle-piece menu so it's one click away
 
 Open the popup. The small dot in the corner is green when the server is
@@ -134,7 +147,7 @@ To compare against the GPT baseline, start the server with the default config
 and an `OPENAI_API_KEY` in your shell or `.env`:
 
 ```bash
-SECONDTHOUGHT_CONFIG=config/default.toml python -m api.server
+SECONDTHOUGHT_CONFIG=config/default.toml python -m extension.api.server
 ```
 
 ## The API

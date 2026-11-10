@@ -15,7 +15,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ARTIFACT_DIRECTORY = PROJECT_ROOT / "steering_experimentation" / "artifacts"
+# Runtime assets. These are copies promoted from research/steering_experimentation/artifacts/
+# (see artifacts/README.md), so the product never depends on the research folder.
+ARTIFACT_DIRECTORY = PROJECT_ROOT / "artifacts"
 DEFAULT_FORMALITY_DIRECTION_PATH = (
     ARTIFACT_DIRECTORY / "qwen2_5_0_5b_gyafc_formality_directions.pt"
 )

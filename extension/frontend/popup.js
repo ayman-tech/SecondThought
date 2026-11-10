@@ -1,7 +1,7 @@
 // SecondThought popup. Talks only to the local API; no keys live here.
 const API_BASE = "http://127.0.0.1:8000";
 const REQUEST_TIMEOUT_MS = 30000;
-const START_HINT = "Start the local server: <code>python -m api.server</code> from the repo root.";
+const START_HINT = "Start the local server: <code>python -m extension.api.server</code> from the repo root.";
 
 const messageEl = document.getElementById("message");
 const rewriteBtn = document.getElementById("rewrite");

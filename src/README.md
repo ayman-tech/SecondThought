@@ -33,8 +33,8 @@ Then evaluate a saved predictions file:
 
 ```bash
 secondthought evaluate \
-  --predictions outputs/constrained.csv \
-  --output outputs/constrained_evaluated.csv \
+  --predictions research/outputs/constrained.csv \
+  --output research/outputs/constrained_evaluated.csv \
   --with-learned-metrics
 ```
 
@@ -47,8 +47,8 @@ the deterministic diagnostic metrics, but omits toxicity and semantic similarity
 
 ```bash
 secondthought evaluate \
-  --predictions outputs/constrained.csv \
-  --output outputs/constrained_evaluated.csv
+  --predictions research/outputs/constrained.csv \
+  --output research/outputs/constrained_evaluated.csv
 ```
 
 ## Metrics added in the current evaluation setup

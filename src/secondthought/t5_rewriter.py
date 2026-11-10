@@ -1,6 +1,6 @@
 """Local T5 rewrite service.
 
-Loading and generation follow the notebooks/inference_*.ipynb notebooks:
+Loading and generation follow the research/notebooks/inference_*.ipynb notebooks:
 local files only, CPU, beam search without sampling, and inputs over the token
 limit are rejected instead of truncated.
 """
