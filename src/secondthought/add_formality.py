@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from .data import read_csv, write_csv
-from .evaluation import EVALUATION_COLUMNS
+from evaluation.evaluation import EVALUATION_COLUMNS
 from .formality_evaluation import (
     FORMALITY_COLUMNS,
     RobertaFormalityScorer,

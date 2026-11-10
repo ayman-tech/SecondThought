@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
 
-from .evaluation import critical_value_metrics
+from evaluation.evaluation import critical_value_metrics
 from .inference_from_jsonl import validate_model_files
 from .rewriter import RewriteResult
 

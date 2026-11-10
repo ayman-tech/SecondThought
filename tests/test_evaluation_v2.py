@@ -1,5 +1,5 @@
-from secondthought.evaluation import evaluate_records, format_evaluated_row, summarize
-from secondthought.evaluation_v2 import (
+from evaluation.evaluation import evaluate_records, format_evaluated_row, summarize
+from evaluation.evaluation_v2 import (
     EVALUATION_COLUMNS_V2,
     evaluate_records_v2,
     format_evaluated_row_v2,

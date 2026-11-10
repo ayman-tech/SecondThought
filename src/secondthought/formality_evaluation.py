@@ -21,7 +21,7 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Any, Protocol
 
-from .evaluation import _average, extract_critical_values
+from evaluation.evaluation import _average, extract_critical_values
 from .t5_rewriter import split_sentences
 
 FORMALITY_MODEL_COLUMNS = (
@@ -35,13 +35,13 @@ FORMALITY_MODEL_COLUMNS = (
 REGISTER_COLUMNS = ("register_marker_count", "register_markers")
 FORMALITY_COLUMNS = (*FORMALITY_MODEL_COLUMNS, *REGISTER_COLUMNS)
 
-# Copied from TEXTING in extension/triggers.js (JavaScript, so it can't be imported).
+# Copied from TEXTING in extension/frontend/triggers.js (JavaScript, so it can't be imported).
 # As there, a word only counts in lowercase, so "R" (the language) or "U" don't.
 TEXTING_WORDS = frozenset({
     "u", "ur", "r", "pls", "plz", "gonna", "wanna", "gotta", "tbh", "idk", "lol",
     "omg", "b4", "thx", "cuz", "coz", "ya", "yall",
 })
-# ACRONYMS from extension/triggers.js plus common workplace acronyms. Needed because
+# ACRONYMS from extension/frontend/triggers.js plus common workplace acronyms. Needed because
 # evaluation.ACRONYM_PATTERN tags every all-caps word, which would hide shouting.
 # ponytail: fixed allow-list; an acronym missing here counts as a marker. Grow it from false positives.
 KNOWN_ACRONYMS = frozenset({

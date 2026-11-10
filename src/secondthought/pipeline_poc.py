@@ -30,7 +30,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from .evaluation import critical_value_metrics, evaluate_pair, extract_critical_values
+from evaluation.evaluation import critical_value_metrics, evaluate_pair, extract_critical_values
 from .sendable_gate import CONTROL_MAX_EDIT, MIN_LENGTH_RATIO, TOXICITY_MAX, gate, hostile_markers
 from .t5_rewriter import split_sentences
 

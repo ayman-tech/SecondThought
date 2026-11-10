@@ -3,7 +3,7 @@
 Measures whether a rewrite reads as formal or professional. It adds columns next to the existing metrics; `evaluation.py` is unchanged.
 
 - `src/secondthought/formality_evaluation.py`: the metrics
-- `src/secondthought/evaluation_v2.py`: existing metrics plus formality (`evaluate_records_v2`, `format_evaluated_row_v2`, `summarize_v2`)
+- `src/evaluation/evaluation_v2.py`: existing metrics plus formality (`evaluate_records_v2`, `format_evaluated_row_v2`, `summarize_v2`)
 - `src/secondthought/add_formality.py`: adds the columns to an already-evaluated CSV
 
 There are **no thresholds and no pass/fail**. These are raw values, to be calibrated later against human ratings.
@@ -26,7 +26,7 @@ There are **no thresholds and no pass/fail**. These are raw values, to be calibr
 **Sentences:** messages are split the way the product splits them before `both-t5`: each line, then `t5_rewriter.split_sentences`. Every sentence of every row is scored in one batched call.
 
 **Register markers** (no model):
-- `texting`: lowercase texting words (`u`, `gonna`, `lol`…), copied from `TEXTING` in `extension/triggers.js`.
+- `texting`: lowercase texting words (`u`, `gonna`, `lol`…), copied from `TEXTING` in `extension/frontend/triggers.js`.
 - `all_caps`: words of 3+ capital letters. Known acronyms (`KNOWN_ACRONYMS`: the extension's list plus API, PDF, CEO…) and ticket IDs like `JIRA-123` are skipped.
 - `exclamations` (`!!`+), `questions` (`??`+), `emoji`.
 - `lowercase_i`: a standalone `i`, or `i'm`/`i'll`; `i.e.` doesn't count.
@@ -39,12 +39,12 @@ Writes a **new** file and refuses to overwrite one. Every input column keeps its
 
 ```bash
 pip install -r requirements-formality.txt --extra-index-url https://download.pytorch.org/whl/cpu
-PYTHONPATH=src python -m secondthought.add_formality outputs/both_detox_formalize.csv outputs/formality/both_detox_formalize_formality.csv
+PYTHONPATH=src python -m secondthought.add_formality research/outputs/both_detox_formalize.csv research/outputs/formality/both_detox_formalize_formality.csv
 # markers only, no model download:
 PYTHONPATH=src python -m secondthought.add_formality <in.csv> <out.csv> --no-model
 # steering artifacts use other text columns:
-PYTHONPATH=src python -m secondthought.add_formality steering_experimentation/artifacts/paradetox_activation_steering_evaluated.csv \
-    outputs/formality/paradetox_activation_steering_evaluated_formality.csv --original-column toxic --rewritten-column generated
+PYTHONPATH=src python -m secondthought.add_formality research/steering_experimentation/artifacts/paradetox_activation_steering_evaluated.csv \
+    research/outputs/formality/paradetox_activation_steering_evaluated_formality.csv --original-column toxic --rewritten-column generated
 ```
 
 Tests: `PYTHONPATH=src pytest tests`. They use a fake scorer; the one real-model test is skipped if `transformers` isn't installed.
@@ -63,7 +63,7 @@ Tests: `PYTHONPATH=src pytest tests`. They use a fake scorer; the one real-model
 
 ## First result: `both-t5` on the 35 workplace messages
 
-`outputs/formality/both_detox_formalize_formality.csv`:
+`research/outputs/formality/both_detox_formalize_formality.csv`:
 
 | average_formality_original | average_formality_rewritten | average_formality_gain | average_formality_min_sentence | formality_gain_positive_rate | register_marker_free_rate |
 |---|---|---|---|---|---|

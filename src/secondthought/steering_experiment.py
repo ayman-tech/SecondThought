@@ -22,7 +22,7 @@ from typing import Any, Iterator, Literal
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from secondthought.evaluation import evaluate_pair
+from evaluation.evaluation import evaluate_pair
 
 
 Pooling = Literal["mean", "final_token"]
