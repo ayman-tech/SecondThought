@@ -1,0 +1,1198 @@
+<!DOCTYPE html><html lang="en" class="scroll-smooth"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Second Thought — Activation Steering Research Lab &amp; Platform</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'accent': '#D97706',
+        'accent-hover': '#B45309',
+        'cyan-tensor': '#0891B2',
+        'light-primary': '#0F172A',
+        'light-on-primary': '#FFFFFF',
+        'light-surface': '#F8FAFC',
+        'light-on-surface': '#0F172A',
+        'light-surface-container': '#FFFFFF',
+        'light-surface-container-high': '#F1F5F9',
+        'light-outline': '#E2E8F0',
+        'dark-primary': '#F8FAFC',
+        'dark-on-primary': '#090D16',
+        'dark-surface': '#090D16',
+        'dark-on-surface': '#F1F5F9',
+        'dark-surface-container': '#111827',
+        'dark-surface-container-high': '#1E293B',
+        'dark-outline': '#334155',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '8px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '64px',
+        'page-margin': '32px',
+      },
+      fontFamily: {
+        'display': ['"Space Grotesk"', 'sans-serif'],
+        'headline': ['"Space Grotesk"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+        'code': ['"JetBrains Mono"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['56px', { lineHeight: '64px', letterSpacing: '-1.5px', fontWeight: '700' }],
+        'display-lg-mobile': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.75px', fontWeight: '600' }],
+        'headline-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-sm': ['20px', { lineHeight: '28px', fontWeight: '600' }],
+        'body-lg': ['18px', { lineHeight: '28px', fontWeight: '400' }],
+        'body-md': ['15px', { lineHeight: '24px', fontWeight: '400' }],
+        'body-sm': ['13px', { lineHeight: '20px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+        'code-md': ['14px', { lineHeight: '22px', fontWeight: '500' }],
+        'code-sm': ['12px', { lineHeight: '18px', fontWeight: '400' }],
+      },
+      transitionDuration: {
+        'state-change': '120ms',
+        'vector-shift': '220ms',
+        'surface-enter': '280ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'vector-shift': '0ms',
+        'surface-enter': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'vector-shift': 'cubic-bezier(0.2, 0, 0, 1)',
+        'surface-enter': 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+  <style>
+    /* Subtle scientific grid pattern for off-white research paper atmosphere */
+    .lab-grid {
+      background-size: 36px 36px;
+      background-image: 
+        linear-gradient(to right, rgba(203, 213, 225, 0.45) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(203, 213, 225, 0.45) 1px, transparent 1px);
+    }
+    .latent-glow {
+      background: radial-gradient(circle at 50% 50%, rgba(217, 119, 6, 0.08) 0%, rgba(8, 145, 178, 0.04) 50%, transparent 80%);
+    }
+    /* Custom range slider styling for light theme */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 22px;
+      width: 22px;
+      border-radius: 9999px;
+      background: #D97706;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 1px 6px rgba(217, 119, 6, 0.4), 0 0 0 1px rgba(203, 213, 225, 0.8);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    /* Token morphing animation keyframe simulation */
+    .token-transition {
+      transition: background-color 0.25s ease, color 0.25s ease, transform 0.2s ease;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-[1024px] font-body selection:bg-amber-100 selection:text-amber-800" data-stitch-vh="min-h-[1024px]===min-h-screen">
+
+  <!-- Top Navigation Header (Second Thought typographic brand + 5 Requested Pages) -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200/80 px-6 lg:px-12 py-3.5 shadow-xs transition-colors">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Brand Name (Kept as requested: clean 'Second Thought' name without graphic logo) -->
+      <a href="#overview" class="flex items-center gap-2 group">
+        <span class="font-headline font-bold text-slate-900 text-xl tracking-tight group-hover:text-accent transition-colors">Second Thought</span>
+        
+      </a>
+
+      <!-- 5 Requested Navigation Pages: Overview, The Experimental Page, Browser Extension, Evaluation, About Us -->
+      <nav class="hidden lg:flex items-center gap-6 xl:gap-8 text-label-lg font-label text-slate-600">
+        <a href="#overview" class="hover:text-accent transition-colors font-medium">Overview</a>
+        <a href="#experimental" class="hover:text-accent transition-colors flex items-center gap-1.5 font-medium text-accent">
+          <span class="material-symbols-outlined text-sm">tune</span>
+          <span>The Experimental Page</span>
+        </a>
+        <a href="#extension" class="hover:text-accent transition-colors flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">extension</span>
+          <span>Browser Extension</span>
+        </a>
+        <a href="#evaluation" class="hover:text-accent transition-colors">Evaluation</a>
+        <a href="#about" class="hover:text-accent transition-colors">About Us</a>
+      </nav>
+
+      <!-- Action Area: Preserved Get Extension & Enter Lab -->
+      <div class="flex items-center gap-3">
+        <a href="#extension" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-body-sm font-medium text-slate-700 bg-white border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-colors shadow-xs">
+          <span class="material-symbols-outlined text-xs">download</span>
+          <span>Get Extension</span>
+        </a>
+        <a href="#experimental" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-label font-medium text-body-sm shadow-sm transition-all">
+          <span class="material-symbols-outlined text-xs">play_arrow</span>
+          <span>Enter Lab</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- PAGE 1: OVERVIEW (Hero & Technical Primer) -->
+    <section id="overview" class="relative pt-16 pb-20 px-6 lg:px-12 lab-grid border-b border-slate-200/80 overflow-hidden bg-white">
+      <!-- Latent glow in background -->
+      <div class="absolute inset-0 latent-glow pointer-events-none"></div>
+
+      <div class="max-w-6xl mx-auto relative z-10">
+        <div class="flex flex-col items-center text-center max-w-4xl mx-auto">
+          <!-- Eyebrow status tag -->
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 mb-6">
+            <span class="text-cyan-tensor font-code text-code-sm font-semibold tracking-wide">INTERPRETABILITY &amp; CONTROL RESEARCH</span>
+            <span class="text-slate-600">/</span>
+            <span class="text-slate-300 text-code-sm font-code">RESIDUAL STREAM INTERVENTION</span>
+          </div>
+
+          <!-- Main Hero Headline -->
+          <h1 class="font-display text-display-lg-mobile md:text-display-lg text-slate-900 font-bold tracking-tight text-balance leading-tight mb-6">
+            Don&#39;t prompt the model. <br>
+            <span class="bg-gradient-to-r from-accent via-amber-200 to-cyan-tensor bg-clip-text text-transparent">Steer its latent activations.</span>
+          </h1>
+
+          <!-- Hero Subtitle -->
+          <p class="text-body-lg text-slate-600 max-w-3xl text-pretty mb-8 leading-relaxed">
+            Second Thought is an experimental laboratory and product platform investigating activation steering. By intervening directly in a transformer&#39;s residual stream with contrastive control vectors, we can modulate tone, formality, and behavioral boundaries continuously in real time.
+          </p>
+
+          <!-- Core Call to Action / Interactive Anchor -->
+          <div class="flex flex-wrap items-center justify-center gap-4 mb-12">
+            <a href="#experimental" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent hover:bg-accent-hover text-dark-surface font-label font-semibold text-base transition-all shadow-lg shadow-accent/20">
+              <span class="material-symbols-outlined">tune</span>
+              <span>Launch The Experimental Page</span>
+            </a>
+            <a href="#extension" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-dark-surface-container hover:bg-dark-surface-container-high border border-dark-outline hover:border-slate-500 text-slate-200 font-label font-medium text-base transition-all">
+              <span class="material-symbols-outlined text-sm">extension</span>
+              <span>Get Browser Extension</span>
+            </a>
+          </div>
+
+          <!-- Real-time Mathematical Spec Strip -->
+          <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-3 text-left bg-slate-50 rounded-xl border border-slate-200/90 p-4 shadow-xs">
+            <div class="p-2 border-r border-slate-200">
+              <span class="text-code-sm text-slate-500 font-code block">INTERVENTION FORMULA</span>
+              <span class="text-code-md text-accent font-code font-bold mt-1 block">h_l ← h_l + α · v_c</span>
+            </div>
+            <div class="p-2 md:border-r border-slate-200">
+              <span class="text-code-sm text-slate-500 font-code block">TARGET RESIDUAL LAYER</span>
+              <span class="text-code-md text-cyan-tensor font-code font-bold mt-1 block">Layer 16 of 32 (Mid-deep)</span>
+            </div>
+            <div class="p-2 border-r border-slate-200">
+              <span class="text-code-sm text-slate-500 font-code block">ACTIVE VECTOR SPACE</span>
+              <span class="text-code-md text-slate-800 font-code font-bold mt-1 block">Formality / Candor / Empathy</span>
+            </div>
+            <div class="p-2">
+              <span class="text-code-sm text-slate-500 font-code block">INFERENCE OVERHEAD</span>
+              <span class="text-code-md text-emerald-400 font-code font-bold mt-1 block">&lt; 0.2ms (Zero Weight Drift)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 2: THE EXPERIMENTAL PAGE (Large Animated Morphing Output & Bottom Controller) -->
+    <section id="experimental" class="py-16 px-6 lg:px-12 bg-slate-50 relative border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- Lab Header Strip with Quick Vector Objective Switcher -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-accent/15 border border-accent/30 text-accent flex items-center justify-center font-bold">
+              <span class="material-symbols-outlined text-lg">tune</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="font-headline text-headline-sm text-slate-900 font-bold tracking-tight">Steering Experimental Lab</h2>
+                <span class="text-[11px] font-code px-2 py-0.5 rounded bg-cyan-tensor/15 text-cyan-tensor border border-cyan-tensor/30">Model: Qwen Representation</span>
+              </div>
+              <p class="text-body-sm text-slate-400 text-xs">Direct activation perturbation on forward residual stream</p>
+            </div>
+          </div>
+
+          <!-- Quick Objective Vector Selector Pills -->
+          <div class="flex items-center gap-1.5 bg-white p-1 rounded-lg border border-slate-200 shadow-xs" id="vector-selector-pills">
+            <button data-vector="formality" class="vector-pill active px-3 py-1.5 rounded-md text-xs font-code font-medium transition-all bg-amber-600 text-white shadow-xs">
+              Formality (α)
+            </button>
+            <button data-vector="empathy" class="vector-pill px-3 py-1.5 rounded-md text-xs font-code font-medium transition-all text-slate-600 hover:text-slate-900">
+              Empathy
+            </button>
+            <button data-vector="candor" class="vector-pill px-3 py-1.5 rounded-md text-xs font-code font-medium transition-all text-slate-600 hover:text-slate-900">
+              Candor
+            </button>
+            <button data-vector="respect" class="vector-pill px-3 py-1.5 rounded-md text-xs font-code font-medium transition-all text-slate-600 hover:text-slate-900">
+              De-escalate
+            </button>
+          </div>
+        </div>
+
+        <!-- MAIN STAGE: BIG ANIMATED MORPHING TEXT DISPLAY (The Centerpiece) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-lg shadow-slate-200/50 relative">
+          
+          <!-- Top Telemetry & Diff Status Bar -->
+          <div class="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs font-code">
+            <div class="flex items-center gap-3">
+              <span class="inline-flex items-center gap-1.5 text-accent font-semibold">
+                <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                <span id="active-regime-pill">OPTIMAL STEERING SWEETSPOT (★)</span>
+              </span>
+              <span class="text-slate-600">|</span>
+              <span class="text-slate-400">Layer Injection: <span id="layer-status-tag" class="text-cyan-tensor font-bold">h₂ → h₃</span></span>
+              <span class="text-slate-600">|</span>
+              <span class="text-slate-400">Latent Shift: <span id="drift-score-tag" class="text-emerald-400 font-bold">78%</span></span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <button id="diff-toggle-btn" class="px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-accent transition-colors">
+                Token Annotations: ON
+              </button>
+              <button id="copy-steered-btn" class="px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-accent flex items-center gap-1 transition-colors">
+                <span class="material-symbols-outlined text-xs">content_copy</span>
+                <span>Copy Output</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- THE BIG DISPLAY BLOCK: Words Morph and Animate Based on Strength -->
+          <div class="p-8 md:p-14 min-h-[280px] flex flex-col justify-center relative bg-gradient-to-b from-white via-slate-50/40 to-slate-50/80">
+            <div class="text-code-sm font-code text-slate-500 uppercase tracking-widest text-xs mb-4 flex items-center justify-between">
+              <span>Model Generated Output (Streaming in Real Time)</span>
+              <span class="text-slate-400 text-xs font-mono" id="char-token-counter">Live Residual Stream</span>
+            </div>
+
+            <!-- Prominent Big Animated Text Element -->
+            <div id="big-steered-output" class="font-display text-2xl sm:text-4xl md:text-5xl text-slate-900 font-semibold leading-snug tracking-tight transition-all duration-300">&#34;I am <span class="text-accent underline decoration-accent/50 underline-offset-4 font-bold transition-all inline-block hover:scale-105">going to</span> <span class="text-accent underline decoration-accent/50 underline-offset-4 font-bold transition-all inline-block hover:scale-105">definitely</span> do it today.&#34;</div>
+
+            <!-- Subtle inline token trajectory annotation preview (inspired by the whiteboard arrows) -->
+            <div id="token-annotation-ribbon" class="mt-8 pt-4 border-t border-slate-200/80 flex flex-wrap items-center gap-2 text-xs font-code text-slate-400">
+              <span class="text-slate-500 font-semibold">Active Vector Morphisms:</span>
+              <span id="annotation-pills-container" class="flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 line-through">fucking</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-tensor/15 border border-cyan-tensor/30 text-cyan-tensor font-medium">definitely</span>
+          <span class="text-slate-600">|</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 line-through">today</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/15 border border-accent/30 text-accent font-medium">before sunrise</span>
+        </span>
+            </div>
+          </div>
+
+          <!-- Interactive Latent Space Representation Box (Directly inspired by the whiteboard sketch: box with h1, h2, h3 layers, vector line & alpha pointer) -->
+          <div class="px-6 py-4 bg-slate-100/90 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-code text-slate-400">Model Qwen Representation:</span>
+              <div class="flex items-center gap-2 text-xs font-code text-slate-500">
+                <span class="px-1.5 py-0.5 rounded bg-cyan-tensor/10 text-cyan-tensor border border-cyan-tensor/20">h₁ (dim: 4096)</span>
+                <span>→</span>
+                <span class="px-1.5 py-0.5 rounded bg-cyan-tensor/20 text-cyan-tensor border border-cyan-tensor/40 font-bold">h₂ (Layer 16)</span>
+                <span>→</span>
+                <span class="px-1.5 py-0.5 rounded bg-accent/20 text-accent border border-accent/40 font-bold">h₃ (Perturbed + α·v)</span>
+              </div>
+            </div>
+
+            <!-- Compact SVG Vector Trajectory Display -->
+            <div class="w-full md:w-80 h-11 bg-white rounded-lg border border-slate-200 relative overflow-hidden flex items-center px-3 shadow-xs">
+              <svg id="vector-mini-svg" class="w-full h-full" viewBox="0 0 300 36">
+                <!-- Center Axis -->
+                <line x1="10" y1="18" x2="290" y2="18" stroke="#334155" stroke-dasharray="3,3"></line>
+                <circle cx="150" cy="18" r="3.5" fill="#64748B"></circle>
+                <text x="142" y="11" fill="#64748B" font-size="8" font-family="JetBrains Mono">h_base</text>
+                
+                <!-- Dynamic vector arrow line -->
+                <line id="vector-mini-line" x1="150" y1="18" x2="189" y2="18" stroke="#F59E0B" stroke-width="2.5"></line>
+                <circle id="vector-mini-point" cx="189" cy="18" r="5" fill="#F59E0B" class="filter drop-shadow-[0_0_6px_#F59E0B]"></circle>
+                <text id="vector-mini-alpha-text" x="197" y="21" fill="#F59E0B" font-size="9" font-weight="bold" font-family="JetBrains Mono">α = +1.5</text>
+              </svg>
+            </div>
+
+            <div class="text-right text-xs font-code text-slate-400">
+              <span>Vector Trajectory: </span>
+              <span id="vector-direction-label" class="text-accent font-bold">+v (Formal / Diplomatic)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTOM CONTROLLER DECK: Text input on bottom + Activation Strength Controller -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-6 space-y-6 shadow-md shadow-slate-200/40">
+          
+          <!-- Activation Strength Slider Controller -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-accent text-lg">speed</span>
+                <span class="font-headline font-semibold text-slate-900 text-base">Activation Steering Strength (α)</span>
+                <span class="text-xs text-slate-400 font-body hidden sm:inline">— Slide to bend internal model representations</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-code text-slate-400">Current Alpha:</span>
+                <span id="strength-numeric-display" class="font-code text-lg font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-md border border-amber-200 tabular-nums">+1.50</span>
+              </div>
+            </div>
+
+            <!-- Big Custom Strength Slider Track -->
+            <div class="relative py-2">
+              <input id="alpha-strength-slider" type="range" min="-3.0" max="3.0" step="0.1" value="1.5" class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600 focus:outline-none">
+              <!-- Detent tick markers below slider -->
+              <div class="flex justify-between items-center text-xs font-code text-slate-500 pt-2">
+                <button type="button" class="hover:text-rose-400 transition-colors" onclick="setStrength(-2.5)">
+                  -2.5 (Extreme Slang / Blunt)
+                </button>
+                <button type="button" class="hover:text-slate-300 transition-colors" onclick="setStrength(0.0)">
+                  0.0 (Unsteered Baseline)
+                </button>
+                <button type="button" class="hover:text-accent transition-colors font-bold" onclick="setStrength(1.5)">
+                  +1.5 (Optimal Sweetspot ★)
+                </button>
+                <button type="button" class="hover:text-amber-400 transition-colors" onclick="setStrength(2.8)">
+                  +2.8 (Hyper-Formal)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Text Input Box: Type anything and see response change -->
+          <div class="space-y-3 pt-2 border-t border-slate-200/80">
+            <div class="flex items-center justify-between">
+              <label for="bottom-user-input" class="text-xs font-code text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm text-cyan-tensor">edit_note</span>
+                <span>Type or paste any draft sentence below:</span>
+              </label>
+
+              <!-- Quick Presets -->
+              <div class="flex items-center gap-1.5 text-xs">
+                <span class="text-slate-500 font-code hidden md:inline">Quick Inspiration:</span>
+                <button type="button" class="sample-chip px-2.5 py-1 rounded bg-amber-50/80 border border-amber-200 text-amber-800 font-medium font-code hover:bg-dark-surface-container-high transition-colors" onclick="loadSampleText(&#39;whiteboard&#39;)">
+                  &#34;Do it today&#34; (Whiteboard)
+                </button>
+                <button type="button" class="sample-chip px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-code hover:bg-dark-surface-container-high transition-colors" onclick="loadSampleText(&#39;meeting&#39;)">
+                  &#34;Meeting Waste&#34;
+                </button>
+                <button type="button" class="sample-chip px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-code hover:bg-dark-surface-container-high transition-colors" onclick="loadSampleText(&#39;code&#39;)">
+                  &#34;Broken PR&#34;
+                </button>
+              </div>
+            </div>
+
+            <!-- Input Row -->
+            <div class="flex gap-2">
+              <input id="bottom-user-input" type="text" value="I&#39;m gonna fucking do it today." placeholder="Type any sentence here..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-body-lg text-slate-900 font-body focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 shadow-xs">
+              <button id="clear-input-btn" type="button" title="Clear input" class="px-4 rounded-xl bg-dark-surface border border-dark-outline hover:border-slate-500 text-slate-600 hover:text-slate-900 transition-colors" onclick="document.getElementById(&#39;bottom-user-input&#39;).value=&#39;&#39;; updateInteractiveLab();">
+                <span class="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 font-code">
+              <span>Tip: As you type or drag the activation strength slider above, the large output updates in real time.</span>
+              <span class="text-cyan-tensor">Inference time: ~22ms • Zero weight drift</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION: FINE-TUNED REWRITING VS. ACTIVATION STEERING -->
+    <section id="fine-tune-vs-steering" class="py-20 px-6 lg:px-12 bg-white border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto space-y-12">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-tensor/10 border border-cyan-tensor/30 text-cyan-tensor text-code-sm font-code">
+            <span class="material-symbols-outlined text-xs">schema</span>
+            <span>CORE PARADIGM SHIFT</span>
+          </div>
+          <h2 class="font-headline text-headline-lg text-slate-900 font-bold">
+            Weight Modification vs. Latent Geometry
+          </h2>
+          <p class="text-body-lg text-slate-600">
+            Why Second Thought combines a practical local fine-tune tool with an exploratory live steering engine. Understanding where each technology excels and where steering opens new frontiers.
+          </p>
+        </div>
+
+        <!-- Comparative Architectural Breakdown Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          <!-- Column A: Fine-Tuned Local Rewriting (The Extension) -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-8 space-y-6 relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
+                PRACTICAL &amp; RELIABLE
+              </span>
+              <span class="material-symbols-outlined text-emerald-400">extension</span>
+            </div>
+            <div>
+              <h3 class="font-headline text-headline-md text-slate-900 font-semibold">Fine-Tuned Rewriting</h3>
+              <p class="text-body-sm text-slate-400 mt-1">Our Chrome Extension&#39;s on-device model architecture.</p>
+            </div>
+            
+            <ul class="space-y-3.5 text-body-md text-slate-600">
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-emerald-400 text-sm mt-1">check_circle</span>
+                <span><strong>Static Weight Updates:</strong> Model weights $W$ are permanently adapted via supervised pairs (rude $\rightarrow$ respectful).</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-emerald-400 text-sm mt-1">check_circle</span>
+                <span><strong>Predictable Failure Modes:</strong> High reliability for designated task (rephrasing toxic language into polite prose).</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-emerald-400 text-sm mt-1">check_circle</span>
+                <span><strong>100% Local &amp; Private:</strong> Runs in-browser via WebAssembly / ONNX with zero telemetry or cloud latency.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-slate-500 text-sm mt-1">remove_circle_outline</span>
+                <span><strong>Binary / Coarse Control:</strong> You cannot slide formality smoothly from 12% to 88% or adjust layer interventions at runtime.</span>
+              </li>
+            </ul>
+
+            <div class="p-4 rounded-lg bg-white border border-slate-200 font-code text-code-sm text-slate-300">
+              <span class="text-slate-500 block mb-1">// Static Mapping</span>
+              <span class="text-emerald-400">f_fine_tuned(x) = y_polite</span>
+            </div>
+          </div>
+
+          <!-- Column B: Activation Steering (The Steering Lab) -->
+          <div class="bg-amber-50/40 rounded-xl border border-amber-200/90 p-8 space-y-6 relative overflow-hidden shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-accent bg-accent/10 px-2.5 py-1 rounded border border-accent/30">
+                DYNAMIC &amp; INTERPRETABLE
+              </span>
+              <span class="material-symbols-outlined text-accent">tune</span>
+            </div>
+            <div>
+              <h3 class="font-headline text-headline-md text-slate-900 font-semibold">Activation Steering</h3>
+              <p class="text-body-sm text-slate-400 mt-1">The Steering Lab&#39;s runtime residual intervention engine.</p>
+            </div>
+            
+            <ul class="space-y-3.5 text-body-md text-slate-600">
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-accent text-sm mt-1">arrow_forward</span>
+                <span><strong>Zero Weight Changes:</strong> Base weights remain pristine. Interventions occur in the hidden residual stream during forward pass.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-accent text-sm mt-1">arrow_forward</span>
+                <span><strong>Continuous Parameter Dialing:</strong> Slide $\alpha$ smoothly to shift tone incrementally from informal to hyper-academic.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-accent text-sm mt-1">arrow_forward</span>
+                <span><strong>Multi-Objective Superposition:</strong> Combine orthogonal vectors simultaneously: $\mathbf{h} + \alpha_1 \mathbf{v}_{\text{formal}} + \alpha_2 \mathbf{v}_{\text{empathy}}$.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-cyan-tensor text-sm mt-1">info</span>
+                <span><strong>The Honest Reality:</strong> Non-linearities can cause coherence degradation at extreme $\alpha$ values—making empirical lab exploration essential.</span>
+              </li>
+            </ul>
+
+            <div class="p-4 rounded-lg bg-white border border-amber-200 font-code text-code-sm text-slate-300">
+              <span class="text-slate-500 block mb-1">// Dynamic Residual Transformation</span>
+              <span class="text-accent">h_l^(t) ← h_l^(t) + α · (μ_contrastive^+ - μ_contrastive^-)</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: GOOGLE CHROME EXTENSION (On-Device Local Tool) -->
+    <section id="extension" class="py-20 px-6 lg:px-12 bg-slate-50 border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 lg:p-12 relative overflow-hidden shadow-md shadow-slate-200/50">
+          <!-- Background accent rings -->
+          <div class="absolute -right-20 -top-20 w-96 h-96 bg-amber-50/60 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            <div class="lg:col-span-7 space-y-6">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-code-sm font-code">
+                <span class="material-symbols-outlined text-xs">verified_user</span>
+                <span>AVAILABLE NOW — CHROME &amp; EDGE</span>
+              </div>
+
+              <h2 class="font-headline text-headline-lg text-slate-900 font-bold">
+                Second Thought Browser Extension
+              </h2>
+
+              <p class="text-body-lg text-slate-600 leading-relaxed">
+                Before sending a reactive email, harsh code review comment, or tense Slack response, let Second Thought provide an instant, respectful alternative. Powered by a lightweight quantized model running directly inside your browser.
+              </p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                  <span class="material-symbols-outlined text-accent text-lg">memory</span>
+                  <div class="font-headline font-semibold text-sm text-slate-900 mt-1">100% On-Device</div>
+                  <div class="text-body-sm text-slate-400 text-xs mt-0.5">Your text never leaves your local machine.</div>
+                </div>
+
+                <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                  <span class="material-symbols-outlined text-cyan-tensor text-lg">bolt</span>
+                  <div class="font-headline font-semibold text-sm text-slate-900 mt-1">&lt; 90ms Latency</div>
+                  <div class="text-body-sm text-slate-400 text-xs mt-0.5">Instant inline rewrite suggestions.</div>
+                </div>
+
+                <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                  <span class="material-symbols-outlined text-emerald-400 text-lg">rule</span>
+                  <div class="font-headline font-semibold text-sm text-slate-900 mt-1">Tone Preservation</div>
+                  <div class="text-body-sm text-slate-400 text-xs mt-0.5">Retains core critique while stripping hostility.</div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-4 pt-4">
+                <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-dark-surface font-label font-semibold text-sm transition-all shadow-md">
+                  <span class="material-symbols-outlined text-base">extension</span>
+                  <span>Install Chrome Extension</span>
+                </button>
+                <a href="#lab" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-label font-medium text-sm transition-colors">
+                  <span>Explore Steering Lab Instead</span>
+                  <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Interactive Extension Preview Mockup -->
+            <div class="lg:col-span-5">
+              <div class="bg-slate-50 rounded-xl border border-slate-200 shadow-md p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+                    <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+                    <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+                  </div>
+                  <span class="text-code-sm font-code text-xs text-slate-500">Chrome Popup // In-Context</span>
+                </div>
+
+                <div class="space-y-2">
+                  <span class="text-code-sm font-code text-xs text-rose-400 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">warning</span>
+                    <span>Detected High Hostility (0.89)</span>
+                  </span>
+                  <div class="p-3 rounded bg-rose-50 border border-rose-200 text-body-sm text-rose-800">
+                    &#34;This PR is complete garbage, did you even bother testing this branch?&#34;
+                  </div>
+                </div>
+
+                <div class="flex justify-center">
+                  <span class="material-symbols-outlined text-accent animate-bounce">arrow_downward</span>
+                </div>
+
+                <div class="space-y-2">
+                  <span class="text-code-sm font-code text-xs text-emerald-400 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">check_circle</span>
+                    <span>Second Thought Suggested Rewrite</span>
+                  </span>
+                  <div class="p-3 rounded bg-emerald-50 border border-emerald-200 text-body-sm text-emerald-800">
+                    &#34;Could you walk me through the test coverage for this branch? I noticed a few edge cases that may need closer review.&#34;
+                  </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-between">
+                  <button class="px-3 py-1.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-code-sm font-code text-xs hover:bg-emerald-500/30 transition-colors">
+                    Replace in Draft
+                  </button>
+                  <span class="text-code-sm font-code text-[11px] text-slate-500">Latency: 72ms (Local WebAssembly)</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: EVALUATION & EXPERIMENTATION SUITE (Future-Facing Research Engine) -->
+    <section id="evaluation" class="py-20 px-6 lg:px-12 bg-white border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto space-y-12">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-code-sm font-code mb-2">
+              <span class="material-symbols-outlined text-xs">analytics</span>
+              <span>SCIENTIFIC CREDIBILITY &amp; MEASUREMENT</span>
+            </div>
+            <h2 class="font-headline text-headline-lg text-slate-900 font-bold">The Evaluation &amp; Experimentation Layer</h2>
+            <p class="text-body-md text-slate-400 max-w-2xl mt-1">
+              Steering is powerful, but it is not magic. Rigorous research requires measuring both the intended behavioral shift and unintended collateral damage across multi-dimensional benchmarks.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-code-sm font-code text-cyan-tensor px-3 py-1 rounded bg-white border border-cyan-tensor/30">
+              Benchmark Dataset: Contrastive-NLP-v2
+            </span>
+          </div>
+        </div>
+
+        <!-- Evaluation Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Metric Card 1: Tone Transfer Efficacy -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-6 space-y-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-accent">METRIC 01</span>
+              <span class="material-symbols-outlined text-accent text-sm">trending_up</span>
+            </div>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Target Attribute Accuracy</h3>
+            <p class="text-body-sm text-slate-600">
+              Classifier confidence that the generated text possesses the intended target attribute (e.g. Formal, Polite, Empathic).
+            </p>
+            <div class="space-y-2 pt-2">
+              <div class="flex justify-between text-code-sm font-code text-xs">
+                <span class="text-slate-400">At α = +1.50</span>
+                <span class="text-accent font-bold">92.4% success</span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-accent rounded-full" style="width: 92.4%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metric Card 2: Perplexity & Collateral Coherence -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-6 space-y-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-cyan-tensor">METRIC 02</span>
+              <span class="material-symbols-outlined text-cyan-tensor text-sm">psychology</span>
+            </div>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Perplexity &amp; Fluency Retention</h3>
+            <p class="text-body-sm text-slate-600">
+              Ensures that activation intervention does not destroy grammatical fluency or produce degenerate token loops.
+            </p>
+            <div class="space-y-2 pt-2">
+              <div class="flex justify-between text-code-sm font-code text-xs">
+                <span class="text-slate-400">PPL Drift (vs Baseline)</span>
+                <span class="text-cyan-tensor font-bold">+1.82 (Safe Zone)</span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-cyan-tensor rounded-full" style="width: 25%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metric Card 3: Semantic Content Invariance -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-6 space-y-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-emerald-400">METRIC 03</span>
+              <span class="material-symbols-outlined text-emerald-400 text-sm">balance</span>
+            </div>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Core Semantic Preservation</h3>
+            <p class="text-body-sm text-slate-600">
+              Embedding cosine similarity between source prompt intent and output, confirming the meaning didn&#39;t get hallucinated away.
+            </p>
+            <div class="space-y-2 pt-2">
+              <div class="flex justify-between text-code-sm font-code text-xs">
+                <span class="text-slate-400">Cosine Sim (Intent)</span>
+                <span class="text-emerald-400 font-bold">0.88 Cos-Sim</span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-400 rounded-full" style="width: 88%"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Alpha Parameter Sweep Visualizer Mockup -->
+        <div class="bg-slate-50 rounded-xl border border-slate-200 p-6 space-y-4 shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h4 class="font-headline font-semibold text-slate-900">Large-Scale Batch Sweep Inspector</h4>
+              <p class="text-body-sm text-slate-500 text-xs">Running 1,000 prompt variations across $\alpha \in [-3.0, +3.0]$ to identify the Pareto frontier.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1 rounded bg-white border border-slate-200 text-code-sm font-code text-xs text-slate-700 hover:border-slate-400 transition-colors">
+                Export Run CSV
+              </button>
+              <button class="px-3 py-1 rounded bg-accent/20 border border-accent/40 text-code-sm font-code text-xs text-accent hover:bg-accent/30 transition-colors">
+                + Launch Cloud Sweep
+              </button>
+            </div>
+          </div>
+
+          <!-- Mini data table representation -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left font-code text-code-sm">
+              <thead class="bg-slate-100 text-slate-700 text-xs uppercase border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Alpha (α)</th>
+                  <th class="py-2.5 px-3">Layer (L)</th>
+                  <th class="py-2.5 px-3">Attribute Shift</th>
+                  <th class="py-2.5 px-3">Semantic Sim</th>
+                  <th class="py-2.5 px-3">Perplexity</th>
+                  <th class="py-2.5 px-3">Regime Classification</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 text-slate-700 text-xs">
+                <tr>
+                  <td class="py-2.5 px-3 text-rose-600 font-bold">-2.50</td>
+                  <td class="py-2.5 px-3 text-slate-500">16</td>
+                  <td class="py-2.5 px-3">Informal (98%)</td>
+                  <td class="py-2.5 px-3">0.72</td>
+                  <td class="py-2.5 px-3 text-amber-700">14.2</td>
+                  <td class="py-2.5 px-3 text-rose-700 font-medium">Over-steered (Mild Slang)</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-3 text-slate-500">0.00</td>
+                  <td class="py-2.5 px-3 text-slate-500">-</td>
+                  <td class="py-2.5 px-3">Neutral (50%)</td>
+                  <td class="py-2.5 px-3">1.00</td>
+                  <td class="py-2.5 px-3 text-emerald-600">8.1</td>
+                  <td class="py-2.5 px-3 text-slate-500">Unsteered Baseline</td>
+                </tr>
+                <tr class="bg-amber-50/60">
+                  <td class="py-2.5 px-3 text-amber-700 font-bold">+1.40</td>
+                  <td class="py-2.5 px-3 text-slate-500">16</td>
+                  <td class="py-2.5 px-3 text-amber-700 font-medium">Formal (91%)</td>
+                  <td class="py-2.5 px-3 text-emerald-600">0.91</td>
+                  <td class="py-2.5 px-3 text-emerald-600">8.9</td>
+                  <td class="py-2.5 px-3 text-amber-800 font-semibold">Optimal Sweetspot ★</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-3 text-amber-700 font-bold">+2.80</td>
+                  <td class="py-2.5 px-3 text-slate-500">16</td>
+                  <td class="py-2.5 px-3">Formal (99%)</td>
+                  <td class="py-2.5 px-3 text-amber-700">0.79</td>
+                  <td class="py-2.5 px-3 text-rose-600">22.6</td>
+                  <td class="py-2.5 px-3 text-rose-700 font-medium">Victorian Hyperbole</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- PAGE 5: ABOUT US (Mission, Lab Origins, Open Science, and Research Philosophy) -->
+    <section id="about" class="py-20 px-6 lg:px-12 bg-slate-50 border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto space-y-12">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-code-sm font-code">
+            <span class="material-symbols-outlined text-xs">group</span>
+            <span>ABOUT SECOND THOUGHT</span>
+          </div>
+          <h2 class="font-headline text-headline-lg text-slate-900 font-bold">
+            An Open Lab for Controllable Language Mechanics
+          </h2>
+          <p class="text-body-lg text-slate-600 leading-relaxed">
+            Second Thought was founded at the intersection of mechanistic interpretability research and everyday communication tools. We believe that understanding how language models construct tone is prerequisite to making them safe, respectful, and genuinely controllable.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="p-6 rounded-xl bg-white border border-slate-200 space-y-3 shadow-xs">
+            <span class="material-symbols-outlined text-accent text-2xl">biotech</span>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Interpretability First</h3>
+            <p class="text-body-sm text-slate-600">
+              Rather than treating LLMs as mysterious black boxes steered purely by prompt engineering, we isolate residual control vectors to understand the geometric structure of language attributes.
+            </p>
+          </div>
+
+          <div class="p-6 rounded-xl bg-white border border-slate-200 space-y-3 shadow-xs">
+            <span class="material-symbols-outlined text-cyan-tensor text-2xl">lock_open</span>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Open Research Stance</h3>
+            <p class="text-body-sm text-slate-600">
+              We publish our failure modes alongside our breakthroughs. Activation steering is fragile, polysemantic, and still imperfect—we invite the broader NLP community to test our findings.
+            </p>
+          </div>
+
+          <div class="p-6 rounded-xl bg-white border border-slate-200 space-y-3 shadow-xs">
+            <span class="material-symbols-outlined text-emerald-400 text-2xl">laptop_chromebook</span>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Practical Everyday Utility</h3>
+            <p class="text-body-sm text-slate-600">
+              Our research feeds directly into practical tools. The Second Thought browser extension delivers on-device, respectful rewriting for emails and code reviews without sending text to any cloud server.
+            </p>
+          </div>
+        </div>
+
+        <!-- Research quote box -->
+        <div class="p-8 rounded-2xl bg-white border border-slate-200 text-center max-w-4xl mx-auto space-y-4 shadow-xs">
+          <p class="text-body-lg text-slate-700 italic leading-relaxed">
+            &#34;We do not claim activation steering is solved. Residual spaces are dense and non-linear. But by allowing users to touch the internal parameters directly, we transform abstract math into an intuitive creative experience.&#34;
+          </p>
+          <div class="text-code-sm font-code text-accent font-semibold">
+            — The Second Thought Research Group
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Site Footer (Unified with 5 Clean Page Links) -->
+  <footer class="bg-white border-t border-slate-200 py-12 px-6 lg:px-12 text-slate-600 text-body-sm">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <span class="font-headline font-bold text-slate-900 text-base">Second Thought</span>
+        <span class="text-slate-600">|</span>
+        <span class="text-xs">Activation Steering &amp; Controllable Language Platform</span>
+      </div>
+
+      <div class="flex items-center gap-6 font-label text-xs">
+        <a href="#overview" class="hover:text-slate-900 transition-colors">Overview</a>
+        <a href="#experimental" class="hover:text-slate-900 transition-colors">The Experimental Page</a>
+        <a href="#extension" class="hover:text-slate-900 transition-colors">Browser Extension</a>
+        <a href="#evaluation" class="hover:text-slate-900 transition-colors">Evaluation</a>
+        <a href="#about" class="hover:text-slate-900 transition-colors">About Us</a>
+        <a href="https://github.com" target="_blank" class="hover:text-slate-900 transition-colors text-slate-500 hover:text-accent">GitHub</a>
+      </div>
+
+      <div class="text-code-sm font-code text-xs text-slate-500">
+        © 2026 Second Thought Project. Open Source Apache-2.0.
+      </div>
+    </div>
+  </footer>
+
+  <!-- SCRIPT: LIVE STEERING INTERACTION ENGINE -->
+  <script>
+    // State management for redesigned intuitive interactive lab
+    const state = {
+      alpha: 1.5,
+      vector: 'formality',
+      diffMode: true,
+      currentText: "I'm gonna fucking do it today.",
+      
+      // Dynamic semantic word replacement dictionaries for custom inputs and known samples
+      // Inspired directly by the whiteboard sketch:
+      // "I'm gonna fucking do it today" -> "going to" / "definitely" / "finish it before tomorrow sunrise"
+      whiteboardMapping: {
+        neg_extreme: "I'm straight up gonna fucking do it today no cap.",
+        neg_mild: "I'm gonna do it today, get off my back.",
+        zero: "I am going to do it today.",
+        pos_moderate: "I am going to definitely do it today.",
+        pos_high: "I will make sure to finish it before tomorrow sunrise.",
+        pos_extreme: "I hereby pledge to bring this endeavor to completion prior to tomorrow's dawn."
+      },
+      
+      meetingMapping: {
+        neg_extreme: "Ain't no way I'm sitting in that meeting, ya'll got zero plan and it's straight trash.",
+        neg_mild: "Skipping the call. The agenda makes no sense and it's a huge waste of my time.",
+        zero: "I can't make this meeting, your agenda is unstructured and not a good use of time.",
+        pos_moderate: "I will be unable to attend today's meeting. Could we refine the agenda topics in advance?",
+        pos_high: "Regrettably, I must decline today's meeting. Let us review a structured agenda prior to reconvening.",
+        pos_extreme: "I hereby convey my respectful apologies as I shall be absent from the scheduled assembly."
+      },
+
+      codeMapping: {
+        neg_extreme: "Bro who approved this garbage PR? You didn't even run tests, seriously?!",
+        neg_mild: "This pull request is totally busted. Why merge code without test coverage?",
+        zero: "This pull request has issues. It was merged without adequate test coverage.",
+        pos_moderate: "I noticed a few failing checks in this PR. Could we pause and add comprehensive test coverage?",
+        pos_high: "Upon reviewing this PR, I recommend we defer the merge until thorough unit tests are verified.",
+        pos_extreme: "A prudent examination reveals substantive omissions in automated verification protocols."
+      }
+    };
+
+    // DOM Elements
+    const alphaSlider = document.getElementById('alpha-strength-slider');
+    const numericDisplay = document.getElementById('strength-numeric-display');
+    const bigOutput = document.getElementById('big-steered-output');
+    const bottomInput = document.getElementById('bottom-user-input');
+    const activeRegimePill = document.getElementById('active-regime-pill');
+    const driftScoreTag = document.getElementById('drift-score-tag');
+    const vectorMiniLine = document.getElementById('vector-mini-line');
+    const vectorMiniPoint = document.getElementById('vector-mini-point');
+    const vectorMiniAlphaText = document.getElementById('vector-mini-alpha-text');
+    const vectorDirectionLabel = document.getElementById('vector-direction-label');
+    const annotationPillsContainer = document.getElementById('annotation-pills-container');
+    const diffToggleBtn = document.getElementById('diff-toggle-btn');
+    const copySteeredBtn = document.getElementById('copy-steered-btn');
+
+    // Categorize alpha into qualitative regime
+    function getRegime(alpha) {
+      if (alpha <= -2.0) {
+        return {
+          title: "NEGATIVE STEERING (ANTI-VECTOR)",
+          tier: "neg_extreme",
+          drift: 94,
+          regimeClass: "text-rose-400"
+        };
+      } else if (alpha < -0.5) {
+        return {
+          title: "COLLOQUIAL / BLUNT REGIME",
+          tier: "neg_mild",
+          drift: 62,
+          regimeClass: "text-amber-400"
+        };
+      } else if (alpha >= -0.5 && alpha <= 0.5) {
+        return {
+          title: "UNSTEERED BASELINE (α = 0)",
+          tier: "zero",
+          drift: 0,
+          regimeClass: "text-slate-400"
+        };
+      } else if (alpha <= 1.8) {
+        return {
+          title: "OPTIMAL STEERING SWEETSPOT (★)",
+          tier: "pos_moderate",
+          drift: 78,
+          regimeClass: "text-accent"
+        };
+      } else if (alpha <= 2.5) {
+        return {
+          title: "HIGH EXECUTIVE DIPLOMACY",
+          tier: "pos_high",
+          drift: 89,
+          regimeClass: "text-cyan-tensor"
+        };
+      } else {
+        return {
+          title: "HYPER-STEERED REGIME (DRIFT)",
+          tier: "pos_extreme",
+          drift: 98,
+          regimeClass: "text-amber-300"
+        };
+      }
+    }
+
+    // Dynamic text morpher: works on known sample keys AND arbitrary user typed text
+    function synthesizeSteeredText(inputText, alpha, tier) {
+      const lower = inputText.toLowerCase().trim();
+
+      // Check for known presets first
+      if (lower.includes("fucking") || lower.includes("gonna") || lower.includes("do it today")) {
+        return state.whiteboardMapping[tier];
+      }
+      if (lower.includes("meeting") || lower.includes("waste") || lower.includes("agenda")) {
+        return state.meetingMapping[tier];
+      }
+      if (lower.includes("pr") || lower.includes("pull request") || lower.includes("test") || lower.includes("broken")) {
+        return state.codeMapping[tier];
+      }
+
+      // Procedural transformation for any arbitrary user text typed into the bottom box!
+      if (alpha <= -2.0) {
+        return inputText
+          .replace(/please/gi, "")
+          .replace(/would you/gi, "you better")
+          .replace(/could you/gi, "just")
+          .replace(/hello|hi/gi, "yo")
+          .replace(/thank you/gi, "whatever")
+          .replace(/\./g, "!!") + " (straight up fr)";
+      } else if (alpha < -0.5) {
+        return inputText
+          .replace(/would like to/gi, "wanna")
+          .replace(/going to/gi, "gonna")
+          .replace(/kindly/gi, "")
+          .replace(/please /gi, "");
+      } else if (alpha >= -0.5 && alpha <= 0.5) {
+        return inputText;
+      } else if (alpha <= 1.8) {
+        return inputText
+          .replace(/gonna/gi, "planning to")
+          .replace(/wanna/gi, "would appreciate")
+          .replace(/fucking/gi, "definitely")
+          .replace(/garbage|trash|stupid/gi, "suboptimal")
+          .replace(/hate/gi, "have reservations about")
+          .replace(/bad/gi, "needing revision")
+          .replace(/now|today/gi, "at your earliest convenience");
+      } else if (alpha <= 2.5) {
+        return "With deference to our shared objectives, " + inputText
+          .replace(/gonna/gi, "shall endeavor to")
+          .replace(/fucking/gi, "substantively")
+          .replace(/do it today/gi, "conclude this deliverable prior to close of business")
+          .replace(/why/gi, "kindly elucidate the rationale whereby")
+          .replace(/bad|broken/gi, "exhibiting anomalous divergence");
+      } else {
+        return "In accordance with organizational governance, " + inputText
+          .replace(/gonna/gi, "stand bound to consummate")
+          .replace(/fucking/gi, "inexorably")
+          .replace(/do it today/gi, "reach completion prior to tomorrow's dawn");
+      }
+    }
+
+    // Main update routine for interactive lab
+    function updateInteractiveLab() {
+      const alpha = parseFloat(state.alpha);
+      const userText = bottomInput.value.trim() || "I'm gonna fucking do it today.";
+      state.currentText = userText;
+
+      // Update numeric alpha readout
+      numericDisplay.textContent = (alpha >= 0 ? '+' : '') + alpha.toFixed(2);
+
+      // Determine qualitative regime
+      const regime = getRegime(alpha);
+      activeRegimePill.textContent = regime.title;
+      driftScoreTag.textContent = `${regime.drift}%`;
+
+      // Synthesize output text
+      const rawOutput = synthesizeSteeredText(userText, alpha, regime.tier);
+
+      // Apply animated diff highlights if diffMode is ON
+      if (state.diffMode) {
+        const highlighted = rawOutput
+          .replace(/(definitely|going to|finish it before tomorrow sunrise|prior to tomorrow's dawn|pledge to bring|refined|substantively|earliest convenience|planning to|shall endeavor to|governance)/gi,
+            '<span class="text-accent underline decoration-accent/50 underline-offset-4 font-bold transition-all inline-block hover:scale-105">$1</span>')
+          .replace(/(decline|apologies|operational efficiency|reconvening|assembly|stewardship|prudent examination|substantive omissions)/gi,
+            '<span class="text-cyan-tensor underline decoration-cyan-tensor/50 underline-offset-4 font-bold transition-all inline-block hover:scale-105">$1</span>')
+          .replace(/(straight up|fucking|no cap|get off my back|trash|garbage|busted)/gi,
+            '<span class="text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded transition-all inline-block line-through">$1</span>');
+        
+        bigOutput.innerHTML = `"${highlighted}"`;
+      } else {
+        bigOutput.textContent = `"${rawOutput}"`;
+      }
+
+      // Update Mini Vector Trajectory SVG (center = 150)
+      const scaleX = 26; // pixels per alpha
+      const arrowX = Math.min(Math.max(150 + (alpha * scaleX), 25), 285);
+      
+      vectorMiniLine.setAttribute('x2', arrowX);
+      vectorMiniPoint.setAttribute('cx', arrowX);
+      vectorMiniAlphaText.setAttribute('x', Math.min(arrowX + 8, 230));
+      vectorMiniAlphaText.textContent = `α = ${(alpha >= 0 ? '+' : '') + alpha.toFixed(1)}`;
+      
+      if (alpha > 0) {
+        vectorMiniLine.setAttribute('stroke', '#F59E0B');
+        vectorMiniPoint.setAttribute('fill', '#F59E0B');
+        vectorMiniAlphaText.setAttribute('fill', '#F59E0B');
+        vectorDirectionLabel.textContent = "+v (Formal / Diplomatic)";
+        vectorDirectionLabel.className = "text-accent font-bold";
+      } else if (alpha < 0) {
+        vectorMiniLine.setAttribute('stroke', '#F43F5E');
+        vectorMiniPoint.setAttribute('fill', '#F43F5E');
+        vectorMiniAlphaText.setAttribute('fill', '#F43F5E');
+        vectorDirectionLabel.textContent = "-v (Informal / Anti-Steered)";
+        vectorDirectionLabel.className = "text-rose-400 font-bold";
+      } else {
+        vectorMiniLine.setAttribute('stroke', '#94A3B8');
+        vectorMiniPoint.setAttribute('fill', '#94A3B8');
+        vectorMiniAlphaText.setAttribute('fill', '#94A3B8');
+        vectorDirectionLabel.textContent = "Unsteered (Residual Stream Baseline)";
+        vectorDirectionLabel.className = "text-slate-400 font-bold";
+      }
+
+      // Update the active token trajectory ribbon at bottom of stage
+      updateAnnotationRibbon(alpha, regime.tier);
+    }
+
+    // Render morphism pills (inspired by whiteboard arrows: h1 -> h2 -> h3)
+    function updateAnnotationRibbon(alpha, tier) {
+      if (alpha <= -1.0) {
+        annotationPillsContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600 shadow-xs">going to</span>
+          <span class="text-rose-400">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-rose-300 font-medium">straight up gonna</span>
+          <span class="text-slate-600">|</span>
+          <span class="text-rose-400 text-[11px] font-bold">Negative activation polarity</span>
+        `;
+      } else if (alpha > -1.0 && alpha < 1.0) {
+        annotationPillsContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600 shadow-xs">Baseline Residual Output</span>
+          <span class="text-slate-600">|</span>
+          <span class="text-slate-400 text-[11px]">No contrastive vector injected (α ≈ 0)</span>
+        `;
+      } else if (alpha >= 1.0 && alpha <= 2.2) {
+        annotationPillsContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 line-through">fucking</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-tensor/15 border border-cyan-tensor/30 text-cyan-tensor font-medium">definitely</span>
+          <span class="text-slate-600">|</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 line-through">today</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/15 border border-accent/30 text-accent font-medium">before sunrise</span>
+        `;
+      } else {
+        annotationPillsContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/20 border border-accent/40 text-accent font-medium">Hyper-Steered Synthesis</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-tensor/20 border border-cyan-tensor/40 text-cyan-tensor font-medium">High Victorian / Bureaucratic Latent State</span>
+        `;
+      }
+    }
+
+    // Set strength helper for quick detent buttons
+    window.setStrength = function(val) {
+      alphaSlider.value = val;
+      state.alpha = val;
+      updateInteractiveLab();
+    };
+
+    // Load sample text helper
+    window.loadSampleText = function(key) {
+      if (key === 'whiteboard') {
+        bottomInput.value = "I'm gonna fucking do it today.";
+      } else if (key === 'meeting') {
+        bottomInput.value = "I can't make this meeting, your agenda is totally unstructured and a waste of time.";
+      } else if (key === 'code') {
+        bottomInput.value = "This PR is broken, why did you merge code with zero test coverage?";
+      }
+      updateInteractiveLab();
+    };
+
+    // Event listeners
+    alphaSlider.addEventListener('input', (e) => {
+      state.alpha = parseFloat(e.target.value);
+      updateInteractiveLab();
+    });
+
+    bottomInput.addEventListener('input', () => {
+      updateInteractiveLab();
+    });
+
+    // Vector pill buttons
+    document.querySelectorAll('.vector-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.vector-pill').forEach(b => {
+          b.classList.remove('active', 'bg-accent', 'text-dark-surface', 'shadow-sm');
+          b.classList.add('text-slate-400');
+        });
+        btn.classList.remove('text-slate-400');
+        btn.classList.add('active', 'bg-accent', 'text-dark-surface', 'shadow-sm');
+        state.vector = btn.dataset.vector;
+        updateInteractiveLab();
+      });
+    });
+
+    // Toggle Diff
+    diffToggleBtn.addEventListener('click', () => {
+      state.diffMode = !state.diffMode;
+      diffToggleBtn.textContent = `Token Annotations: ${state.diffMode ? 'ON' : 'OFF'}`;
+      diffToggleBtn.classList.toggle('text-accent', state.diffMode);
+      updateInteractiveLab();
+    });
+
+    // Copy to clipboard
+    copySteeredBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(bigOutput.textContent.replace(/^"|"$/g, '').trim());
+      const orig = copySteeredBtn.innerHTML;
+      copySteeredBtn.innerHTML = '<span class="material-symbols-outlined text-xs">done</span><span>Copied!</span>';
+      setTimeout(() => {
+        copySteeredBtn.innerHTML = orig;
+      }, 1500);
+    });
+
+    // Initial trigger on load
+    updateInteractiveLab();
+  </script>
+
+
+</body></html>

@@ -2013,6 +2013,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "datasets" },
+    { name = "fastapi" },
     { name = "gradio" },
     { name = "ipykernel" },
     { name = "matplotlib" },
@@ -2021,10 +2022,12 @@ dependencies = [
     { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
     { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
     { name = "transformers" },
+    { name = "uvicorn" },
 ]
 
 [package.optional-dependencies]
 dev = [
+    { name = "httpx" },
     { name = "nbformat" },
     { name = "pandas" },
     { name = "pytest" },
@@ -2036,6 +2039,7 @@ evaluation = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "httpx" },
     { name = "nbformat" },
     { name = "pandas" },
     { name = "pytest" },
@@ -2045,7 +2049,9 @@ dev = [
 requires-dist = [
     { name = "datasets", specifier = ">=4.0,<5.0" },
     { name = "detoxify", marker = "extra == 'evaluation'", specifier = ">=0.5.2,<1.0" },
+    { name = "fastapi", specifier = ">=0.115,<1.0" },
     { name = "gradio", specifier = ">=5.0,<6.0" },
+    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27,<1" },
     { name = "ipykernel", specifier = ">=6.29,<7" },
     { name = "matplotlib", specifier = ">=3.9,<4.0" },
     { name = "nbformat", marker = "extra == 'dev'", specifier = ">=5.10,<6" },
@@ -2057,11 +2063,13 @@ requires-dist = [
     { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = "==2.8.0" },
     { name = "torch", marker = "sys_platform == 'linux' or sys_platform == 'win32'", specifier = "==2.8.0", index = "https://download.pytorch.org/whl/cpu" },
     { name = "transformers", specifier = "==4.57.3" },
+    { name = "uvicorn", specifier = ">=0.30,<1.0" },
 ]
 provides-extras = ["dev", "evaluation"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "httpx", specifier = ">=0.27,<1" },
     { name = "nbformat", specifier = ">=5.10,<6" },
     { name = "pandas", specifier = ">=2.2,<3" },
     { name = "pytest", specifier = ">=8.0,<9.0" },

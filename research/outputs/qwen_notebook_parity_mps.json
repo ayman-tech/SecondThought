@@ -1,0 +1,142 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "device": "mps",
+  "dtype": "torch.float16",
+  "prompt": "Rewrite the user's sentence while preserving its meaning. Return only the rewritten sentence.",
+  "shifts": {
+    "formality": {
+      "layer": 11,
+      "vector_norm": 3.904750108718872,
+      "observed_shift_norm": 1.9528542757034302,
+      "max_error": 0.0015856623649597168
+    },
+    "toxicity": {
+      "layer": 22,
+      "vector_norm": 0.9999999403953552,
+      "observed_shift_norm": 0.9996844530105591,
+      "max_error": 0.0037792176008224487
+    }
+  },
+  "max_next_token_logit_change": 3.654296875,
+  "gradio_callback_matches": true,
+  "streaming_parity": true,
+  "cancellation_hook_cleanup": true,
+  "cases": [
+    {
+      "text": "its really hard when u want to know what happened",
+      "alpha": -2.0,
+      "beta": 0.0,
+      "output": "it's really hard when you wanna know what happened",
+      "notebook_token_match": true
+    },
+    {
+      "text": "its really hard when u want to know what happened",
+      "alpha": 0.0,
+      "beta": 0.0,
+      "output": "it is very difficult to know what happened when you want to know",
+      "notebook_token_match": true
+    },
+    {
+      "text": "its really hard when u want to know what happened",
+      "alpha": 0.5,
+      "beta": 0.0,
+      "output": "It is difficult for you to know what happened when you want to know.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "its really hard when u want to know what happened",
+      "alpha": 1.0,
+      "beta": 0.0,
+      "output": "It is difficult for you to know what has occurred.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "its really hard when u want to know what happened",
+      "alpha": 2.0,
+      "beta": 0.0,
+      "output": "When you seek information about an event, it can be challenging and frustrating.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "send me the fucking report by 3 PM",
+      "alpha": -2.0,
+      "beta": 0.0,
+      "output": "send me the fucking report by 3 pm",
+      "notebook_token_match": true
+    },
+    {
+      "text": "send me the fucking report by 3 PM",
+      "alpha": 0.0,
+      "beta": 0.0,
+      "output": "I need the report by 3 PM.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "send me the fucking report by 3 PM",
+      "alpha": 0.5,
+      "beta": 0.0,
+      "output": "I need you to send me the report by 3 PM.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "send me the fucking report by 3 PM",
+      "alpha": 1.0,
+      "beta": 0.0,
+      "output": "I will send you the report by 3 PM.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "send me the fucking report by 3 PM",
+      "alpha": 2.0,
+      "beta": 0.0,
+      "output": "Send the report to me by 3 PM.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "if people didn 't buy this shit they wouldn 't be doing it .",
+      "alpha": 0.0,
+      "beta": -2.0,
+      "output": "If people didn't buy this shit, they wouldn't be doing it.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "if people didn 't buy this shit they wouldn 't be doing it .",
+      "alpha": 0.0,
+      "beta": 0.0,
+      "output": "If people didn't buy this shit, they wouldn't be doing it.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "if people didn 't buy this shit they wouldn 't be doing it .",
+      "alpha": 0.0,
+      "beta": 0.5,
+      "output": "If people didn't buy this, they wouldn't be doing it.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "if people didn 't buy this shit they wouldn 't be doing it .",
+      "alpha": 0.0,
+      "beta": 1.0,
+      "output": "If people didn't buy this, they wouldn't be doing it.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "if people didn 't buy this shit they wouldn 't be doing it .",
+      "alpha": 0.0,
+      "beta": 2.0,
+      "output": "If people didn't buy this, they wouldn't be doing it.",
+      "notebook_token_match": true
+    },
+    {
+      "text": "send me the fucking report by 3 PM",
+      "alpha": 0.5,
+      "beta": 1.0,
+      "output": "I need you to send me the report by 3 PM.",
+      "notebook_token_match": true
+    }
+  ],
+  "artifacts": {
+    "qwen2_5_0_5b_gyafc_formality_directions.pt": "53af037f6f44170568340298215f58f7a71201cc6bc4a1acb861d08ddb88b73f",
+    "qwen2_5_0_5b_paradetox_directions.pt": "cb08216f6d3ca5c66f3827e93c6429d8d7bc9ff3093d1bf8dfe19f74578cda11"
+  }
+}

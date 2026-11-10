@@ -1,8 +1,22 @@
 # SecondThought
 
-SecondThought explores rewriting emotionally charged messages into respectful, professional language while preserving meaning, criticism, urgency, facts, and requested actions. It includes an activation-steered local Qwen comparison interface, local T5 inference and fine-tuning notebooks, an OpenAI baseline CLI, and evaluation tools.
+SecondThought explores rewriting emotionally charged messages into respectful, professional language while preserving meaning, criticism, urgency, facts, and requested actions. It includes a local Qwen activation-steering interface, local T5 inference and fine-tuning notebooks, an OpenAI baseline CLI, and evaluation tools.
 
 ## Setup
+
+### Run the website
+
+```bash
+uv sync
+make website
+```
+
+Open **http://127.0.0.1:8001** for the Overview and live formality-steering page.
+Typing or changing alpha starts a real Qwen rewrite automatically, with streaming
+text, cancellation of superseded work, and no Generate button. The extension API
+continues to use port 8000. See [website/README.md](website/README.md) for API
+contracts, limits, and verification. Gradio remains an optional interface to the
+same steering core while the website is developed.
 
 Use Python 3.12 (the project supports Python 3.12–3.13). Install the application, local inference, notebook, and development dependencies:
 
@@ -56,7 +70,7 @@ The final model and tokenizer are exported to `./epoch5`; the last cell download
 
 The notebook includes a reusable `detoxify(text)` function and instructions for loading the exported model later. Training runs locally within your Colab runtime; the notebook does not publish the model to Hugging Face or enable external experiment tracking.
 
-## Run the model comparison demo
+## Run the Qwen steering demo
 
 Launch the local Gradio interface from the repository root:
 
@@ -64,22 +78,41 @@ Launch the local Gradio interface from the repository root:
 secondthought-app
 ```
 
-The app loads `Qwen/Qwen2.5-0.5B-Instruct`, the two local fine-tuned T5-small
-models, and the saved directions from `artifacts/`. It
-displays three vertically stacked responses in this order:
-
-1. **Detox Fine-Tuned:** T5-small trained on ParaDetox.
-2. **Formality Fine-Tuned:** T5-small trained for formal rewriting.
-3. **Combined Steering:** one Qwen rewrite with the GYAFC final-token direction
-   applied at Layer 4 by alpha and the unit-normalized ParaDetox mean-pooled
-   direction applied at Layer 11 by beta. The detox direction's sign is oriented
-   from the causal sweep so positive beta uses the empirically detoxifying side.
+The app loads `Qwen/Qwen2.5-0.5B-Instruct` and the saved directions from
+`artifacts/`. It displays one Qwen rewrite with the
+raw GYAFC mean-pooled direction applied at decoder layer 11 by alpha
+(`negative_layer11_mean`, the historical control promoted in the formality
+notebook's causal results) and the unit-normalized ParaDetox final-token
+direction applied at decoder layer 22 by beta (`best_final`, neutral minus toxic,
+without sign reversal). Layer indices are zero-based.
 
 Both controls range from `-2` to `+2` in `0.5` increments. The combined response
-uses a fixed minimal-rewrite prompt, while alpha and beta independently control
+uses the notebooks' fixed neutral rewrite prompt, while alpha and beta independently control
 the two activation interventions in the same generation. Values above `+1`
 remain experimental because strong interventions can alter meaning or drift off
 topic.
+
+The chat template contains exactly a system rewrite instruction and the source
+sentence as the user message, matching `activation_steering.ipynb` and
+`paradetox_activation_steering.ipynb`. At alpha=beta=0 the model still rewrites:
+this is a prompt baseline, not an identity/copy baseline. Compare steering
+against that baseline. The notebooks evaluate each direction separately;
+simultaneous steering is experimental and can change meaning.
+
+Verify the application against the actual notebook generation functions:
+
+```bash
+uv run python research/steering_experimentation/verify_qwen_integration.py --device cpu
+# Apple Silicon: check the same float16 device path as Gradio.
+uv run python research/steering_experimentation/verify_qwen_integration.py --device mps \
+  --output research/outputs/qwen_notebook_parity_mps.json
+```
+
+This checks generated token equality for isolated and combined interventions,
+measures real layer-output shifts, checks hook cleanup, and runs Gradio's
+registered callbacks through the real model. Results include vector checksums
+and per-setting outputs. Run `uv run pytest tests/test_steering_app.py` for
+lightweight Gradio regression checks.
 
 The first launch may download the Qwen model from Hugging Face. Later launches use
 the local cache. Apple Silicon uses MPS automatically; CUDA is used when available,
@@ -176,15 +209,15 @@ in `src/secondthought/` and never import each other.
 extension/              The Chrome extension (see extension/README.md)
   frontend/               the extension itself: load this folder as "unpacked" in Chrome
   api/                    its local backend, runs on the user's machine (config.toml picks the model)
-website/                The website (not built yet; the tech stack is undecided)
-  frontend/               empty for now
-  api/                    backend for EC2 / Lambda, empty for now
-src/secondthought/      Shared core: rewriters, facts guard, config, evaluation. No HTTP, no UI
+website/                Local formality-steering website (see website/README.md)
+  frontend/               static HTML/CSS/JS, automatically generated rewrites
+  api/                    FastAPI, streaming, cancellation, bounded model scheduling
+src/secondthought/      Shared inference/evaluation core; app.py retains the legacy Gradio UI
 config/  prompts/       Shared baseline config and model instructions (default.toml, constrained.txt)
 artifacts/              Runtime assets the code loads (steering vectors); see artifacts/README.md
 data/workplace_eval/    Versioned evaluation inputs
 tests/                  Offline unit tests
-infra/                  Deployment and CI definitions (empty for now)
+infra/                  Deployment and CI definitions (not configured yet)
 research/               Not shipped: notebooks/, steering_experimentation/, reports/, outputs/
 models/                 Exported model weights (ignored by Git)
 ```
@@ -194,7 +227,10 @@ that product's `api/`, and anything both backends need goes in `src/secondthough
 
 ## Test
 
-Tests do not call the OpenAI API or load any model.
+Most tests use small fakes and do not load models. The existing real-model
+formality-ranker test may download weights from Hugging Face. The explicit
+notebook-parity script and optional website browser QA also use real models;
+see [website/README.md](website/README.md). Tests do not call the OpenAI API.
 
 ```bash
 make test    # same as: pytest
