@@ -21,7 +21,7 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Any, Protocol
 
-from .evaluation import _average, extract_critical_values
+from evaluation.evaluation import _average, extract_critical_values
 from .t5_rewriter import split_sentences
 
 FORMALITY_MODEL_COLUMNS = (

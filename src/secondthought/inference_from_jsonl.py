@@ -13,7 +13,7 @@ from time import perf_counter
 from typing import Mapping, Sequence
 
 from .data import write_csv
-from .evaluation import (
+from evaluation.evaluation import (
     DetoxifyToxicityScorer,
     SentenceTransformerSimilarityScorer,
     evaluate_records,

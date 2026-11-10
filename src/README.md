@@ -1,7 +1,7 @@
 # SecondThought Source and Evaluation Guide
 
 This directory contains the Python implementation of SecondThought. The current
-evaluation pipeline is in `secondthought/evaluation.py`, and the `evaluate` CLI
+evaluation pipeline is in `evaluation/evaluation.py`, and the `evaluate` CLI
 command is wired in `secondthought/cli.py`.
 
 The project evaluates saved model outputs rather than evaluating requests in real

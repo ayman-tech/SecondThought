@@ -3,7 +3,7 @@
 Measures whether a rewrite reads as formal or professional. It adds columns next to the existing metrics; `evaluation.py` is unchanged.
 
 - `src/secondthought/formality_evaluation.py`: the metrics
-- `src/secondthought/evaluation_v2.py`: existing metrics plus formality (`evaluate_records_v2`, `format_evaluated_row_v2`, `summarize_v2`)
+- `src/evaluation/evaluation_v2.py`: existing metrics plus formality (`evaluate_records_v2`, `format_evaluated_row_v2`, `summarize_v2`)
 - `src/secondthought/add_formality.py`: adds the columns to an already-evaluated CSV
 
 There are **no thresholds and no pass/fail**. These are raw values, to be calibrated later against human ratings.

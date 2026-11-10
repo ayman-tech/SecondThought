@@ -17,7 +17,7 @@ from .evaluation import (
     format_evaluated_row,
     summarize,
 )
-from .formality_evaluation import (
+from secondthought.formality_evaluation import (
     FORMALITY_COLUMNS,
     FormalityScorer,
     evaluate_formality_records,

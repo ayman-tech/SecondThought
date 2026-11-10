@@ -8,7 +8,7 @@ from dataclasses import asdict
 
 from .config import Settings, load_settings
 from .data import read_csv, read_jsonl, write_csv
-from .evaluation import (
+from evaluation.evaluation import (
     DetoxifyToxicityScorer,
     SentenceTransformerSimilarityScorer,
     evaluate_records,

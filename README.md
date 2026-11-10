@@ -158,7 +158,7 @@ usage. Model information and the UTC timestamp remain the last two columns.
 - Baseline instructions: `prompts/constrained.txt`
 - Evaluation inputs: `data/workplace_eval/*.jsonl`
 - Provider implementation: `src/secondthought/rewriter.py`
-- Metrics: `src/secondthought/evaluation.py`
+- Metrics: `src/evaluation/evaluation.py` (and `src/evaluation/evaluation_v2.py`, which adds formality)
 
 Environment variables override the main settings:
 

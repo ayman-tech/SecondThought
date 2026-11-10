@@ -25,7 +25,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from .evaluation import evaluate_pair
+from evaluation.evaluation import evaluate_pair
 
 # ponytail: uncalibrated placeholders; fit them on the human labels (proposal, "Calibration").
 TOXICITY_MAX = 0.2   # Detoxify score above this counts as still hostile.
