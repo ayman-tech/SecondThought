@@ -140,6 +140,8 @@ until you click it.
   diff, Replace and Undo.
 - The classifiers load in the background when the server starts (the first run
   downloads about 500 MB). After that a check takes about 0.2 s on CPU.
+- They need the project's evaluation extras: `uv sync --extra evaluation`. Without
+  them the server still runs, and `/health` reports the tone check as `error`.
 - Models and thresholds are in `[tone_check]` in `config/t5.toml`, so they're
   easy to swap. The pill can be switched off on the settings page.
 
