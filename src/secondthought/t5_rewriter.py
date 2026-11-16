@@ -28,6 +28,9 @@ ACRONYMS_IN_VOCAB = {"PR", "PDF"}
 # Too short to judge alone ("IT" may be the department), so these only count as
 # shouting right next to a shouted word ("STOP IT").
 SHORT_WORDS = {"AM", "AT", "BE", "DO", "GO", "IF", "IN", "IS", "IT", "ME", "MY", "NO", "OF", "ON", "OR", "SO", "TO", "UP", "US", "WE"}
+# Short words that are basically never acronyms, so in capitals they're always
+# emphasis: "you are SO lazy", "DO not merge".
+EMPHASIS_WORDS = {"BE", "DO", "GO", "IF", "IS", "ME", "MY", "NO", "OF", "SO", "TO", "UP", "WE"}
 
 # A sentence made of only these says nothing about the work, so there's nothing
 # to preserve. "This is garbage" is different: it criticises something, so it
@@ -67,9 +70,12 @@ def calm_shouting(sentence: str, vocabulary: Collection[str]) -> str:
     shouted = {
         index
         for index, word in enumerate(words)
-        if len(word.group()) >= 3
-        and word.group() not in ACRONYMS_IN_VOCAB
-        and "▁" + word.group().lower() in vocabulary
+        if word.group() in EMPHASIS_WORDS
+        or (
+            len(word.group()) >= 3
+            and word.group() not in ACRONYMS_IN_VOCAB
+            and "▁" + word.group().lower() in vocabulary
+        )
     }
     if not shouted:
         return sentence
