@@ -109,16 +109,15 @@ function inputChanged(kind = 'text') {
   if (kind === 'slider' && maxWaitTimer === null) maxWaitTimer = setTimeout(dispatch, 1000);
 }
 function finish(event, snapshot, fromCache = false) {
-  const previous = completed?.source === snapshot.message ? completed.text : snapshot.message;
   const unchanged = completed?.source === snapshot.message && completed.text === event.rewritten_text;
-  completed = { text: event.rewritten_text, source: snapshot.message, alpha: snapshot.alpha, before: previous };
-  renderText(completed.text, unchanged ? null : previous);
+  completed = { text: event.rewritten_text, source: snapshot.message, alpha: snapshot.alpha };
+  renderText(completed.text, completed.source);
   elements['output-context'].textContent = event.finish_reason === 'length' ? 'Output limit reached · review this partial rewrite' : 'Your rewrite';
   elements['output-parameters'].textContent = `α ${signed(snapshot.alpha)} · β 0`;
   elements['change-note'].textContent = event.finish_reason === 'length'
     ? 'This result reached the 64-token limit. Shorten your draft for a complete rewrite.'
-    : unchanged ? 'Same wording at this setting. Identical results are possible.'
-      : 'Highlighted words changed from the previous result, or from your draft on the first run.';
+    : unchanged ? 'Same wording at this setting. Highlights still compare with your original draft.'
+      : 'Highlighted words differ from your original draft.';
   elements.latency.textContent = fromCache ? `Cached · originally ${(event.latency_ms / 1000).toFixed(2)}s`
     : `${(event.latency_ms / 1000).toFixed(2)}s generation`;
   elements.copy.disabled = false;
@@ -223,7 +222,7 @@ elements['changes-toggle'].addEventListener('click', () => {
   highlightChanges = !highlightChanges;
   elements['changes-toggle'].setAttribute('aria-pressed', String(highlightChanges));
   elements['changes-check'].textContent = highlightChanges ? '✓' : '';
-  if (completed && !elements.copy.disabled) renderText(completed.text, highlightChanges ? completed.before : null);
+  if (completed && !elements.copy.disabled) renderText(completed.text, completed.source);
 });
 elements.copy.addEventListener('click', async () => {
   if (!completed || elements.copy.disabled) return;
@@ -231,12 +230,22 @@ elements.copy.addEventListener('click', async () => {
   catch { setStatus('Clipboard access was unavailable. Select the text to copy it.'); }
 });
 window.addEventListener('pagehide', () => { clearSchedule(); clearTimeout(readinessTimer); cancelActive(); });
+window.addEventListener('pageshow', event => {
+  if (event.persisted) {
+    // A Back/Forward cache restore resumes this module rather than reloading it.
+    // Restart readiness polling and invalidate any pre-navigation request.
+    revisions.next();
+    ready = false;
+    clearSchedule();
+    updateDocking();
+    void checkReadiness();
+  }
+});
 
 // Keep the live control within reach while viewing the output on a small screen.
 // Undock while editing so a virtual keyboard does not compete for input space.
 let dockingFrame = null;
 function updateDocking() {
-  dockingFrame = null;
   const bounds = $('experimental').getBoundingClientRect();
   const headerBottom = document.querySelector('.site-header').getBoundingClientRect().bottom;
   $('slider-panel').classList.toggle('is-docked',
@@ -244,11 +253,16 @@ function updateDocking() {
     && bounds.top <= headerBottom + 40 && bounds.bottom > window.innerHeight * 0.6);
 }
 function scheduleDocking() {
-  if (dockingFrame === null) dockingFrame = requestAnimationFrame(updateDocking);
+  if (dockingFrame === null) dockingFrame = requestAnimationFrame(() => {
+    dockingFrame = null;
+    updateDocking();
+  });
 }
 window.addEventListener('scroll', scheduleDocking, { passive: true });
-window.addEventListener('resize', scheduleDocking);
-elements.draft.addEventListener('focus', scheduleDocking);
-elements.draft.addEventListener('blur', scheduleDocking);
-scheduleDocking();
+window.addEventListener('resize', updateDocking);
+matchMedia('(max-width: 650px)').addEventListener('change', updateDocking);
+window.visualViewport?.addEventListener('resize', updateDocking);
+elements.draft.addEventListener('focus', updateDocking);
+elements.draft.addEventListener('blur', updateDocking);
+updateDocking();
 refreshControls(); void checkReadiness();

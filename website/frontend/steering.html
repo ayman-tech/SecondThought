@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block scripts %}<script type="module" src="/assets/steering.js"></script>{% endblock %}
+{% block content %}
+    <section id="experimental" class="workspace section-wrap">
+      <div class="section-heading">
+        <div class="heading-with-icon"><span class="section-icon" aria-hidden="true">≋</span><div><p class="eyebrow">STEERING LAB</p><h1 class="page-title">Find your level of formality.</h1></div></div>
+        <div class="model-status"><span id="model-dot" class="status-dot loading"></span><span id="model-status">Loading model…</span><button id="reconnect" class="link-button" hidden>Reconnect</button></div>
+      </div>
+
+      <div class="output-card" id="output-card" aria-busy="false">
+        <div class="output-toolbar">
+          <div class="output-title"><span class="live-indicator" id="live-indicator"></span><span>MODEL REWRITE</span><span class="badge">FORMALITY</span></div>
+          <div class="output-tools"><button id="changes-toggle" type="button" aria-pressed="true">Highlight changes <span id="changes-check" aria-hidden="true">✓</span></button><button id="copy" type="button" disabled>Copy output <span aria-hidden="true">↗</span></button></div>
+        </div>
+        <div class="output-stage">
+          <div class="output-subheading"><span id="output-context">Your next wording starts here.</span><span id="output-parameters" class="parameter-label"></span></div>
+          <div id="output" class="big-output placeholder" aria-label="Generated rewrite">A small shift.<br>A new way to say it.</div>
+          <div class="output-bottom"><span id="change-note">Type a draft below. Your rewrite will appear automatically.</span><span id="latency"></span></div>
+        </div>
+        <div class="vector-strip">
+          <span class="code-label">h₁₁ + α · v<sub>formal</sub></span>
+          <div class="vector-axis" aria-hidden="true"><span class="axis-center"></span><span id="vector-line"></span><span id="vector-point"></span></div>
+          <span class="code-label" id="vector-description">Small positive intervention</span>
+        </div>
+      </div>
+
+      <div class="controller-card">
+        <div id="slider-panel" class="slider-panel">
+        <div class="slider-heading"><div><label for="alpha">Formality strength <span class="greek">α</span></label><p>Move the slider. A new rewrite starts automatically.</p></div><output for="alpha" id="alpha-value">+0.5</output></div>
+        <input id="alpha" type="range" min="-2" max="2" value="0.5" step="0.1" aria-describedby="slider-help">
+        <div class="slider-stops"><button type="button" data-alpha="-2">−2 <span>Against the direction</span></button><button type="button" data-alpha="0">0 <span>No formality vector</span></button><button type="button" data-alpha="2">+2 <span>A stronger intervention</span></button></div>
+        <p id="slider-help" class="slider-help">Positive values add the learned formality direction. Results vary by sentence.</p>
+        </div>
+
+        <div class="draft-heading"><label for="draft">YOUR DRAFT</label><div class="samples"><span>Try a sentence</span><button type="button" data-sample="its really hard when u want to know what happened">An everyday thought</button><button type="button" data-sample="hey can u send the report by 3 PM?">A work message</button><button type="button" data-sample="I can't make this meeting. Can we move it to Friday?">A change of plans</button></div></div>
+        <div class="draft-field"><textarea id="draft" rows="2" maxlength="2000" placeholder="Write something you want to rephrase…" aria-describedby="draft-help error-message" spellcheck="true"></textarea><button id="clear" type="button" title="Clear draft" aria-label="Clear draft">×</button></div>
+        <div class="draft-footer"><span id="draft-help">Processed by the Python server running this website. No draft history is saved.</span><span id="character-count">0 / 2,000</span></div>
+        <div id="error-box" class="error-box" hidden><p id="error-message" role="alert"></p><button id="retry" type="button">Retry this wording ↗</button></div>
+      </div>
+      <div class="workspace-footer"><p id="status" role="status" aria-live="polite">Waiting for a draft.</p><p>Review facts, names, deadlines, and who is doing what.</p></div>
+      <details class="experiment-notes"><summary>What should I expect from this slider?</summary><p>At α = 0, Qwen still follows a neutral rewrite instruction. It may rephrase or remove profanity without steering. Compare different alpha values to explore the added intervention. Nearby values can produce identical text. Strong values can change meaning, reverse an action, or produce awkward wording.</p><p>This version exposes formality only. The finalized backend also supports a separate detoxification direction, which is set to zero here. The animated line is a schematic of the requested strength, not a measurement of the model’s hidden states.</p></details>
+    </section>
+{% endblock %}

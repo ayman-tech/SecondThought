@@ -63,6 +63,26 @@ def test_static_page_configuration_and_stream_contract():
         assert client.post("/api/v1/steering/rewrite", json=body).status_code == 409
 
 
+@pytest.mark.parametrize("path,section", [
+    ("/", "overview"), ("/steering", "experimental"),
+    ("/extension", "extension"), ("/evaluation", "evaluation"), ("/about", "about"),
+])
+def test_pages_have_separate_content_and_navigation(path, section):
+    with TestClient(create_app(FakeService())) as client:
+        response = client.get(path)
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("text/html")
+        html = response.text
+        assert f'<section id="{section}"' in html
+        assert f'href="{path}" class="nav-active" aria-current="page"' in html
+        for other in {"overview", "experimental", "extension", "evaluation", "about"} - {section}:
+            assert f'<section id="{other}"' not in html
+        assert ('src="/assets/steering.js"' in html) == (path == "/steering")
+        for target in ("/", "/steering", "/extension", "/evaluation", "/about"):
+            assert f'href="{target}"' in html
+        assert "{%" not in html and "{{" not in html
+
+
 def test_json_endpoint_and_cancel_are_revision_scoped():
     with TestClient(create_app(FakeService())) as client:
         wait_ready(client)

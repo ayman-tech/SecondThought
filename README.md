@@ -11,8 +11,9 @@ uv sync
 make website
 ```
 
-Open **http://127.0.0.1:8001** for the Overview and live formality-steering page.
-Typing or changing alpha starts a real Qwen rewrite automatically, with streaming
+Open **http://127.0.0.1:8001** for Home, then use **Steering Lab** to open the
+separate experiment page at **http://127.0.0.1:8001/steering**.
+Typing or changing alpha there starts a real Qwen rewrite automatically, with streaming
 text, cancellation of superseded work, and no Generate button. The extension API
 continues to use port 8000. See [website/README.md](website/README.md) for API
 contracts, limits, and verification. Gradio remains an optional interface to the

@@ -10,8 +10,9 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import uvicorn
 
 from secondthought.steering_rewriter import SteeredQwenRewriter
@@ -21,6 +22,13 @@ from .schemas import CancelRequest, RewriteRequest
 logger = logging.getLogger(__name__)
 FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
 TERMINAL = {"completed", "cancelled", "error"}
+PAGES = {
+    "home": ("/", "Home", "Find the words you mean with SecondThought."),
+    "steering": ("/steering", "Steering Lab", "Experiment with Qwen formality steering and inspect its rewrites."),
+    "extension": ("/extension", "Extension", "Learn about the separate local T5 browser-extension workflow."),
+    "evaluation": ("/evaluation", "Evaluation", "How SecondThought evaluates style changes and meaning preservation."),
+    "about": ("/about", "About", "The SecondThought project and its current experimental direction."),
+}
 
 
 def create_app(service=None, *, service_factory=None) -> FastAPI:
@@ -133,9 +141,24 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
             app.state.manager.cancel_revision(str(body.session_id), body.revision)
         return {"status": "ok"}
 
-    @app.get("/")
-    async def index():
-        return FileResponse(FRONTEND / "index.html")
+    templates = Jinja2Templates(directory=str(FRONTEND))
+
+    def page_handler(page: str):
+        async def render(request: Request):
+            _, title, description = PAGES[page]
+            return templates.TemplateResponse(
+                request=request,
+                name="index.html" if page == "home" else f"{page}.html",
+                context=dict(
+                    page=page, title=title, description=description,
+                    navigation=[(key, path, label) for key, (path, label, _) in PAGES.items()],
+                ),
+            )
+        return render
+
+    for page, (path, _, _) in PAGES.items():
+        app.add_api_route(path, page_handler(page), response_class=HTMLResponse,
+                          include_in_schema=False, name=f"{page}_page")
 
     app.mount("/assets", StaticFiles(directory=FRONTEND / "assets", check_dir=False), name="assets")
     return app
