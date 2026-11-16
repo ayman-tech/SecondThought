@@ -142,7 +142,7 @@ until you click it.
   downloads about 500 MB). After that a check takes about 0.2 s on CPU.
 - They need the project's evaluation extras: `uv sync --extra evaluation`. Without
   them the server still runs, and `/health` reports the tone check as `error`.
-- Models and thresholds are in `[tone_check]` in `config/t5.toml`, so they're
+- Models and thresholds are in `[tone_check]` in `extension/api/config.toml`, so they're
   easy to swap. The pill can be switched off on the settings page.
 
 The trigger lists also include the open "List of Dirty, Naughty, Obscene, and

@@ -3,7 +3,7 @@
 Runs two small classifiers, only when the user asks for a check, so nothing
 heavy happens per keystroke: Detoxify for toxicity, and a RoBERTa formality
 ranker trained on GYAFC for informality. Both are swappable through the
-[tone_check] section of config/t5.toml.
+[tone_check] section of extension/api/config.toml.
 """
 
 from __future__ import annotations
