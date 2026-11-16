@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#f8fafc">
   <title>{{ title }} — SecondThought</title>
   <link rel="stylesheet" href="/assets/styles.css">
+  {% block styles %}{% endblock %}
   {% block scripts %}{% endblock %}
 </head>
 <body class="page-{{ page }}">
@@ -18,7 +19,6 @@
       <a href="{{ path }}"{% if key == page %} class="nav-active" aria-current="page"{% endif %}>{{ label }}</a>
       {% endfor %}
     </nav>
-    <a class="button small primary" href="/steering">Open Steering Lab <span aria-hidden="true">↗</span></a>
   </header>
   <main id="main">
     {% block content %}{% endblock %}

@@ -72,6 +72,7 @@ function keepPrevious() {
 }
 function refreshControls() {
   const { alpha } = desired();
+  $('requested-alpha').textContent = signed(alpha);
   elements['alpha-value'].value = signed(alpha);
   elements.alpha.setAttribute('aria-valuetext', `${signed(alpha)} formality strength`);
   elements['character-count'].textContent = `${elements.draft.value.length.toLocaleString()} / 2,000`;
@@ -97,6 +98,7 @@ function inputChanged(kind = 'text') {
     elements['output-parameters'].textContent = '';
     elements['change-note'].textContent = 'Type a draft or choose a sample. No Generate button needed.';
     elements.latency.textContent = ''; elements.copy.disabled = true;
+    clearInspection();
     setStatus('Waiting for a draft.'); return;
   }
   // Invalidate display immediately. Network cancellation happens at dispatch,
@@ -121,7 +123,27 @@ function finish(event, snapshot, fromCache = false) {
   elements.latency.textContent = fromCache ? `Cached · originally ${(event.latency_ms / 1000).toFixed(2)}s`
     : `${(event.latency_ms / 1000).toFixed(2)}s generation`;
   elements.copy.disabled = false;
+  updateInspection(event, snapshot, fromCache);
   setStatus(fromCache ? 'Restored a completed result from this tab’s memory.' : 'Up to date. Move the slider to explore another wording.');
+}
+
+function clearInspection() {
+  for (const id of ['run-alpha', 'run-time', 'run-tokens', 'run-finish', 'run-source',
+    'change-source-count', 'change-output-count', 'change-added-count']) $(id).textContent = '—';
+  $('change-summary').textContent = 'Complete a rewrite to inspect its wording.';
+}
+
+function updateInspection(event, snapshot, fromCache) {
+  $('run-alpha').textContent = signed(snapshot.alpha);
+  $('run-time').textContent = `${(event.latency_ms / 1000).toFixed(2)}s`;
+  $('run-tokens').textContent = event.generated_tokens ?? '—';
+  $('run-finish').textContent = event.finish_reason === 'length' ? 'Token limit reached' : 'Complete';
+  $('run-source').textContent = fromCache ? 'Tab cache' : 'Model generation';
+  const countWords = text => (text.match(/\S+/gu) || []).length;
+  $('change-source-count').textContent = countWords(snapshot.message);
+  $('change-output-count').textContent = countWords(event.rewritten_text);
+  $('change-added-count').textContent = wordChanges(snapshot.message, event.rewritten_text).filter(segment => segment.added).length;
+  $('change-summary').textContent = `Last completed rewrite at α ${signed(snapshot.alpha)}, compared with the original draft submitted for that run. New input may still be generating.`;
 }
 async function dispatch() {
   clearSchedule();
@@ -229,6 +251,31 @@ elements.copy.addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(completed.text); setStatus('Copied your completed rewrite.'); }
   catch { setStatus('Clipboard access was unavailable. Select the text to copy it.'); }
 });
+
+// Inspection is local UI state; switching panels never starts model inference.
+const inspectionTabs = [...document.querySelectorAll('.inspector-tabs [role="tab"]')];
+function selectInspectionTab(tab) {
+  for (const candidate of inspectionTabs) {
+    const selected = candidate === tab;
+    candidate.setAttribute('aria-selected', String(selected));
+    candidate.tabIndex = selected ? 0 : -1;
+    $(candidate.getAttribute('aria-controls')).hidden = !selected;
+  }
+}
+inspectionTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => selectInspectionTab(tab));
+  tab.addEventListener('keydown', event => {
+    let next;
+    if (event.key === 'ArrowRight') next = (index + 1) % inspectionTabs.length;
+    if (event.key === 'ArrowLeft') next = (index + inspectionTabs.length - 1) % inspectionTabs.length;
+    if (event.key === 'Home') next = 0;
+    if (event.key === 'End') next = inspectionTabs.length - 1;
+    if (next === undefined) return;
+    event.preventDefault();
+    selectInspectionTab(inspectionTabs[next]);
+    inspectionTabs[next].focus();
+  });
+});
 window.addEventListener('pagehide', () => { clearSchedule(); clearTimeout(readinessTimer); cancelActive(); });
 window.addEventListener('pageshow', event => {
   if (event.persisted) {
@@ -246,6 +293,7 @@ window.addEventListener('pageshow', event => {
 // Undock while editing so a virtual keyboard does not compete for input space.
 let dockingFrame = null;
 function updateDocking() {
+  elements.alpha.setAttribute('aria-orientation', 'horizontal');
   const bounds = $('experimental').getBoundingClientRect();
   const headerBottom = document.querySelector('.site-header').getBoundingClientRect().bottom;
   $('slider-panel').classList.toggle('is-docked',

@@ -102,6 +102,31 @@ try {
   await assertSourceHighlights();
   console.log('Real model + browser:', { alpha05: first, alpha1: second });
 
+  // Keep source, rewrite, strength, and the complete layer stack visible at
+  // normal desktop viewport sizes. Long results scroll inside their own panel.
+  for (const [width, height] of [[1280, 800], [1366, 768], [1440, 900], [1920, 1080]]) {
+    await cdp('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+    await evaluate(`window.scrollTo({top:0,behavior:'instant'});window.dispatchEvent(new Event('resize'))`);
+    const bounds = await evaluate(`Object.fromEntries(['#output-card','#draft','#alpha','.layer-stack','.inspector-tabs'].map(selector=>[selector,document.querySelector(selector).getBoundingClientRect().toJSON()]))`);
+    for (const [selector, box] of Object.entries(bounds)) {
+      assert.ok(box.top >= 0 && box.bottom <= height + 1 && box.left >= 0 && box.right <= width + 1,
+        `${selector} must fit ${width}×${height}: ${JSON.stringify(box)}`);
+    }
+    assert.ok(await evaluate(`document.documentElement.scrollWidth <= innerWidth`));
+    const screenshot = await cdp('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+    await writeFile(join(directory, `workspace-${width}.png`), Buffer.from(screenshot.data, 'base64'));
+  }
+  await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
+  await evaluate(`document.querySelector('#tab-run').click()`);
+  assert.equal(await evaluate(`document.querySelector('#panel-run').hidden`), false);
+  assert.equal(await evaluate(`document.querySelector('#run-alpha').textContent`), '+1.0');
+  assert.ok(await evaluate(`Number(document.querySelector('#run-tokens').textContent)>0`));
+  await evaluate(`document.querySelector('#tab-changes').click();document.querySelector('#tab-changes').focus()`);
+  assert.equal(await evaluate(`document.querySelector('#change-source-count').textContent`), '10');
+  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Home', code: 'Home' });
+  await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Home', code: 'Home' });
+  assert.equal(await evaluate(`document.querySelector('#tab-evaluation').getAttribute('aria-selected')`), 'true');
+
   // Immediate feedback, final-value scheduling, stale-response rejection.
   await evaluate(`
     window.__testRequests=[];
@@ -140,12 +165,14 @@ try {
   assert.ok(await evaluate(`document.querySelector('#output').textContent.includes('latest')`));
   assert.equal(await evaluate(`document.querySelectorAll('#output img').length`), 0);
   assert.equal(await evaluate(`window.__testRequests.length`), 2);
+  assert.equal(await evaluate(`document.querySelector('#run-alpha').textContent`), '+1.4');
   // Back to the exact cached setting: no new model request.
   await evaluate(`document.querySelector('[data-alpha="0"]').click()`);
   await until(`document.querySelector('#status').textContent.startsWith('Up to date.')`);
   await evaluate(`document.querySelector('#alpha').value='1.4'; document.querySelector('#alpha').dispatchEvent(new Event('input')); document.querySelector('#alpha').dispatchEvent(new Event('change'))`);
   await until(`document.querySelector('#status').textContent.includes('Restored')`);
   assert.equal(await evaluate(`window.__testRequests.length`), 3);
+  assert.equal(await evaluate(`document.querySelector('#run-source').textContent`), 'Tab cache');
   await assertSourceHighlights();
 
   // A response after Clear must not repopulate the output.
@@ -155,6 +182,8 @@ try {
   await new Promise(resolve => setTimeout(resolve, 1000));
   assert.equal(await evaluate(`document.querySelector('#output').textContent`), 'Your next wording starts here.');
   assert.equal(await evaluate(`document.querySelector('#copy').disabled`), true);
+  assert.equal(await evaluate(`document.querySelector('#run-alpha').textContent`), '—');
+  assert.equal(await evaluate(`document.querySelector('#change-source-count').textContent`), '—');
 
   // Identical consecutive rewrites must retain differences from the source.
   await evaluate(`document.querySelector('#draft').value='stable result source';document.querySelector('#draft').dispatchEvent(new Event('input'))`);

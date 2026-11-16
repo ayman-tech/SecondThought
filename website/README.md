@@ -49,10 +49,37 @@ The website API currently runs from the repository checkout, not a standalone wh
 - A 64-token completion limit bounds work. If the limit is reached, the page labels
   the result as partial. It is not saved in the result cache.
 
-The original Stitch export is retained as `frontend/code 2.html` for reference.
+The Steering Lab is a wide application workspace, with styling isolated in
+`assets/lab.css`. At desktop widths of 1,200px and above, the layers sit on the
+left, the streamed output and draft/alpha controls share the center, and an
+inspector sits on the right. The main controls fit together at normal desktop
+viewport sizes; long outputs and side panels can scroll independently. The layout
+uses available width up to 1,800px without enlarging all typography. Smaller
+screens reflow the panels and retain mobile slider docking. Informational pages
+keep their narrower reading layouts.
+
+Inspector tabs expose evaluation placeholders, actual run metadata (generation
+time, generated tokens, applied alpha, finish reason, cache source), and word
+counts/differences against the submitted original. Run details and text changes
+describe the last completed run; editing the draft or alpha does not relabel old
+results as new. Clearing the draft clears those details. Switching tabs does not
+request inference, and the tabs support arrow/Home/End keyboard navigation.
+
+Alpha, draft input, streaming, copy, and highlights remain connected to the
+existing API. Model/layer/pooling controls and feedback are disabled; the exact
+backend prompt is read only and expandable in the model panel. Evaluation is
+explicitly unconnected and displays no fabricated scores or curves. Layer indices
+are 0–23; index 11 is the twelfth decoder block. The layer panel reads down the
+first column, then down the second on desktop, and across rows on smaller screens.
+
+The original Stitch exports are retained as `frontend/code 2.html`,
+`frontend/code 3.html`, and `frontend/code 4.html` for reference.
 The server renders the five page templates through a shared base and serves only
 the public `frontend/assets/` directory as static files. The original export and
 raw templates are not exposed as downloadable routes.
+
+See [the staged integration plan](STEERING_LAB_INTEGRATION.md) for connecting the
+new controls without changing the finalized experiment accidentally.
 
 ## Interaction and scheduling
 

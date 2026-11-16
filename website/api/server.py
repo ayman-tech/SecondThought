@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
 
-from secondthought.steering_rewriter import SteeredQwenRewriter
+from secondthought.steering_rewriter import BASE_REWRITE_PROMPT, SteeredQwenRewriter
 from .generation import AdmissionError, GenerationManager, VERSION
 from .schemas import CancelRequest, RewriteRequest
 
@@ -151,6 +151,7 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
                 name="index.html" if page == "home" else f"{page}.html",
                 context=dict(
                     page=page, title=title, description=description,
+                    rewrite_prompt=BASE_REWRITE_PROMPT,
                     navigation=[(key, path, label) for key, (path, label, _) in PAGES.items()],
                 ),
             )
