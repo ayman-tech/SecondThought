@@ -13,6 +13,9 @@ uv sync
 make website
 ```
 
+No `make` (e.g. on Windows)? Run `uv run python -m website.api.server` instead.
+The same goes for the extension's service: `uv run python -m extension.api.server`.
+
 Open **http://127.0.0.1:8001**. The extension's separate API keeps port 8000.
 The page serves while the model initializes and reports readiness automatically.
 The first model load may download Qwen from Hugging Face; later launches prefer

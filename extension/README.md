@@ -35,7 +35,8 @@ change them without touching code.
 
 ## Running it
 
-**Just want to use it?** Run the website (`make website`) and open
+**Just want to use it?** Run the website (`uv run python -m website.api.server`,
+or `make website` on Mac/Linux) and open
 http://127.0.0.1:8001/community. It has a download button and a four-step setup
 guide with a live check that the service is running. The download is a zip of
 `extension/frontend/` with a short `HOW TO INSTALL.txt` inside. The steps below
