@@ -215,3 +215,16 @@ def test_active_generation_cancels_before_replacement_starts():
         assert (await terminal(latest))["rewritten_text"] == "newest"
         await manager.close()
     asyncio.run(scenario())
+
+
+def test_extension_download_is_a_loadable_zip():
+    import io
+    import zipfile
+
+    with TestClient(create_app(FakeService())) as client:
+        response = client.get("/downloads/secondthought-extension.zip")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/zip"
+        names = zipfile.ZipFile(io.BytesIO(response.content)).namelist()
+        assert "SecondThought/manifest.json" in names
+        assert "SecondThought/content.js" in names

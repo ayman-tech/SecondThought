@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+import io
 from contextlib import asynccontextmanager
 import json
 import logging
 import os
 from pathlib import Path
+import zipfile
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, Response, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
@@ -22,12 +24,28 @@ from .layers import ExploreRewriter, layer_manifest
 
 logger = logging.getLogger(__name__)
 FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
+EXTENSION_FRONTEND = Path(__file__).resolve().parents[2] / "extension" / "frontend"
+LOCAL_DOWNLOAD = "/downloads/secondthought-extension.zip"
+# Where the setup page sends people. Both point at this machine until we deploy;
+# set these to the hosted package and API to switch, no code changes needed.
+EXTENSION_DOWNLOAD_URL = os.getenv("SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL", LOCAL_DOWNLOAD)
+EXTENSION_API_URL = os.getenv("SECONDTHOUGHT_EXTENSION_API_URL", "http://127.0.0.1:8000")
 TERMINAL = {"completed", "cancelled", "error"}
 PAGES = {
     "steering": ("/explore", "Explore", "Explore activation steering, one layer at a time."),
     "community": ("/community", "Community", "Bring a second thought to your everyday writing."),
     "evaluation": ("/evaluation", "Evaluation", "SecondThought evaluation."),
 }
+
+
+def extension_zip() -> bytes:
+    """The Chrome extension as a zip, built from extension/frontend so it's never stale."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        for path in sorted(EXTENSION_FRONTEND.rglob("*")):
+            if path.is_file():
+                archive.write(path, Path("SecondThought") / path.relative_to(EXTENSION_FRONTEND))
+    return buffer.getvalue()
 
 
 def create_app(service=None, *, service_factory=None) -> FastAPI:
@@ -152,6 +170,8 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
                 context=dict(
                     page=page, title=title, description=description,
                     rewrite_prompt=BASE_REWRITE_PROMPT, layers=layer_manifest(),
+                    extension_download_url=EXTENSION_DOWNLOAD_URL,
+                    extension_api_url=EXTENSION_API_URL,
                     navigation=[(key, path, label) for key, (path, label, _) in PAGES.items()],
                 ),
             )
@@ -169,6 +189,16 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
     for old_path, target in (("/", "/explore"), ("/steering", "/explore"),
                              ("/extension", "/community"), ("/about", "/community")):
         app.add_api_route(old_path, redirect_handler(target), include_in_schema=False)
+
+    @app.get(LOCAL_DOWNLOAD, include_in_schema=False)
+    async def download_extension():
+        if not (EXTENSION_FRONTEND / "manifest.json").is_file():
+            raise HTTPException(404, "The extension folder isn't in this checkout.")
+        return Response(
+            extension_zip(),
+            media_type="application/zip",
+            headers={"Content-Disposition": 'attachment; filename="secondthought-extension.zip"'},
+        )
 
     app.mount("/assets", StaticFiles(directory=FRONTEND / "assets", check_dir=False), name="assets")
     return app
