@@ -1,7 +1,8 @@
 // SecondThought popup. Talks only to the local API; no keys live here.
 const API_BASE = "http://127.0.0.1:8000";
 const REQUEST_TIMEOUT_MS = 30000;
-const START_HINT = "Start the local server: <code>python -m extension.api.server</code> from the repo root.";
+const START_HINT = "Start it with <code>python -m extension.api.server</code> from the project folder, or see the " +
+  `<a href="${SecondThoughtSettings.siteLink("/community#install")}" target="_blank" rel="noopener">setup guide</a>.`;
 
 const messageEl = document.getElementById("message");
 const rewriteBtn = document.getElementById("rewrite");
@@ -214,3 +215,4 @@ prefillFromSelection();
 checkServer();
 setupSiteToggle();
 document.getElementById("settings-link").addEventListener("click", () => chrome.runtime.openOptionsPage());
+document.getElementById("advanced-link").href = SecondThoughtSettings.siteLink("/explore");
