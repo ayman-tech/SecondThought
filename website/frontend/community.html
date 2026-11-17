@@ -51,11 +51,13 @@
       <p class="service-status" role="status" aria-live="polite"><span class="dot"></span><span class="label">Checking…</span></p>
       <details>
         <summary>First time on this computer?</summary>
-        <ul>
-          <li>Get the project and install it: <code>uv sync --extra evaluation</code></li>
+        <ol>
+          <li>Install <a class="text-link" href="https://docs.astral.sh/uv/getting-started/installation/" target="_blank" rel="noopener">uv</a>, which sets up Python for you.</li>
+          <li>Get the project: <code>git clone https://github.com/ayman-tech/SecondThought</code>, then open that folder in a terminal.</li>
+          <li>Install what it needs: <code>uv sync --extra evaluation</code></li>
           <li>Put the <code>both-t5</code> model folder in <code>models/</code> (ask the team for it).</li>
-          <li>The first start downloads the tone-check models, about 500 MB. After that it starts in seconds.</li>
-        </ul>
+        </ol>
+        <p>The first start also downloads the tone-check models (about 500 MB). After that it starts in seconds.</p>
       </details>
     </li>
     <li>

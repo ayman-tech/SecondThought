@@ -142,10 +142,12 @@ code {
   color: var(--purple);
   font-weight: 550;
 }
-.install details ul {
-  margin: 10px 0 0;
+.install details ol {
+  margin: 10px 0 8px;
   padding-left: 18px;
 }
+.install details li { margin-bottom: 6px; }
+.install details p { margin: 0; color: var(--muted); }
 
 .install-notes {
   display: grid;
