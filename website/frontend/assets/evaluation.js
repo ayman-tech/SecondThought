@@ -1,17 +1,11 @@
-// Evaluation page: model scorecard and before/after (dumbbell) chart from eval-results.json.
+// Evaluation page: headline tiles and before/after (dumbbell) chart from eval-results.json.
 (() => {
   const SVG = "http://www.w3.org/2000/svg";
   const METRICS = {
     toxicity: { better: "lower", verb: "less toxic" },
     formality: { better: "higher", verb: "more formal" },
   };
-  const COLUMNS = [ // scorecard: summary key, format, which direction wins
-    ["critical_value_exact_rate", (v) => `${Math.round(v * 100)}%`, "higher"],
-    ["average_toxicity_rewritten", (v) => v.toFixed(3), "lower"],
-    ["average_semantic_similarity", (v) => v.toFixed(3), "higher"],
-    ["average_formality_rewritten", (v) => v.toFixed(2), "higher"],
-  ];
-  const state = { system: 0, metric: "toxicity" };
+  const state = { metric: "toxicity" };
   let data;
 
   const $ = (sel) => document.querySelector(sel);
@@ -22,46 +16,31 @@
     return node;
   };
 
-  function scorecard() {
-    const best = COLUMNS.map(([key, , dir]) => {
-      const values = data.systems.map((s) => s.summary[key]);
-      return dir === "higher" ? Math.max(...values) : Math.min(...values);
-    });
-    const body = $("[data-eval-scorecard] tbody");
-    body.replaceChildren(...data.systems.map((system) => {
-      const row = el("tr");
-      const name = el("th", { scope: "row" }, system.label);
-      name.append(el("small", {}, system.description));
-      row.append(name);
-      COLUMNS.forEach(([key, format], i) => {
-        const value = system.summary[key];
-        const cell = el("td");
-        const score = el("span", { class: "score" }, format(value));
-        if (value === best[i]) score.append(el("span", { class: "score-best" }, "BEST"));
-        const bar = el("span", { class: "score-bar", "aria-hidden": "true" });
-        bar.style.width = `${Math.max(value * 100, 2)}%`;
-        cell.append(score, bar);
-        row.append(cell);
-      });
-      return row;
+  function tiles() {
+    const { summary: s, description } = data.systems[0];
+    const kept = Math.round(s.critical_value_exact_rate * s.examples);
+    const items = [
+      ["Toxicity", `${s.average_toxicity_original.toFixed(2)} → ${s.average_toxicity_rewritten.toFixed(2)}`, "Average, lower is better"],
+      ["Formality", `${s.average_formality_original.toFixed(2)} → ${s.average_formality_rewritten.toFixed(2)}`, "Average, higher is more formal"],
+      ["Meaning kept", s.average_semantic_similarity.toFixed(3), "Average similarity, 1 is identical meaning"],
+      ["Facts kept", `${kept} of ${s.examples}`, "Messages with every number, date and ID intact"],
+    ];
+    $("[data-eval-tiles]").replaceChildren(...items.map(([label, value, note]) => {
+      const tile = el("div", { class: "eval-tile" });
+      tile.append(el("dt", {}, label), el("dd", { class: "tile-value" }, value), el("dd", {}, note));
+      return tile;
     }));
-    $("[data-eval-note]").textContent = `${data.dataset}. ${data.note}`;
+    $("[data-eval-note]").textContent = `${description}. ${data.note}`;
   }
 
   function controls() {
-    const group = $("[data-eval-systems]");
-    group.replaceChildren(...data.systems.map((system, i) => {
-      const button = el("button", { type: "button", "aria-pressed": String(i === state.system) }, system.label);
-      button.addEventListener("click", () => { state.system = i; update(); });
-      return button;
-    }));
     document.querySelectorAll("[data-metric]").forEach((button) =>
       button.addEventListener("click", () => { state.metric = button.dataset.metric; update(); }));
   }
 
   function rows() {
     const sign = METRICS[state.metric].better === "lower" ? 1 : -1;
-    return [...data.systems[state.system].messages]
+    return [...data.systems[0].messages]
       .sort((a, b) => sign * ((b[state.metric][0] - b[state.metric][1]) - (a[state.metric][0] - a[state.metric][1])));
   }
 
@@ -137,7 +116,6 @@
   }
 
   function update() {
-    document.querySelectorAll("[data-eval-systems] button").forEach((b, i) => b.setAttribute("aria-pressed", String(i === state.system)));
     document.querySelectorAll("[data-metric]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.metric === state.metric)));
     const messages = rows();
     headline(messages);
@@ -154,7 +132,7 @@
       $("[data-eval-note]").textContent = "Evaluation results could not be loaded.";
       return;
     }
-    scorecard();
+    tiles();
     controls();
     update();
     let pending, lastWidth = $("[data-eval-chart]").clientWidth;

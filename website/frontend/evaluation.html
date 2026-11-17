@@ -27,21 +27,17 @@
       </dl>
     </section>
 
-    <section class="eval-block" aria-labelledby="scorecard-title">
-      <p class="eyebrow">MODEL COMPARISON</p>
-      <h2 id="scorecard-title">Three rewriting models on the same 35 workplace messages.</h2>
+    <section class="eval-block" aria-labelledby="glance-title">
+      <p class="eyebrow">AT A GLANCE</p>
+      <h2 id="glance-title">both-t5 on 35 workplace messages.</h2>
       <p class="eval-lede" data-eval-note>Loading results…</p>
-      <div class="eval-table-wrap"><table class="eval-scorecard" data-eval-scorecard>
-        <thead><tr><th scope="col">Model</th><th scope="col">Facts kept <small>higher is better</small></th><th scope="col">Toxicity after <small>lower is better</small></th><th scope="col">Meaning kept <small>higher is better</small></th><th scope="col">Formality after <small>higher is better</small></th></tr></thead>
-        <tbody></tbody>
-      </table></div>
+      <dl class="eval-tiles" data-eval-tiles></dl>
     </section>
 
     <section class="eval-block" aria-labelledby="dumbbell-title">
       <p class="eyebrow">MESSAGE BY MESSAGE</p>
       <h2 id="dumbbell-title">Before and after, for every message.</h2>
       <div class="eval-controls">
-        <div class="eval-toggle" role="group" aria-label="Model" data-eval-systems></div>
         <div class="eval-toggle" role="group" aria-label="Score">
           <button type="button" data-metric="toxicity" aria-pressed="true">Toxicity</button>
           <button type="button" data-metric="formality" aria-pressed="false">Formality</button>

@@ -78,7 +78,7 @@ def test_pages_have_separate_content_and_navigation(path):
             assert '<section class="evaluation-page" aria-label="Evaluation">' in html
             assert 'src="/assets/evaluation.js"' in html and "data-eval-chart" in html
             data = client.get("/assets/eval-results.json").json()
-            assert [len(s["messages"]) for s in data["systems"]] == [35, 35, 35]
+            assert [len(s["messages"]) for s in data["systems"]] == [35]
 
 
 def test_multilayer_contract_and_legacy_redirects():

@@ -240,7 +240,7 @@ try {
       );
     if (path === "/evaluation") {
       await until(
-        `document.querySelectorAll('[data-eval-scorecard] tbody tr').length===3`,
+        `document.querySelectorAll('[data-eval-tiles] .eval-tile').length===4`,
       );
       assert.equal(
         await evaluate(
