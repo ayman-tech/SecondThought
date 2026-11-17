@@ -12,9 +12,9 @@
       <p class="eyebrow">HOW A REWRITE IS CHECKED</p>
       <h2 id="pipeline-title">One message, two passes, a fact check after each.</h2>
       <ol class="eval-pipeline">
-        <li><span class="step-num">1</span><strong>Trigger words</strong><span>The extension spots words that may read as hostile.</span></li>
+        <li><span class="step-num">1</span><strong>Spotting</strong><span>Word lists catch swearing, insults, texting shorthand and shouting, on your device. If none match, a tone check can score each line when you ask. Only flagged lines go on.</span></li>
         <li><span class="step-num">2</span><strong>Detoxify pass</strong><span>The T5 model removes insults and hostility, sentence by sentence.</span><em class="eval-tag">Toxicity</em></li>
-        <li><span class="step-num">3</span><strong>Facts guard</strong><span>Numbers, names and dates must survive unchanged.</span><em class="eval-tag">Facts kept</em></li>
+        <li><span class="step-num">3</span><strong>Facts guard</strong><span>Numbers, dates, amounts, links and IDs must survive unchanged.</span><em class="eval-tag">Facts kept</em></li>
         <li><span class="step-num">4</span><strong>Formalize pass</strong><span>The same model makes the wording professional.</span><em class="eval-tag">Formality</em></li>
         <li><span class="step-num">5</span><strong>Facts guard</strong><span>The check runs again on the final wording.</span><em class="eval-tag">Facts kept</em></li>
         <li><span class="step-num">6</span><strong>Suggestion</strong><span>You see the rewrite and decide whether to use it.</span><em class="eval-tag">Meaning kept</em></li>
@@ -23,7 +23,7 @@
         <div><dt>Toxicity</dt><dd>0 to 1 from the Detoxify classifier. Lower is better.</dd></div>
         <div><dt>Formality</dt><dd>0 to 1 from a RoBERTa formality ranker, scored per sentence. Higher is more formal.</dd></div>
         <div><dt>Meaning kept</dt><dd>Sentence-embedding similarity between original and rewrite. 1 means the same meaning.</dd></div>
-        <div><dt>Facts kept</dt><dd>Share of messages where every number, name, date and amount survives exactly.</dd></div>
+        <div><dt>Facts kept</dt><dd>Share of messages where every number, date, amount, link and ID survives exactly.</dd></div>
       </dl>
     </section>
 
