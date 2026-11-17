@@ -13,6 +13,9 @@ uv sync
 make website
 ```
 
+No `make` (e.g. on Windows)? Run `uv run python -m website.api.server` instead.
+The same goes for the extension's service: `uv run python -m extension.api.server`.
+
 Open **http://127.0.0.1:8001**. The extension's separate API keeps port 8000.
 The page serves while the model initializes and reports readiness automatically.
 The first model load may download Qwen from Hugging Face; later launches prefer
@@ -31,6 +34,23 @@ system fallbacks if Google Fonts is unavailable. The server binds to loopback an
 is intended for local use; authentication, a public deployment, and infrastructure
 are outside this first version. Restart the Python process after backend changes.
 The website API currently runs from the repository checkout, not a standalone wheel.
+
+## The extension download
+
+The Community page (`/community`) is the extension's home: a download button and
+a four-step setup guide. `/downloads/secondthought-extension.zip` zips
+`extension/frontend/` on the fly (plus a short `HOW TO INSTALL.txt`), so it's
+always the current version. The guide also checks live whether the extension's
+service is running.
+
+Both point at this machine for now. Once we deploy, set these instead of
+changing code:
+
+- `SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL`: where the download button goes
+- `SECONDTHOUGHT_EXTENSION_API_URL`: the service the guide checks (default `http://127.0.0.1:8000`)
+
+On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
+`SITE_URL` (`extension/frontend/settings.js`) are the matching switches.
 
 ## Pages and layer controls
 

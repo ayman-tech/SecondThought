@@ -34,6 +34,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = Path(__file__).resolve().parent / "config.toml"
 MAX_MESSAGE_CHARS = 4000
 MAX_CHECK_LINES = 50
+# The SecondThought website may check whether this service is running (its setup
+# page shows a live status). Comma-separated; set it to the hosted site once deployed.
+WEBSITE_ORIGINS = os.getenv(
+    "SECONDTHOUGHT_WEBSITE_ORIGINS", "http://127.0.0.1:8001,http://localhost:8001"
+).split(",")
 
 logger = logging.getLogger("secondthought.api")
 
@@ -75,7 +80,7 @@ def tone_check_options(config: str | Path) -> dict[str, Any]:
         with Path(config).open("rb") as handle:
             return dict(tomllib.load(handle).get("tone_check", {}))
     except OSError:
-        return {}
+        return {"enabled": False}  # no config, no heavy models (e.g. in tests)
 
 
 def load_dotenv(path: Path) -> None:
@@ -113,9 +118,10 @@ def create_app(
     checker: Any | None = None,
 ) -> FastAPI:
     app = FastAPI(title="SecondThought API")
-    # Only Chrome extension pages may call this from a browser.
+    # Only Chrome extension pages and the SecondThought website may call this from a browser.
     app.add_middleware(
         CORSMiddleware,
+        allow_origins=[origin.strip() for origin in WEBSITE_ORIGINS if origin.strip()],
         allow_origin_regex=r"^chrome-extension://[a-p]{32}$",
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],

@@ -235,7 +235,7 @@ try {
     );
     if (path === "/community")
       assert.equal(
-        await evaluate(`document.querySelector('.download-button').disabled`),
+        await evaluate(`document.querySelector('.download-button').getAttribute('href').endsWith('.zip')`),
         true,
       );
     if (path === "/evaluation") {

@@ -1,6 +1,11 @@
 // Settings shared by the in-page nudge, the popup and the settings page, so
 // they all read the same defaults from chrome.storage.
 const SecondThoughtSettings = (() => {
+  // The SecondThought website: setup guide and advanced controls. It runs on this
+  // computer until we deploy; point this at the hosted site to switch.
+  const SITE_URL = "http://127.0.0.1:8001";
+  const siteLink = (path) => SITE_URL + path;
+
   const DEFAULTS = {
     nudgeEnabled: true,
     idleCheck: true,
@@ -30,5 +35,5 @@ const SecondThoughtSettings = (() => {
     await save({ disabledSites: next });
   }
 
-  return { DEFAULTS, KINDS, load, save, setSiteEnabled };
+  return { DEFAULTS, KINDS, SITE_URL, siteLink, load, save, setSiteEnabled };
 })();

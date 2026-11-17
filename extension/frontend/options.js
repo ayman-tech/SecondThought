@@ -90,5 +90,8 @@ idleToggle.addEventListener("change", () => save({ idleCheck: idleToggle.checked
 // Stay in sync when the popup changes something while this page is open.
 chrome.storage.onChanged.addListener(render);
 
+document.getElementById("advanced-link").href = SecondThoughtSettings.siteLink("/explore");
+document.getElementById("guide-link").href = SecondThoughtSettings.siteLink("/community#install");
+
 render();
 checkServer();
