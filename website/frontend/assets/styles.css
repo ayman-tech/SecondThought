@@ -20,10 +20,26 @@ html {
 }
 body {
   margin:0;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
   background:var(--paper);
   color:var(--ink);
   font:15px/1.65 var(--sans);
   -webkit-font-smoothing:antialiased
+}
+main {
+  flex:1;
+}
+.page-title {
+  font:600 clamp(28px,3vw,38px)/1.25 var(--display);
+  letter-spacing:-1px;
+  margin:0;
+}
+.page-extension .secondary-section,
+.page-evaluation .secondary-section,
+.page-about .about {
+  border-top:0;
 }
 button,input,textarea {
   font:inherit
@@ -264,7 +280,7 @@ h2 {
   letter-spacing:-1px;
   margin:0
 }
-.section-heading h2 {
+.section-heading h2, .section-heading h1 {
   font-size:23px;
   letter-spacing:-.65px
 }
@@ -843,7 +859,7 @@ h3 {
     flex-direction:column;
     gap:15px
   }
-  .section-heading h2 {
+  .section-heading h2, .section-heading h1 {
     font-size:21px
   }
   .model-status {

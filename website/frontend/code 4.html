@@ -1,0 +1,2013 @@
+<!DOCTYPE html><html lang="en" class="scroll-smooth"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Second Thought — Activation Steering Research Lab &amp; Platform</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'accent': '#D97706',
+        'accent-hover': '#B45309',
+        'cyan-tensor': '#0891B2',
+        'light-primary': '#0F172A',
+        'light-on-primary': '#FFFFFF',
+        'light-surface': '#F8FAFC',
+        'light-on-surface': '#0F172A',
+        'light-surface-container': '#FFFFFF',
+        'light-surface-container-high': '#F1F5F9',
+        'light-outline': '#E2E8F0',
+        'dark-primary': '#F8FAFC',
+        'dark-on-primary': '#090D16',
+        'dark-surface': '#090D16',
+        'dark-on-surface': '#F1F5F9',
+        'dark-surface-container': '#111827',
+        'dark-surface-container-high': '#1E293B',
+        'dark-outline': '#334155',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '8px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '64px',
+        'page-margin': '32px',
+      },
+      fontFamily: {
+        'display': ['"Space Grotesk"', 'sans-serif'],
+        'headline': ['"Space Grotesk"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+        'code': ['"JetBrains Mono"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['56px', { lineHeight: '64px', letterSpacing: '-1.5px', fontWeight: '700' }],
+        'display-lg-mobile': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.75px', fontWeight: '600' }],
+        'headline-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-sm': ['20px', { lineHeight: '28px', fontWeight: '600' }],
+        'body-lg': ['18px', { lineHeight: '28px', fontWeight: '400' }],
+        'body-md': ['15px', { lineHeight: '24px', fontWeight: '400' }],
+        'body-sm': ['13px', { lineHeight: '20px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+        'code-md': ['14px', { lineHeight: '22px', fontWeight: '500' }],
+        'code-sm': ['12px', { lineHeight: '18px', fontWeight: '400' }],
+      },
+      transitionDuration: {
+        'state-change': '120ms',
+        'vector-shift': '220ms',
+        'surface-enter': '280ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'vector-shift': '0ms',
+        'surface-enter': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'vector-shift': 'cubic-bezier(0.2, 0, 0, 1)',
+        'surface-enter': 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+  <style>
+    /* Subtle scientific grid pattern for off-white research paper atmosphere */
+    .lab-grid {
+      background-size: 36px 36px;
+      background-image: 
+        linear-gradient(to right, rgba(203, 213, 225, 0.45) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(203, 213, 225, 0.45) 1px, transparent 1px);
+    }
+    .latent-glow {
+      background: radial-gradient(circle at 50% 50%, rgba(217, 119, 6, 0.08) 0%, rgba(8, 145, 178, 0.04) 50%, transparent 80%);
+    }
+    /* Custom range slider styling for light theme */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 22px;
+      width: 22px;
+      border-radius: 9999px;
+      background: #D97706;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 1px 6px rgba(217, 119, 6, 0.4), 0 0 0 1px rgba(203, 213, 225, 0.8);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    /* Token morphing animation keyframe simulation */
+    .token-transition {
+      transition: background-color 0.25s ease, color 0.25s ease, transform 0.2s ease;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-[1024px] font-body selection:bg-amber-100 selection:text-amber-800" data-stitch-vh="min-h-[1024px]===min-h-screen">
+
+  <!-- Top Navigation Header (Second Thought typographic brand + 5 Requested Pages) -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200/80 px-6 lg:px-12 py-3.5 shadow-xs transition-colors">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Brand Name (Kept as requested: clean 'Second Thought' name without graphic logo) -->
+      <a href="#overview" class="flex items-center gap-2 group">
+        <span class="font-headline font-bold text-slate-900 text-xl tracking-tight group-hover:text-accent transition-colors">Second Thought</span>
+        
+      </a>
+
+      <!-- 5 Requested Navigation Pages: Overview, The Experimental Page, Browser Extension, Evaluation, About Us -->
+      <nav class="hidden lg:flex items-center gap-6 xl:gap-8 text-label-lg font-label text-slate-600">
+        <a href="#overview" class="hover:text-accent transition-colors font-medium">Overview</a>
+        <a href="#experimental" class="hover:text-accent transition-colors flex items-center gap-1.5 font-medium text-accent">
+          <span class="material-symbols-outlined text-sm">tune</span>
+          <span>The Experimental Page</span>
+        </a>
+        <a href="#extension" class="hover:text-accent transition-colors flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">extension</span>
+          <span>Browser Extension</span>
+        </a>
+        <a href="#evaluation" class="hover:text-accent transition-colors">Evaluation</a>
+        <a href="#about" class="hover:text-accent transition-colors">About Us</a>
+      </nav>
+
+      <!-- Action Area: Preserved Get Extension & Enter Lab -->
+      <div class="flex items-center gap-3">
+        <a href="#extension" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-body-sm font-medium text-slate-700 bg-white border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-colors shadow-xs">
+          <span class="material-symbols-outlined text-xs">download</span>
+          <span>Get Extension</span>
+        </a>
+        <a href="#experimental" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-label font-medium text-body-sm shadow-sm transition-all">
+          <span class="material-symbols-outlined text-xs">play_arrow</span>
+          <span>Enter Lab</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- PAGE 1: OVERVIEW (Hero & Technical Primer) -->
+    <section id="overview" class="relative pt-16 pb-20 px-6 lg:px-12 lab-grid border-b border-slate-200/80 overflow-hidden bg-white">
+      <!-- Latent glow in background -->
+      <div class="absolute inset-0 latent-glow pointer-events-none"></div>
+
+      <div class="max-w-6xl mx-auto relative z-10">
+        <div class="flex flex-col items-center text-center max-w-4xl mx-auto">
+          <!-- Eyebrow status tag -->
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 mb-6">
+            <span class="text-cyan-tensor font-code text-code-sm font-semibold tracking-wide">INTERPRETABILITY &amp; CONTROL RESEARCH</span>
+            <span class="text-slate-600">/</span>
+            <span class="text-slate-300 text-code-sm font-code">RESIDUAL STREAM INTERVENTION</span>
+          </div>
+
+          <!-- Main Hero Headline -->
+          <h1 class="font-display text-display-lg-mobile md:text-display-lg text-slate-900 font-bold tracking-tight text-balance leading-tight mb-6">
+            Don&#39;t prompt the model. <br>
+            <span class="bg-gradient-to-r from-accent via-amber-200 to-cyan-tensor bg-clip-text text-transparent">Steer its latent activations.</span>
+          </h1>
+
+          <!-- Hero Subtitle -->
+          <p class="text-body-lg text-slate-600 max-w-3xl text-pretty mb-8 leading-relaxed">
+            Second Thought is an experimental laboratory and product platform investigating activation steering. By intervening directly in a transformer&#39;s residual stream with contrastive control vectors, we can modulate tone, formality, and behavioral boundaries continuously in real time.
+          </p>
+
+          <!-- Core Call to Action / Interactive Anchor -->
+          <div class="flex flex-wrap items-center justify-center gap-4 mb-12">
+            <a href="#experimental" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent hover:bg-accent-hover text-dark-surface font-label font-semibold text-base transition-all shadow-lg shadow-accent/20">
+              <span class="material-symbols-outlined">tune</span>
+              <span>Launch The Experimental Page</span>
+            </a>
+            <a href="#extension" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-dark-surface-container hover:bg-dark-surface-container-high border border-dark-outline hover:border-slate-500 text-slate-200 font-label font-medium text-base transition-all">
+              <span class="material-symbols-outlined text-sm">extension</span>
+              <span>Get Browser Extension</span>
+            </a>
+          </div>
+
+          <!-- Real-time Mathematical Spec Strip -->
+          <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-3 text-left bg-slate-50 rounded-xl border border-slate-200/90 p-4 shadow-xs">
+            <div class="p-2 border-r border-slate-200">
+              <span class="text-code-sm text-slate-500 font-code block">INTERVENTION FORMULA</span>
+              <span class="text-code-md text-accent font-code font-bold mt-1 block">h_l ← h_l + α · v_c</span>
+            </div>
+            <div class="p-2 md:border-r border-slate-200">
+              <span class="text-code-sm text-slate-500 font-code block">TARGET RESIDUAL LAYER</span>
+              <span class="text-code-md text-cyan-tensor font-code font-bold mt-1 block">Layer 16 of 32 (Mid-deep)</span>
+            </div>
+            <div class="p-2 border-r border-slate-200">
+              <span class="text-code-sm text-slate-500 font-code block">ACTIVE VECTOR SPACE</span>
+              <span class="text-code-md text-slate-800 font-code font-bold mt-1 block">Formality / Candor / Empathy</span>
+            </div>
+            <div class="p-2">
+              <span class="text-code-sm text-slate-500 font-code block">INFERENCE OVERHEAD</span>
+              <span class="text-code-md text-emerald-400 font-code font-bold mt-1 block">&lt; 0.2ms (Zero Weight Drift)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 2: THE EXPERIMENTAL PAGE (Large Animated Morphing Output & Bottom Controller) -->
+    <section id="experimental" class="py-16 px-6 lg:px-12 bg-slate-50 relative border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- Lab Header Strip with Interactive Model Selection Tabs -->
+        <div class="space-y-4 pb-2 border-b border-slate-200">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-accent/15 border border-accent/30 text-accent flex items-center justify-center font-bold">
+                <span class="material-symbols-outlined text-lg">tune</span>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="font-headline text-headline-sm text-slate-900 font-bold tracking-tight">Steering Experimental Lab</h2>
+                  <span class="text-[11px] font-code px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-300 font-semibold flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    ACTIVE RUNTIME
+                  </span>
+                </div>
+                <p class="text-body-sm text-slate-500 text-xs mt-0.5">Select a supported model backend to inspect its internal layer stack and latent vectors.</p>
+              </div>
+            </div>
+
+            <!-- Quick Objective Vector Selector Pills -->
+            <div class="flex items-center gap-1.5 bg-white p-1 rounded-lg border border-slate-200 shadow-xs" id="vector-selector-pills">
+              <span class="text-[11px] font-code text-slate-400 pl-2 hidden md:inline">Vector:</span>
+              <button data-vector="formality" class="vector-pill active px-3 py-1 rounded-md text-xs font-code font-medium transition-all bg-amber-600 text-white shadow-xs">
+                Formality (α)
+              </button>
+              <button data-vector="empathy" class="vector-pill px-3 py-1 rounded-md text-xs font-code font-medium transition-all text-slate-600 hover:text-slate-900">
+                Empathy
+              </button>
+              <button data-vector="candor" class="vector-pill px-3 py-1 rounded-md text-xs font-code font-medium transition-all text-slate-600 hover:text-slate-900">
+                Candor
+              </button>
+              <button data-vector="respect" class="vector-pill px-3 py-1 rounded-md text-xs font-code font-medium transition-all text-slate-600 hover:text-slate-900">
+                De-escalate
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- MODEL INNER STRUCTURE: 24-LAYER RESIDUAL STREAM PIPELINE -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-6 md:p-8 space-y-6 shadow-md shadow-slate-200/40 relative overflow-hidden">
+          
+          <!-- Header Bar: Model Inner Architecture + Model Selection Dropdown -->
+          <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-600">
+                <span class="material-symbols-outlined text-xl">layers</span>
+              </div>
+              <div>
+                <h3 class="font-headline font-bold text-slate-900 text-lg flex items-center gap-2">
+                  <span>Model Inner Architecture</span>
+                  <span class="text-xs font-code font-semibold text-slate-600 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">24 Decoder Layers</span>
+                </h3>
+                <p class="text-xs text-slate-500 font-body">Forward residual stream: tokens pass left to right through 24 transformer blocks.</p>
+              </div>
+            </div>
+
+            <!-- MODEL SELECTION DROPDOWN (Replacing Intervention Section) -->
+            <div class="flex items-center gap-3">
+              <label for="model-selector-dropdown" class="text-xs font-code font-medium text-slate-500 flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm text-slate-400">smart_toy</span>
+                <span>Select Model:</span>
+              </label>
+              <div class="relative">
+                <select id="model-selector-dropdown" class="appearance-none bg-white hover:bg-slate-50 text-slate-900 font-code font-semibold text-xs py-2 pl-3.5 pr-9 rounded-xl border border-slate-300 shadow-xs focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent cursor-pointer transition-all">
+                  <option value="qwen-0.5b" selected>Qwen 0.5B Instruct (24 Layers)</option>
+                  <option value="qwen-2.5-7b">Qwen-2.5-7B-Instruct (28 Layers)</option>
+                  <option value="llama-3-8b">Llama-3-8B-Instruct (32 Layers)</option>
+                  <option value="gemma-2-2b">Gemma-2-2B-IT (26 Layers)</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                  <span class="material-symbols-outlined text-sm">unfold_more</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- THE VISUAL PIPELINE: Input -> 24 Layer Wafers with Vector Injection Beam -> Output -->
+          <div class="relative bg-gradient-to-r from-slate-50 via-slate-100/60 to-slate-50 rounded-2xl p-5 md:p-6 border border-slate-200">
+            
+            <!-- Residual Spine Line running continuously behind all layers -->
+            <div class="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-1 bg-slate-200/90 rounded-full z-0">
+              <!-- Pulsing active energy flow -->
+              <div id="spine-pulse" class="h-full bg-gradient-to-r from-cyan-400 via-accent to-emerald-400 rounded-full transition-all duration-300" style="width: 66%;"></div>
+            </div>
+
+            <div class="relative z-10 flex flex-col md:flex-row items-center gap-4 md:gap-6">
+              
+              <!-- Stage 1: Input Embeddings Wafer -->
+              <div class="shrink-0 flex md:flex-col items-center justify-center p-3 rounded-xl bg-white border border-slate-200 shadow-xs text-center min-w-[80px]">
+                <span class="material-symbols-outlined text-slate-500 text-lg">input</span>
+                <span class="text-[11px] font-code font-bold text-slate-800 mt-1">Embeddings</span>
+                <span class="text-[9px] font-code text-slate-400">h₀ (Tokens)</span>
+              </div>
+
+              <!-- Flow Arrow -->
+              <div class="hidden md:flex text-slate-300">
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+              </div>
+
+              <!-- Stage 2: 24 Clickable Transformer Decoder Layer Slices (The Wafers) -->
+              <div class="flex-1 w-full">
+                <!-- Depth Role Categories Legend -->
+                <div class="flex items-center justify-between text-[11px] font-code text-slate-400 mb-2 px-1">
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-sm bg-slate-300"></span>
+                    <span>L1–L8 • Surface Syntax</span>
+                  </span>
+                  <span class="flex items-center gap-1.5 text-cyan-tensor font-bold">
+                    <span class="w-2.5 h-2.5 rounded-sm bg-cyan-tensor"></span>
+                    <span>L9–L18 • Style &amp; Latent Geometry (Optimal)</span>
+                  </span>
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-sm bg-slate-300"></span>
+                    <span>L19–L24 • Vocabulary Head</span>
+                  </span>
+                </div>
+
+                <!-- 24 Interactive Wafer Tiles -->
+                <div id="layer-stack-container" class="grid grid-cols-6 sm:grid-cols-12 md:grid-cols-24 gap-1.5 py-2">
+                  <button type="button" onclick="selectLayer(1)" id="layer-btn-1" title="Layer 1: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L1</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(2)" id="layer-btn-2" title="Layer 2: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L2</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(3)" id="layer-btn-3" title="Layer 3: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L3</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(4)" id="layer-btn-4" title="Layer 4: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L4</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(5)" id="layer-btn-5" title="Layer 5: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L5</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(6)" id="layer-btn-6" title="Layer 6: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L6</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(7)" id="layer-btn-7" title="Layer 7: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L7</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(8)" id="layer-btn-8" title="Layer 8: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L8</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(9)" id="layer-btn-9" title="Layer 9: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L9</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(10)" id="layer-btn-10" title="Layer 10: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L10</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(11)" id="layer-btn-11" title="Layer 11: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L11</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(12)" id="layer-btn-12" title="Layer 12: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L12</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(13)" id="layer-btn-13" title="Layer 13: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L13</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(14)" id="layer-btn-14" title="Layer 14: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L14</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(15)" id="layer-btn-15" title="Layer 15: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L15</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(16)" id="layer-btn-16" title="Layer 16: Active Vector Injection (h_{16} + α·v)" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-400/60 scale-105 z-20 font-bold cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-white animate-ping mb-1"></span>
+                    <span class="text-xs font-mono font-bold leading-none">L16</span>
+                    <span class="text-[8px] font-mono uppercase tracking-tight mt-1 px-1 rounded bg-black/20 text-white">+α·v</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(17)" id="layer-btn-17" title="Layer 17: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L17</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(18)" id="layer-btn-18" title="Layer 18: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L18</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(19)" id="layer-btn-19" title="Layer 19: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L19</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(20)" id="layer-btn-20" title="Layer 20: Click to inject steering vector" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-white hover:bg-cyan-50/90 border-cyan-300 text-slate-800 hover:border-cyan-500 hover:scale-105 shadow-2xs z-10 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mb-1"></span>
+                    <span class="text-xs font-mono font-semibold leading-none">L20</span>
+                    <span class="text-[8px] font-mono text-cyan-700 mt-1">avail</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(21)" id="layer-btn-21" title="Layer 21: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L21</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(22)" id="layer-btn-22" title="Layer 22: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L22</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(23)" id="layer-btn-23" title="Layer 23: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L23</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                  <button type="button" onclick="selectLayer(24)" id="layer-btn-24" title="Layer 24: Click to test boundary injection" class="group relative py-3 px-1 rounded-xl text-center flex flex-col items-center justify-between transition-all duration-200 border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>
+                    <span class="text-xs font-mono leading-none">L24</span>
+                    <span class="text-[8px] font-mono text-slate-400 mt-1">base</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Flow Arrow -->
+              <div class="hidden md:flex text-slate-300">
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+              </div>
+
+              <!-- Stage 3: Output Logits Wafer -->
+              <div class="shrink-0 flex md:flex-col items-center justify-center p-3 rounded-xl bg-white border border-slate-200 shadow-xs text-center min-w-[80px]">
+                <span class="material-symbols-outlined text-accent text-lg">output</span>
+                <span class="text-[11px] font-code font-bold text-slate-800 mt-1">Logits</span>
+                <span class="text-[9px] font-code text-accent font-semibold">Steered Text</span>
+              </div>
+
+            </div>
+
+            <!-- Floating Vector Perturbation Tag at bottom of diagram -->
+            <div class="mt-4 pt-3 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs font-code">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-accent"></span>
+                <span class="text-slate-500">Residual Addition formula:</span>
+                <span class="px-2 py-0.5 rounded bg-white border border-slate-200 font-mono text-slate-800 font-semibold">
+                  h_L^(t) ← h_L^(t) + α · (μ⁺ - μ⁻)
+                </span>
+              </div>
+
+              <div class="flex items-center gap-4 text-slate-400 text-[11px]">
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-tensor"></span> Available for injection</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-200"></span> Unsupported / Uncached</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- OUTPUT STAGE & METRICS (Side by Side) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          
+          <!-- Left: Big Animated Morphing Text Display (Centerpiece) -->
+          <div class="lg:col-span-8 flex flex-col">
+    <!-- MAIN STAGE: BIG ANIMATED MORPHING TEXT DISPLAY (The Centerpiece) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-lg shadow-slate-200/50 relative">
+          
+          <!-- Top Telemetry & Diff Status Bar -->
+          <div class="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs font-code">
+            <div class="flex items-center gap-3">
+              <span class="inline-flex items-center gap-1.5 text-accent font-semibold">
+                <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                <span id="active-regime-pill">OPTIMAL STEERING SWEETSPOT (★)</span>
+              </span>
+              <span class="text-slate-600">|</span>
+              <span class="text-slate-400">Layer Injection: <span id="layer-status-tag" class="text-cyan-tensor font-bold">h₂ → h₃</span></span>
+              <span class="text-slate-600">|</span>
+              <span class="text-slate-400">Latent Shift: <span id="drift-score-tag" class="text-emerald-400 font-bold">78%</span></span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <button id="diff-toggle-btn" class="px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-accent transition-colors">
+                Token Annotations: ON
+              </button>
+              <button id="copy-steered-btn" class="px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-accent flex items-center gap-1 transition-colors">
+                <span class="material-symbols-outlined text-xs">content_copy</span>
+                <span>Copy Output</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- THE BIG DISPLAY BLOCK: Words Morph and Animate Based on Strength -->
+          <div class="p-8 md:p-14 min-h-[280px] flex flex-col justify-center relative bg-gradient-to-b from-white via-slate-50/40 to-slate-50/80">
+            <div class="text-code-sm font-code text-slate-500 uppercase tracking-widest text-xs mb-4 flex items-center justify-between">
+              <span>Model Generated Output (Streaming in Real Time)</span>
+              <span class="text-slate-400 text-xs font-mono" id="char-token-counter">Live Residual Stream</span>
+            </div>
+
+            <!-- Prominent Big Animated Text Element -->
+            <div id="big-steered-output" class="font-display text-2xl sm:text-4xl md:text-5xl text-slate-900 font-semibold leading-snug tracking-tight transition-all duration-300">&#34;I am <span class="text-accent underline decoration-accent/50 underline-offset-4 font-bold transition-all inline-block hover:scale-105">going to</span> <span class="text-accent underline decoration-accent/50 underline-offset-4 font-bold transition-all inline-block hover:scale-105">definitely</span> do it today.&#34;</div>
+
+            <!-- Subtle inline token trajectory annotation preview (inspired by the whiteboard arrows) -->
+            <div id="token-annotation-ribbon" class="mt-8 pt-4 border-t border-slate-200/80 flex flex-wrap items-center gap-2 text-xs font-code text-slate-400">
+              <span class="text-slate-500 font-semibold">Active Vector Morphisms:</span>
+              <span id="annotation-pills-container" class="flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 line-through">fucking</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-tensor/15 border border-cyan-tensor/30 text-cyan-tensor font-medium">definitely</span>
+          <span class="text-slate-600">|</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 line-through">today</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/15 border border-accent/30 text-accent font-medium">before sunrise</span>
+        </span>
+            </div>
+          </div>
+
+          <!-- USER FEEDBACK CONTAINER: Golden Dataset Human Evaluation System -->
+          <div class="px-6 py-4 bg-slate-50/90 border-t border-slate-200/90 flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Left: Golden Dataset collection badge & explanation -->
+            <div class="flex items-center gap-3 w-full md:w-auto">
+              <div class="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-base">reviews</span>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-headline font-bold text-slate-900">Rate this Steered Output</span>
+                  
+                </div>
+                <p class="text-[11px] text-slate-500 font-body"><br></p>
+              </div>
+            </div>
+
+            <!-- Middle: Quick Qualitative Feedback Criteria Tags -->
+            <div class="flex flex-wrap items-center gap-1.5" id="feedback-tags-container">
+              <button type="button" onclick="toggleFeedbackTag(this)" class="feedback-tag px-2.5 py-1 rounded-md text-[11px] font-code font-medium border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer">
+                Natural Phrasing
+              </button>
+              <button type="button" onclick="toggleFeedbackTag(this)" class="feedback-tag px-2.5 py-1 rounded-md text-[11px] font-code font-medium border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer">
+                Preserved Meaning
+              </button>
+              <button type="button" onclick="toggleFeedbackTag(this)" class="feedback-tag px-2.5 py-1 rounded-md text-[11px] font-code font-medium border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer">
+                Too Rigid
+              </button>
+              <button type="button" onclick="toggleFeedbackTag(this)" class="feedback-tag px-2.5 py-1 rounded-md text-[11px] font-code font-medium border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer">
+                Understeered
+              </button>
+            </div>
+
+            <!-- Right: Interactive Like / Dislike + Submit to Golden Dataset -->
+            <div class="flex items-center gap-2 shrink-0">
+              <!-- Thumbs Up / Like -->
+              <button type="button" id="btn-rating-like" onclick="rateResponse(&#39;positive&#39;)" class="group p-2 rounded-lg border border-slate-200 bg-white hover:border-emerald-400 hover:bg-emerald-50 text-slate-500 hover:text-emerald-700 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer">
+                <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">thumb_up</span>
+                <span class="text-xs font-code font-semibold hidden sm:inline">Good </span>
+              </button>
+
+              <!-- Thumbs Down / Dislike -->
+              <button type="button" id="btn-rating-dislike" onclick="rateResponse(&#39;negative&#39;)" class="group p-2 rounded-lg border border-slate-200 bg-white hover:border-rose-400 hover:bg-rose-50 text-slate-500 hover:text-rose-700 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer">
+                <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">thumb_down</span>
+                <span class="text-xs font-code font-semibold hidden sm:inline">Poor</span>
+              </button>
+
+              <!-- Commit to Golden Dataset -->
+              <button type="button" id="btn-commit-feedback" onclick="commitToGoldenDataset()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-code text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                <span class="material-symbols-outlined text-sm">bookmark_add</span>
+                <span>Save Pair</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+          </div>
+
+          <!-- Right Side of Output: Quantitative Multi-Line Trend Graph -->
+          <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-md shadow-slate-200/40 flex flex-col justify-between space-y-3.5">
+            <div class="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-accent text-lg">show_chart</span>
+                <div>
+                  <span class="font-headline font-semibold text-slate-900 text-sm block leading-tight">Live Metrics Graph</span>
+                  <span class="text-[10px] font-code text-slate-400">Response Curves vs. α</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span id="graph-layer-tag" class="text-[10px] font-code px-2 py-0.5 rounded bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold">
+                  Layer L16
+                </span>
+                <span class="text-code-sm font-code text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  LIVE
+                </span>
+              </div>
+            </div>
+
+            <!-- Metric Legend & Current Instantaneous Readout -->
+            <div class="grid grid-cols-3 gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-200/70 text-center">
+              <div class="p-1 rounded bg-white border border-slate-200/60 shadow-2xs">
+                <div class="flex items-center justify-center gap-1 text-[10px] font-code text-amber-700 font-medium">
+                  <span class="w-2 h-0.5 bg-amber-500 rounded"></span>
+                  <span>Formality</span>
+                </div>
+                <div id="graph-metric-formality" class="text-sm font-bold font-headline text-amber-600">88%</div>
+              </div>
+              <div class="p-1 rounded bg-white border border-slate-200/60 shadow-2xs">
+                <div class="flex items-center justify-center gap-1 text-[10px] font-code text-cyan-700 font-medium">
+                  <span class="w-2 h-0.5 bg-cyan-500 rounded"></span>
+                  <span>NLI Entail</span>
+                </div>
+                <div id="graph-metric-entail" class="text-sm font-bold font-headline text-cyan-600">94%</div>
+              </div>
+              <div class="p-1 rounded bg-white border border-slate-200/60 shadow-2xs">
+                <div class="flex items-center justify-center gap-1 text-[10px] font-code text-emerald-700 font-medium">
+                  <span class="w-2 h-0.5 bg-emerald-500 rounded"></span>
+                  <span>Cosine Sim</span>
+                </div>
+                <div id="graph-metric-cosine" class="text-sm font-bold font-headline text-emerald-600">0.82</div>
+              </div>
+            </div>
+
+            <!-- SVG Multi-Line Chart Canvas: X = Alpha (-2.0 to +3.0), Y = Metric (0% to 100%) -->
+            <div class="relative bg-slate-50/80 rounded-xl p-2.5 border border-slate-200/80 flex flex-col justify-center">
+              <!-- Y-Axis Labels & Graph Body -->
+              <div class="relative h-44 w-full">
+                <svg id="live-metrics-svg" class="w-full h-full overflow-visible" viewBox="0 0 320 160" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="grad-formality" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.4"></stop>
+                      <stop offset="100%" stop-color="#D97706" stop-opacity="1"></stop>
+                    </linearGradient>
+                    <linearGradient id="grad-entail" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#06B6D4" stop-opacity="1"></stop>
+                      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.6"></stop>
+                    </linearGradient>
+                  </defs>
+
+                  <!-- Horizontal Gridlines (0%, 25%, 50%, 75%, 100%) -->
+                  <line x1="30" y1="15" x2="310" y2="15" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="3,3"></line>
+                  <text x="5" y="18" fill="#94A3B8" font-size="8" font-family="JetBrains Mono">100%</text>
+
+                  <line x1="30" y1="50" x2="310" y2="50" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="3,3"></line>
+                  <text x="10" y="53" fill="#94A3B8" font-size="8" font-family="JetBrains Mono">75%</text>
+
+                  <line x1="30" y1="85" x2="310" y2="85" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="2,2"></line>
+                  <text x="10" y="88" fill="#94A3B8" font-size="8" font-family="JetBrains Mono">50%</text>
+
+                  <line x1="30" y1="120" x2="310" y2="120" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="3,3"></line>
+                  <text x="10" y="123" fill="#94A3B8" font-size="8" font-family="JetBrains Mono">25%</text>
+
+                  <line x1="30" y1="145" x2="310" y2="145" stroke="#94A3B8" stroke-width="1.2"></line>
+                  <text x="15" y="148" fill="#94A3B8" font-size="8" font-family="JetBrains Mono">0%</text>
+
+                  <!-- Baseline α = 0.0 vertical reference marker -->
+                  <line x1="190" y1="10" x2="190" y2="145" stroke="#94A3B8" stroke-width="1" stroke-dasharray="2,2"></line>
+                  <text x="183" y="157" fill="#64748B" font-size="8" font-family="JetBrains Mono">α=0</text>
+
+                  <!-- Dynamic Multi-line Curves (Plotted across alpha range: -2.0 to +1.5) -->
+                  <!-- Line 1: Formality Curve (Amber) -->
+                  <path id="curve-formality" d fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-300"></path>
+                  
+                  <!-- Line 2: Meaning Preservation / NLI Entailment Curve (Cyan) -->
+                  <path id="curve-entailment" d fill="none" stroke="#0891B2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-300"></path>
+                  
+                  <!-- Line 3: Cosine Similarity Curve (Emerald) -->
+                  <path id="curve-cosine" d fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="4,2" stroke-linejoin="round" class="transition-all duration-300"></path>
+
+                  <!-- Active Alpha Vertical Crosshair & Data Probe Cursor -->
+                  <line id="graph-cursor-line" x1="310" y1="10" x2="310" y2="145" stroke="#EA580C" stroke-width="1.5" stroke-dasharray="2,2" class="transition-all duration-150"></line>
+                  
+                  <!-- Probe Circles on Curves -->
+                  <circle id="probe-formality" cx="310" cy="32" r="4.5" fill="#D97706" stroke="#FFFFFF" stroke-width="1.5" class="transition-all duration-150"></circle>
+                  <circle id="probe-entailment" cx="310" cy="40" r="4" fill="#0891B2" stroke="#FFFFFF" stroke-width="1.5" class="transition-all duration-150"></circle>
+                  <circle id="probe-cosine" cx="310" cy="55" r="3.5" fill="#10B981" stroke="#FFFFFF" stroke-width="1.5" class="transition-all duration-150"></circle>
+                </svg>
+              </div>
+
+              <!-- X-Axis Labels (Explicit Alpha Range: -2.0 to +1.5) -->
+              <div class="flex items-center justify-between text-[9px] font-mono text-slate-500 pt-1 border-t border-slate-200 pl-7 pr-1">
+                <span class="font-semibold text-rose-500">α = -2.0</span>
+                <span>-1.0</span>
+                <span class="font-bold text-slate-700">0.0 (Base)</span>
+                <span>+0.75</span>
+                <span class="font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">+1.5 (★)</span>
+              </div>
+            </div>
+
+            <!-- Footer: Layer Metric Storage & Status Indicator -->
+            <div class="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px] font-code text-slate-500">
+              <span class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-slate-400 text-xs">database</span>
+                <span>Stored: <strong id="stored-layer-status" class="text-slate-800">L16 Vector Profiling</strong></span>
+              </span>
+              <span class="text-accent font-semibold flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-accent animate-ping"></span>
+                <span>Auto-interpolating</span>
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COMPACT 2-COLUMN DECK: Left (System Prompt + Draft Input) | Right (Vertical Alpha Slider Tower) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 md:p-6 shadow-md shadow-slate-200/40">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            
+            <!-- LEFT COLUMN (col-span-9 / 10): System Prompt Selector + Draft Sentence Input -->
+            <div class="lg:col-span-9 space-y-4 flex flex-col justify-between">
+              
+              <!-- 1. BASE SYSTEM PROMPT BLOCK -->
+              <div class="space-y-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm text-cyan-600">terminal</span>
+                    <span class="text-xs font-code font-bold uppercase tracking-wider text-slate-700">Base System Prompt (Conditioning):</span>
+                    <span class="text-[11px] text-slate-400 font-body hidden sm:inline">— Prior context conditioning</span>
+                  </div>
+                  <button type="button" id="toggle-custom-prompt-btn" onclick="toggleCustomPromptEditor()" class="text-xs font-code text-cyan-700 hover:text-cyan-800 font-medium flex items-center gap-1 cursor-pointer">
+                    <span class="material-symbols-outlined text-xs">edit</span>
+                    <span id="custom-prompt-btn-label">Edit Custom</span>
+                  </button>
+                </div>
+
+                <!-- Base Prompt Preset Pills -->
+                <div class="flex flex-wrap items-center gap-2" id="base-prompt-pills">
+                  <button type="button" onclick="selectBasePrompt(&#39;neutral&#39;, this)" class="base-prompt-chip active px-3 py-1.5 rounded-lg text-xs font-code font-bold border border-slate-900 bg-slate-900 text-white shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span>Default: &#34;Neutral Assistant&#34;</span>
+                  </button>
+                  <button type="button" onclick="selectBasePrompt(&#39;raw&#39;, this)" class="base-prompt-chip px-3 py-1.5 rounded-lg text-xs font-code font-medium border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 flex items-center gap-1.5 transition-all cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span>Raw Unconditioned</span>
+                  </button>
+                  <button type="button" onclick="selectBasePrompt(&#39;executive&#39;, this)" class="base-prompt-chip px-3 py-1.5 rounded-lg text-xs font-code font-medium border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 flex items-center gap-1.5 transition-all cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span>Executive Diplomatic</span>
+                  </button>
+                  <button type="button" onclick="selectBasePrompt(&#39;research&#39;, this)" class="base-prompt-chip px-3 py-1.5 rounded-lg text-xs font-code font-medium border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 flex items-center gap-1.5 transition-all cursor-pointer">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span>Empirical Scientist</span>
+                  </button>
+                </div>
+
+                <!-- Custom System Prompt Editor Box (Collapsible) -->
+                <div id="custom-prompt-editor-container" class="hidden transition-all duration-200 pt-1">
+                  <div class="relative bg-slate-50 rounded-xl border border-slate-300 p-2.5 shadow-inner">
+                    <label for="custom-system-prompt-input" class="text-[10px] font-code text-slate-500 block mb-1 font-medium">Custom Conditioning Prompt:</label>
+                    <textarea id="custom-system-prompt-input" rows="2" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-mono text-slate-800 focus:ring-2 focus:ring-accent focus:outline-none placeholder:text-slate-400" placeholder="Enter custom instructions to condition base representation space..."></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. DRAFT SENTENCE INPUT BLOCK -->
+              <div class="space-y-2 pt-2 border-t border-slate-200/80">
+                <div class="flex items-center justify-between">
+                  <label for="bottom-user-input" class="text-xs font-code text-slate-700 uppercase tracking-wider flex items-center gap-1.5 font-bold">
+                    <span class="material-symbols-outlined text-sm text-cyan-600">edit_note</span>
+                    <span>Draft Sentence Input:</span>
+                  </label>
+
+                  <!-- Quick Presets -->
+                  <div class="flex items-center gap-1.5 text-xs">
+                    <span class="text-slate-400 font-code text-[11px] hidden md:inline">Sample:</span>
+                    <button type="button" class="sample-chip px-2 py-0.5 rounded bg-amber-50/80 border border-amber-200 text-amber-800 text-[11px] font-medium font-code hover:bg-slate-100 transition-colors cursor-pointer" onclick="loadSampleText(&#39;whiteboard&#39;)">
+                      &#34;Do it today&#34;
+                    </button>
+                    <button type="button" class="sample-chip px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-[11px] font-code hover:bg-slate-100 transition-colors cursor-pointer" onclick="loadSampleText(&#39;meeting&#39;)">
+                      &#34;Meeting Waste&#34;
+                    </button>
+                    <button type="button" class="sample-chip px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-[11px] font-code hover:bg-slate-100 transition-colors cursor-pointer" onclick="loadSampleText(&#39;code&#39;)">
+                      &#34;Broken PR&#34;
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Input Row -->
+                <div class="flex gap-2">
+                  <input id="bottom-user-input" type="text" value="I&#39;m gonna fucking do it today." placeholder="Type any sentence here..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-900 font-body focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 shadow-xs">
+                  <button id="clear-input-btn" type="button" title="Clear input" class="px-3.5 rounded-xl bg-white border border-slate-200 hover:border-slate-400 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer" onclick="document.getElementById(&#39;bottom-user-input&#39;).value=&#39;&#39;; updateInteractiveLab();">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+                
+                <div class="flex items-center justify-between text-[11px] text-slate-500 font-code pt-0.5">
+                  <span>Changes in wording stream continuously above as you type or adjust alpha.</span>
+                  <span class="text-cyan-700 font-medium">Inference: ~22ms • Residual Stream Injection</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN (col-span-3): VERTICAL ALPHA SLIDER TOWER -->
+            <div class="lg:col-span-3 bg-slate-50 rounded-xl border border-slate-200/90 p-4 flex flex-col justify-between items-center space-y-3">
+              
+              <!-- Tower Header & Alpha Metric Readout -->
+              <div class="w-full text-center space-y-1 pb-1 border-b border-slate-200">
+                <div class="flex items-center justify-center gap-1.5 text-slate-700 font-headline font-bold text-xs">
+                  <span class="material-symbols-outlined text-amber-600 text-base">speed</span>
+                  <span>Strength (α)</span>
+                </div>
+                <div class="flex items-center justify-center">
+                  <span id="strength-numeric-display" class="font-code text-base font-bold text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-md border border-amber-300 tabular-nums">
+                    +1.50
+                  </span>
+                </div>
+              </div>
+
+              <!-- Vertical Slider Track Area with Ticks & Presets -->
+              <div class="flex items-center justify-center gap-4 w-full flex-1 py-1">
+                
+                <!-- Vertical Range Slider -->
+                <div class="relative flex items-center justify-center h-44 w-10">
+                  <input id="alpha-strength-slider" type="range" min="-3.0" max="3.0" step="0.1" value="1.5" class="h-40 w-3 accent-amber-600 cursor-pointer appearance-none bg-slate-200 rounded-full focus:outline-none" style="-webkit-appearance: slider-vertical; writing-mode: bt-lr;">
+                </div>
+
+                <!-- Detent Preset Buttons (Ranked Vertically from +2.8 to -2.5) -->
+                <div class="flex flex-col justify-between h-44 text-[10px] font-code py-1">
+                  <button type="button" class="text-left px-1.5 py-0.5 rounded hover:bg-white hover:text-amber-700 text-slate-600 transition-all font-medium cursor-pointer" onclick="setStrength(2.8)">
+                    +2.8 <span class="text-slate-400 block text-[9px]">Hyper-Formal</span>
+                  </button>
+                  <button type="button" class="text-left px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-800 transition-all font-bold shadow-2xs cursor-pointer" onclick="setStrength(1.5)">
+                    +1.5 <span class="text-amber-700 block text-[9px]">Optimal ★</span>
+                  </button>
+                  <button type="button" class="text-left px-1.5 py-0.5 rounded hover:bg-white hover:text-slate-900 text-slate-600 transition-all font-medium cursor-pointer" onclick="setStrength(0.0)">
+                    0.0 <span class="text-slate-400 block text-[9px]">Unsteered</span>
+                  </button>
+                  <button type="button" class="text-left px-1.5 py-0.5 rounded hover:bg-white hover:text-rose-700 text-slate-600 transition-all font-medium cursor-pointer" onclick="setStrength(-2.5)">
+                    -2.5 <span class="text-rose-400 block text-[9px]">Slang / Blunt</span>
+                  </button>
+                </div>
+
+              </div>
+
+              <!-- Tower Footer Note -->
+              <div class="w-full text-center pt-1 border-t border-slate-200">
+                <span class="text-[9px] font-mono text-slate-400 uppercase tracking-wider">Latent Multiplier</span>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION: FINE-TUNED REWRITING VS. ACTIVATION STEERING -->
+    <section id="fine-tune-vs-steering" class="py-20 px-6 lg:px-12 bg-white border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto space-y-12">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-tensor/10 border border-cyan-tensor/30 text-cyan-tensor text-code-sm font-code">
+            <span class="material-symbols-outlined text-xs">schema</span>
+            <span>CORE PARADIGM SHIFT</span>
+          </div>
+          <h2 class="font-headline text-headline-lg text-slate-900 font-bold">
+            Weight Modification vs. Latent Geometry
+          </h2>
+          <p class="text-body-lg text-slate-600">
+            Why Second Thought combines a practical local fine-tune tool with an exploratory live steering engine. Understanding where each technology excels and where steering opens new frontiers.
+          </p>
+        </div>
+
+        <!-- Comparative Architectural Breakdown Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          <!-- Column A: Fine-Tuned Local Rewriting (The Extension) -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-8 space-y-6 relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
+                PRACTICAL &amp; RELIABLE
+              </span>
+              <span class="material-symbols-outlined text-emerald-400">extension</span>
+            </div>
+            <div>
+              <h3 class="font-headline text-headline-md text-slate-900 font-semibold">Fine-Tuned Rewriting</h3>
+              <p class="text-body-sm text-slate-400 mt-1">Our Chrome Extension&#39;s on-device model architecture.</p>
+            </div>
+            
+            <ul class="space-y-3.5 text-body-md text-slate-600">
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-emerald-400 text-sm mt-1">check_circle</span>
+                <span><strong>Static Weight Updates:</strong> Model weights $W$ are permanently adapted via supervised pairs (rude $\rightarrow$ respectful).</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-emerald-400 text-sm mt-1">check_circle</span>
+                <span><strong>Predictable Failure Modes:</strong> High reliability for designated task (rephrasing toxic language into polite prose).</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-emerald-400 text-sm mt-1">check_circle</span>
+                <span><strong>100% Local &amp; Private:</strong> Runs in-browser via WebAssembly / ONNX with zero telemetry or cloud latency.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-slate-500 text-sm mt-1">remove_circle_outline</span>
+                <span><strong>Binary / Coarse Control:</strong> You cannot slide formality smoothly from 12% to 88% or adjust layer interventions at runtime.</span>
+              </li>
+            </ul>
+
+            <div class="p-4 rounded-lg bg-white border border-slate-200 font-code text-code-sm text-slate-300">
+              <span class="text-slate-500 block mb-1">// Static Mapping</span>
+              <span class="text-emerald-400">f_fine_tuned(x) = y_polite</span>
+            </div>
+          </div>
+
+          <!-- Column B: Activation Steering (The Steering Lab) -->
+          <div class="bg-amber-50/40 rounded-xl border border-amber-200/90 p-8 space-y-6 relative overflow-hidden shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-accent bg-accent/10 px-2.5 py-1 rounded border border-accent/30">
+                DYNAMIC &amp; INTERPRETABLE
+              </span>
+              <span class="material-symbols-outlined text-accent">tune</span>
+            </div>
+            <div>
+              <h3 class="font-headline text-headline-md text-slate-900 font-semibold">Activation Steering</h3>
+              <p class="text-body-sm text-slate-400 mt-1">The Steering Lab&#39;s runtime residual intervention engine.</p>
+            </div>
+            
+            <ul class="space-y-3.5 text-body-md text-slate-600">
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-accent text-sm mt-1">arrow_forward</span>
+                <span><strong>Zero Weight Changes:</strong> Base weights remain pristine. Interventions occur in the hidden residual stream during forward pass.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-accent text-sm mt-1">arrow_forward</span>
+                <span><strong>Continuous Parameter Dialing:</strong> Slide $\alpha$ smoothly to shift tone incrementally from informal to hyper-academic.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-accent text-sm mt-1">arrow_forward</span>
+                <span><strong>Multi-Objective Superposition:</strong> Combine orthogonal vectors simultaneously: $\mathbf{h} + \alpha_1 \mathbf{v}_{\text{formal}} + \alpha_2 \mathbf{v}_{\text{empathy}}$.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-cyan-tensor text-sm mt-1">info</span>
+                <span><strong>The Honest Reality:</strong> Non-linearities can cause coherence degradation at extreme $\alpha$ values—making empirical lab exploration essential.</span>
+              </li>
+            </ul>
+
+            <div class="p-4 rounded-lg bg-white border border-amber-200 font-code text-code-sm text-slate-300">
+              <span class="text-slate-500 block mb-1">// Dynamic Residual Transformation</span>
+              <span class="text-accent">h_l^(t) ← h_l^(t) + α · (μ_contrastive^+ - μ_contrastive^-)</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: GOOGLE CHROME EXTENSION (On-Device Local Tool) -->
+    <section id="extension" class="py-20 px-6 lg:px-12 bg-slate-50 border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 lg:p-12 relative overflow-hidden shadow-md shadow-slate-200/50">
+          <!-- Background accent rings -->
+          <div class="absolute -right-20 -top-20 w-96 h-96 bg-amber-50/60 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            <div class="lg:col-span-7 space-y-6">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-code-sm font-code">
+                <span class="material-symbols-outlined text-xs">verified_user</span>
+                <span>AVAILABLE NOW — CHROME &amp; EDGE</span>
+              </div>
+
+              <h2 class="font-headline text-headline-lg text-slate-900 font-bold">
+                Second Thought Browser Extension
+              </h2>
+
+              <p class="text-body-lg text-slate-600 leading-relaxed">
+                Before sending a reactive email, harsh code review comment, or tense Slack response, let Second Thought provide an instant, respectful alternative. Powered by a lightweight quantized model running directly inside your browser.
+              </p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                  <span class="material-symbols-outlined text-accent text-lg">memory</span>
+                  <div class="font-headline font-semibold text-sm text-slate-900 mt-1">100% On-Device</div>
+                  <div class="text-body-sm text-slate-400 text-xs mt-0.5">Your text never leaves your local machine.</div>
+                </div>
+
+                <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                  <span class="material-symbols-outlined text-cyan-tensor text-lg">bolt</span>
+                  <div class="font-headline font-semibold text-sm text-slate-900 mt-1">&lt; 90ms Latency</div>
+                  <div class="text-body-sm text-slate-400 text-xs mt-0.5">Instant inline rewrite suggestions.</div>
+                </div>
+
+                <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                  <span class="material-symbols-outlined text-emerald-400 text-lg">rule</span>
+                  <div class="font-headline font-semibold text-sm text-slate-900 mt-1">Tone Preservation</div>
+                  <div class="text-body-sm text-slate-400 text-xs mt-0.5">Retains core critique while stripping hostility.</div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-4 pt-4">
+                <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-dark-surface font-label font-semibold text-sm transition-all shadow-md">
+                  <span class="material-symbols-outlined text-base">extension</span>
+                  <span>Install Chrome Extension</span>
+                </button>
+                <a href="#lab" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-label font-medium text-sm transition-colors">
+                  <span>Explore Steering Lab Instead</span>
+                  <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Interactive Extension Preview Mockup -->
+            <div class="lg:col-span-5">
+              <div class="bg-slate-50 rounded-xl border border-slate-200 shadow-md p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+                    <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+                    <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+                  </div>
+                  <span class="text-code-sm font-code text-xs text-slate-500">Chrome Popup // In-Context</span>
+                </div>
+
+                <div class="space-y-2">
+                  <span class="text-code-sm font-code text-xs text-rose-400 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">warning</span>
+                    <span>Detected High Hostility (0.89)</span>
+                  </span>
+                  <div class="p-3 rounded bg-rose-50 border border-rose-200 text-body-sm text-rose-800">
+                    &#34;This PR is complete garbage, did you even bother testing this branch?&#34;
+                  </div>
+                </div>
+
+                <div class="flex justify-center">
+                  <span class="material-symbols-outlined text-accent animate-bounce">arrow_downward</span>
+                </div>
+
+                <div class="space-y-2">
+                  <span class="text-code-sm font-code text-xs text-emerald-400 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">check_circle</span>
+                    <span>Second Thought Suggested Rewrite</span>
+                  </span>
+                  <div class="p-3 rounded bg-emerald-50 border border-emerald-200 text-body-sm text-emerald-800">
+                    &#34;Could you walk me through the test coverage for this branch? I noticed a few edge cases that may need closer review.&#34;
+                  </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-between">
+                  <button class="px-3 py-1.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-code-sm font-code text-xs hover:bg-emerald-500/30 transition-colors">
+                    Replace in Draft
+                  </button>
+                  <span class="text-code-sm font-code text-[11px] text-slate-500">Latency: 72ms (Local WebAssembly)</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: EVALUATION & EXPERIMENTATION SUITE (Future-Facing Research Engine) -->
+    <section id="evaluation" class="py-20 px-6 lg:px-12 bg-white border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto space-y-12">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-code-sm font-code mb-2">
+              <span class="material-symbols-outlined text-xs">analytics</span>
+              <span>SCIENTIFIC CREDIBILITY &amp; MEASUREMENT</span>
+            </div>
+            <h2 class="font-headline text-headline-lg text-slate-900 font-bold">The Evaluation &amp; Experimentation Layer</h2>
+            <p class="text-body-md text-slate-400 max-w-2xl mt-1">
+              Steering is powerful, but it is not magic. Rigorous research requires measuring both the intended behavioral shift and unintended collateral damage across multi-dimensional benchmarks.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-code-sm font-code text-cyan-tensor px-3 py-1 rounded bg-white border border-cyan-tensor/30">
+              Benchmark Dataset: Contrastive-NLP-v2
+            </span>
+          </div>
+        </div>
+
+        <!-- Evaluation Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Metric Card 1: Tone Transfer Efficacy -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-6 space-y-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-accent">METRIC 01</span>
+              <span class="material-symbols-outlined text-accent text-sm">trending_up</span>
+            </div>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Target Attribute Accuracy</h3>
+            <p class="text-body-sm text-slate-600">
+              Classifier confidence that the generated text possesses the intended target attribute (e.g. Formal, Polite, Empathic).
+            </p>
+            <div class="space-y-2 pt-2">
+              <div class="flex justify-between text-code-sm font-code text-xs">
+                <span class="text-slate-400">At α = +1.50</span>
+                <span class="text-accent font-bold">92.4% success</span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-accent rounded-full" style="width: 92.4%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metric Card 2: Perplexity & Collateral Coherence -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-6 space-y-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-cyan-tensor">METRIC 02</span>
+              <span class="material-symbols-outlined text-cyan-tensor text-sm">psychology</span>
+            </div>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Perplexity &amp; Fluency Retention</h3>
+            <p class="text-body-sm text-slate-600">
+              Ensures that activation intervention does not destroy grammatical fluency or produce degenerate token loops.
+            </p>
+            <div class="space-y-2 pt-2">
+              <div class="flex justify-between text-code-sm font-code text-xs">
+                <span class="text-slate-400">PPL Drift (vs Baseline)</span>
+                <span class="text-cyan-tensor font-bold">+1.82 (Safe Zone)</span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-cyan-tensor rounded-full" style="width: 25%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metric Card 3: Semantic Content Invariance -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-6 space-y-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-code-sm font-code text-emerald-400">METRIC 03</span>
+              <span class="material-symbols-outlined text-emerald-400 text-sm">balance</span>
+            </div>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Core Semantic Preservation</h3>
+            <p class="text-body-sm text-slate-600">
+              Embedding cosine similarity between source prompt intent and output, confirming the meaning didn&#39;t get hallucinated away.
+            </p>
+            <div class="space-y-2 pt-2">
+              <div class="flex justify-between text-code-sm font-code text-xs">
+                <span class="text-slate-400">Cosine Sim (Intent)</span>
+                <span class="text-emerald-400 font-bold">0.88 Cos-Sim</span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-400 rounded-full" style="width: 88%"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Alpha Parameter Sweep Visualizer Mockup -->
+        <div class="bg-slate-50 rounded-xl border border-slate-200 p-6 space-y-4 shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h4 class="font-headline font-semibold text-slate-900">Large-Scale Batch Sweep Inspector</h4>
+              <p class="text-body-sm text-slate-500 text-xs">Running 1,000 prompt variations across $\alpha \in [-3.0, +3.0]$ to identify the Pareto frontier.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1 rounded bg-white border border-slate-200 text-code-sm font-code text-xs text-slate-700 hover:border-slate-400 transition-colors">
+                Export Run CSV
+              </button>
+              <button class="px-3 py-1 rounded bg-accent/20 border border-accent/40 text-code-sm font-code text-xs text-accent hover:bg-accent/30 transition-colors">
+                + Launch Cloud Sweep
+              </button>
+            </div>
+          </div>
+
+          <!-- Mini data table representation -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left font-code text-code-sm">
+              <thead class="bg-slate-100 text-slate-700 text-xs uppercase border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Alpha (α)</th>
+                  <th class="py-2.5 px-3">Layer (L)</th>
+                  <th class="py-2.5 px-3">Attribute Shift</th>
+                  <th class="py-2.5 px-3">Semantic Sim</th>
+                  <th class="py-2.5 px-3">Perplexity</th>
+                  <th class="py-2.5 px-3">Regime Classification</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 text-slate-700 text-xs">
+                <tr>
+                  <td class="py-2.5 px-3 text-rose-600 font-bold">-2.50</td>
+                  <td class="py-2.5 px-3 text-slate-500">16</td>
+                  <td class="py-2.5 px-3">Informal (98%)</td>
+                  <td class="py-2.5 px-3">0.72</td>
+                  <td class="py-2.5 px-3 text-amber-700">14.2</td>
+                  <td class="py-2.5 px-3 text-rose-700 font-medium">Over-steered (Mild Slang)</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-3 text-slate-500">0.00</td>
+                  <td class="py-2.5 px-3 text-slate-500">-</td>
+                  <td class="py-2.5 px-3">Neutral (50%)</td>
+                  <td class="py-2.5 px-3">1.00</td>
+                  <td class="py-2.5 px-3 text-emerald-600">8.1</td>
+                  <td class="py-2.5 px-3 text-slate-500">Unsteered Baseline</td>
+                </tr>
+                <tr class="bg-amber-50/60">
+                  <td class="py-2.5 px-3 text-amber-700 font-bold">+1.40</td>
+                  <td class="py-2.5 px-3 text-slate-500">16</td>
+                  <td class="py-2.5 px-3 text-amber-700 font-medium">Formal (91%)</td>
+                  <td class="py-2.5 px-3 text-emerald-600">0.91</td>
+                  <td class="py-2.5 px-3 text-emerald-600">8.9</td>
+                  <td class="py-2.5 px-3 text-amber-800 font-semibold">Optimal Sweetspot ★</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-3 text-amber-700 font-bold">+2.80</td>
+                  <td class="py-2.5 px-3 text-slate-500">16</td>
+                  <td class="py-2.5 px-3">Formal (99%)</td>
+                  <td class="py-2.5 px-3 text-amber-700">0.79</td>
+                  <td class="py-2.5 px-3 text-rose-600">22.6</td>
+                  <td class="py-2.5 px-3 text-rose-700 font-medium">Victorian Hyperbole</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- PAGE 5: ABOUT US (Mission, Lab Origins, Open Science, and Research Philosophy) -->
+    <section id="about" class="py-20 px-6 lg:px-12 bg-slate-50 border-b border-slate-200/80">
+      <div class="max-w-6xl mx-auto space-y-12">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-code-sm font-code">
+            <span class="material-symbols-outlined text-xs">group</span>
+            <span>ABOUT SECOND THOUGHT</span>
+          </div>
+          <h2 class="font-headline text-headline-lg text-slate-900 font-bold">
+            An Open Lab for Controllable Language Mechanics
+          </h2>
+          <p class="text-body-lg text-slate-600 leading-relaxed">
+            Second Thought was founded at the intersection of mechanistic interpretability research and everyday communication tools. We believe that understanding how language models construct tone is prerequisite to making them safe, respectful, and genuinely controllable.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="p-6 rounded-xl bg-white border border-slate-200 space-y-3 shadow-xs">
+            <span class="material-symbols-outlined text-accent text-2xl">biotech</span>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Interpretability First</h3>
+            <p class="text-body-sm text-slate-600">
+              Rather than treating LLMs as mysterious black boxes steered purely by prompt engineering, we isolate residual control vectors to understand the geometric structure of language attributes.
+            </p>
+          </div>
+
+          <div class="p-6 rounded-xl bg-white border border-slate-200 space-y-3 shadow-xs">
+            <span class="material-symbols-outlined text-cyan-tensor text-2xl">lock_open</span>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Open Research Stance</h3>
+            <p class="text-body-sm text-slate-600">
+              We publish our failure modes alongside our breakthroughs. Activation steering is fragile, polysemantic, and still imperfect—we invite the broader NLP community to test our findings.
+            </p>
+          </div>
+
+          <div class="p-6 rounded-xl bg-white border border-slate-200 space-y-3 shadow-xs">
+            <span class="material-symbols-outlined text-emerald-400 text-2xl">laptop_chromebook</span>
+            <h3 class="font-headline font-semibold text-lg text-slate-900">Practical Everyday Utility</h3>
+            <p class="text-body-sm text-slate-600">
+              Our research feeds directly into practical tools. The Second Thought browser extension delivers on-device, respectful rewriting for emails and code reviews without sending text to any cloud server.
+            </p>
+          </div>
+        </div>
+
+        <!-- Research quote box -->
+        <div class="p-8 rounded-2xl bg-white border border-slate-200 text-center max-w-4xl mx-auto space-y-4 shadow-xs">
+          <p class="text-body-lg text-slate-700 italic leading-relaxed">
+            &#34;We do not claim activation steering is solved. Residual spaces are dense and non-linear. But by allowing users to touch the internal parameters directly, we transform abstract math into an intuitive creative experience.&#34;
+          </p>
+          <div class="text-code-sm font-code text-accent font-semibold">
+            — The Second Thought Research Group
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Site Footer (Unified with 5 Clean Page Links) -->
+  <footer class="bg-white border-t border-slate-200 py-12 px-6 lg:px-12 text-slate-600 text-body-sm">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <span class="font-headline font-bold text-slate-900 text-base">Second Thought</span>
+        <span class="text-slate-600">|</span>
+        <span class="text-xs">Activation Steering &amp; Controllable Language Platform</span>
+      </div>
+
+      <div class="flex items-center gap-6 font-label text-xs">
+        <a href="#overview" class="hover:text-slate-900 transition-colors">Overview</a>
+        <a href="#experimental" class="hover:text-slate-900 transition-colors">The Experimental Page</a>
+        <a href="#extension" class="hover:text-slate-900 transition-colors">Browser Extension</a>
+        <a href="#evaluation" class="hover:text-slate-900 transition-colors">Evaluation</a>
+        <a href="#about" class="hover:text-slate-900 transition-colors">About Us</a>
+        <a href="https://github.com" target="_blank" class="hover:text-slate-900 transition-colors text-slate-500 hover:text-accent">GitHub</a>
+      </div>
+
+      <div class="text-code-sm font-code text-xs text-slate-500">
+        © 2026 Second Thought Project. Open Source Apache-2.0.
+      </div>
+    </div>
+  </footer>
+
+  <!-- SCRIPT: LIVE STEERING INTERACTION ENGINE -->
+  <script>
+    // State management for redesigned intuitive interactive lab
+    const state = {
+      alpha: 1.5,
+      vector: 'formality',
+      diffMode: true,
+      currentText: "I'm gonna fucking do it today.",
+      
+      // Dynamic semantic word replacement dictionaries for custom inputs and known samples
+      // Inspired directly by the whiteboard sketch:
+      // "I'm gonna fucking do it today" -> "going to" / "definitely" / "finish it before tomorrow sunrise"
+      whiteboardMapping: {
+        neg_extreme: "I'm straight up gonna fucking do it today no cap.",
+        neg_mild: "I'm gonna do it today, get off my back.",
+        zero: "I am going to do it today.",
+        pos_moderate: "I am going to definitely do it today.",
+        pos_high: "I will make sure to finish it before tomorrow sunrise.",
+        pos_extreme: "I hereby pledge to bring this endeavor to completion prior to tomorrow's dawn."
+      },
+      
+      meetingMapping: {
+        neg_extreme: "Ain't no way I'm sitting in that meeting, ya'll got zero plan and it's straight trash.",
+        neg_mild: "Skipping the call. The agenda makes no sense and it's a huge waste of my time.",
+        zero: "I can't make this meeting, your agenda is unstructured and not a good use of time.",
+        pos_moderate: "I will be unable to attend today's meeting. Could we refine the agenda topics in advance?",
+        pos_high: "Regrettably, I must decline today's meeting. Let us review a structured agenda prior to reconvening.",
+        pos_extreme: "I hereby convey my respectful apologies as I shall be absent from the scheduled assembly."
+      },
+
+      codeMapping: {
+        neg_extreme: "Bro who approved this garbage PR? You didn't even run tests, seriously?!",
+        neg_mild: "This pull request is totally busted. Why merge code without test coverage?",
+        zero: "This pull request has issues. It was merged without adequate test coverage.",
+        pos_moderate: "I noticed a few failing checks in this PR. Could we pause and add comprehensive test coverage?",
+        pos_high: "Upon reviewing this PR, I recommend we defer the merge until thorough unit tests are verified.",
+        pos_extreme: "A prudent examination reveals substantive omissions in automated verification protocols."
+      }
+    };
+
+    // DOM Elements
+    const alphaSlider = document.getElementById('alpha-strength-slider');
+    const numericDisplay = document.getElementById('strength-numeric-display');
+    const bigOutput = document.getElementById('big-steered-output');
+    const bottomInput = document.getElementById('bottom-user-input');
+    const activeRegimePill = document.getElementById('active-regime-pill');
+    const driftScoreTag = document.getElementById('drift-score-tag');
+    const vectorMiniLine = document.getElementById('vector-mini-line');
+    const vectorMiniPoint = document.getElementById('vector-mini-point');
+    const vectorMiniAlphaText = document.getElementById('vector-mini-alpha-text');
+    const vectorDirectionLabel = document.getElementById('vector-direction-label');
+    const annotationPillsContainer = document.getElementById('annotation-pills-container');
+    const diffToggleBtn = document.getElementById('diff-toggle-btn');
+    const copySteeredBtn = document.getElementById('copy-steered-btn');
+
+    // Categorize alpha into qualitative regime
+    function getRegime(alpha) {
+      if (alpha <= -2.0) {
+        return {
+          title: "NEGATIVE STEERING (ANTI-VECTOR)",
+          tier: "neg_extreme",
+          drift: 94,
+          regimeClass: "text-rose-400"
+        };
+      } else if (alpha < -0.5) {
+        return {
+          title: "COLLOQUIAL / BLUNT REGIME",
+          tier: "neg_mild",
+          drift: 62,
+          regimeClass: "text-amber-400"
+        };
+      } else if (alpha >= -0.5 && alpha <= 0.5) {
+        return {
+          title: "UNSTEERED BASELINE (α = 0)",
+          tier: "zero",
+          drift: 0,
+          regimeClass: "text-slate-400"
+        };
+      } else if (alpha <= 1.8) {
+        return {
+          title: "OPTIMAL STEERING SWEETSPOT (★)",
+          tier: "pos_moderate",
+          drift: 78,
+          regimeClass: "text-accent"
+        };
+      } else if (alpha <= 2.5) {
+        return {
+          title: "HIGH EXECUTIVE DIPLOMACY",
+          tier: "pos_high",
+          drift: 89,
+          regimeClass: "text-cyan-tensor"
+        };
+      } else {
+        return {
+          title: "HYPER-STEERED REGIME (DRIFT)",
+          tier: "pos_extreme",
+          drift: 98,
+          regimeClass: "text-amber-300"
+        };
+      }
+    }
+
+    // Dynamic text morpher: works on known sample keys AND arbitrary user typed text
+    function synthesizeSteeredText(inputText, alpha, tier) {
+      const lower = inputText.toLowerCase().trim();
+
+      // Check for known presets first
+      if (lower.includes("fucking") || lower.includes("gonna") || lower.includes("do it today")) {
+        return state.whiteboardMapping[tier];
+      }
+      if (lower.includes("meeting") || lower.includes("waste") || lower.includes("agenda")) {
+        return state.meetingMapping[tier];
+      }
+      if (lower.includes("pr") || lower.includes("pull request") || lower.includes("test") || lower.includes("broken")) {
+        return state.codeMapping[tier];
+      }
+
+      // Procedural transformation for any arbitrary user text typed into the bottom box!
+      if (alpha <= -2.0) {
+        return inputText
+          .replace(/please/gi, "")
+          .replace(/would you/gi, "you better")
+          .replace(/could you/gi, "just")
+          .replace(/hello|hi/gi, "yo")
+          .replace(/thank you/gi, "whatever")
+          .replace(/\./g, "!!") + " (straight up fr)";
+      } else if (alpha < -0.5) {
+        return inputText
+          .replace(/would like to/gi, "wanna")
+          .replace(/going to/gi, "gonna")
+          .replace(/kindly/gi, "")
+          .replace(/please /gi, "");
+      } else if (alpha >= -0.5 && alpha <= 0.5) {
+        return inputText;
+      } else if (alpha <= 1.8) {
+        return inputText
+          .replace(/gonna/gi, "planning to")
+          .replace(/wanna/gi, "would appreciate")
+          .replace(/fucking/gi, "definitely")
+          .replace(/garbage|trash|stupid/gi, "suboptimal")
+          .replace(/hate/gi, "have reservations about")
+          .replace(/bad/gi, "needing revision")
+          .replace(/now|today/gi, "at your earliest convenience");
+      } else if (alpha <= 2.5) {
+        return "With deference to our shared objectives, " + inputText
+          .replace(/gonna/gi, "shall endeavor to")
+          .replace(/fucking/gi, "substantively")
+          .replace(/do it today/gi, "conclude this deliverable prior to close of business")
+          .replace(/why/gi, "kindly elucidate the rationale whereby")
+          .replace(/bad|broken/gi, "exhibiting anomalous divergence");
+      } else {
+        return "In accordance with organizational governance, " + inputText
+          .replace(/gonna/gi, "stand bound to consummate")
+          .replace(/fucking/gi, "inexorably")
+          .replace(/do it today/gi, "reach completion prior to tomorrow's dawn");
+      }
+    }
+
+    // Layer selection state
+    state.totalLayers = 24;
+    state.selectedLayer = 16;
+    state.supportedLayers = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+
+    function initLayerStack() {
+      const container = document.getElementById('layer-stack-container');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      const total = state.totalLayers || 24;
+      for (let i = 1; i <= total; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'layer-btn-' + i;
+        const isSupported = state.supportedLayers.includes(i);
+        const isSelected = (state.selectedLayer === i);
+        
+        // Sleek architectural wafer design: vertical micro-blade
+        let baseClass = 'group relative py-2.5 px-0.5 rounded-lg text-center flex flex-col items-center justify-between transition-all duration-200 border cursor-pointer ';
+        
+        if (isSelected) {
+          // Highlighted injection layer
+          baseClass += 'bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-400/50 scale-110 z-20 font-bold';
+        } else if (isSupported) {
+          // Available layers in the mid-representation zone
+          baseClass += 'bg-white hover:bg-cyan-50/90 border-cyan-200/90 text-slate-800 hover:border-cyan-400 hover:scale-105 shadow-2xs z-10';
+        } else {
+          // Surface or late layers where pre-extracted vector is disabled
+          baseClass += 'bg-slate-100/70 border-slate-200/60 text-slate-400 cursor-not-allowed opacity-60';
+        }
+        
+        btn.className = baseClass;
+        
+        // Micro-blade content: small indicator pill + Layer number + status pin
+        let topDot = '';
+        if (isSelected) {
+          topDot = '<span class="w-1.5 h-1.5 rounded-full bg-white animate-ping mb-1"></span>';
+        } else if (isSupported) {
+          topDot = '<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mb-1"></span>';
+        } else {
+          topDot = '<span class="w-1.5 h-1.5 rounded-full bg-slate-300 mb-1"></span>';
+        }
+
+        btn.innerHTML = topDot + 
+          '<span class="text-[11px] font-mono leading-none">' + i + '</span>' + 
+          '<span class="text-[8px] font-mono uppercase tracking-tighter mt-1 opacity-75">' + (isSelected ? '+v' : (isSupported ? 'ok' : '·')) + '</span>';
+        
+        if (isSupported) {
+          btn.title = 'Layer ' + i + ': Click to inject activation steering vector at this residual stage';
+          btn.addEventListener('click', () => {
+            selectLayer(i);
+          });
+        } else {
+          btn.title = 'Layer ' + i + ': Vector not pre-extracted for this layer';
+        }
+        container.appendChild(btn);
+      }
+
+      // Update spine pulse width to match selected layer position
+      const spine = document.getElementById('spine-pulse');
+      if (spine) {
+        const pct = Math.round((state.selectedLayer / 24) * 100);
+        spine.style.width = pct + '%';
+      }
+    }
+
+    window.selectLayer = function(layerNum) {
+      state.selectedLayer = layerNum;
+      const badge = document.getElementById('selected-layer-badge');
+      if (badge) {
+        badge.textContent = 'Layer L' + layerNum + ' (h₂ → h₃)';
+      }
+      const layerStatusTag = document.getElementById('layer-status-tag');
+      if (layerStatusTag) {
+        layerStatusTag.textContent = 'L' + layerNum + ' (Active)';
+      }
+      initLayerStack();
+      updateInteractiveLab();
+    };
+
+    // Main update routine for interactive lab
+    function updateInteractiveLab() {
+      const alpha = parseFloat(state.alpha);
+      const userText = bottomInput.value.trim() || "I'm gonna fucking do it today.";
+      state.currentText = userText;
+
+      // Update numeric alpha readout
+      numericDisplay.textContent = (alpha >= 0 ? '+' : '') + alpha.toFixed(2);
+
+      // Determine qualitative regime
+      const regime = getRegime(alpha);
+      activeRegimePill.textContent = regime.title;
+      driftScoreTag.textContent = `${regime.drift}%`;
+
+      // Synthesize output text
+      const rawOutput = synthesizeSteeredText(userText, alpha, regime.tier);
+
+      // Apply animated diff highlights if diffMode is ON
+      if (state.diffMode) {
+        const highlighted = rawOutput
+          .replace(/(definitely|going to|finish it before tomorrow sunrise|prior to tomorrow's dawn|pledge to bring|refined|substantively|earliest convenience|planning to|shall endeavor to|governance)/gi,
+            '<span class="text-accent underline decoration-accent/50 underline-offset-4 font-bold transition-all inline-block hover:scale-105">$1</span>')
+          .replace(/(decline|apologies|operational efficiency|reconvening|assembly|stewardship|prudent examination|substantive omissions)/gi,
+            '<span class="text-cyan-tensor underline decoration-cyan-tensor/50 underline-offset-4 font-bold transition-all inline-block hover:scale-105">$1</span>')
+          .replace(/(straight up|fucking|no cap|get off my back|trash|garbage|busted)/gi,
+            '<span class="text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded transition-all inline-block line-through">$1</span>');
+        
+        bigOutput.innerHTML = `"${highlighted}"`;
+      } else {
+        bigOutput.textContent = `"${rawOutput}"`;
+      }
+
+      // Update Mini Vector Trajectory SVG (center = 150)
+      const scaleX = 26; // pixels per alpha
+      const arrowX = Math.min(Math.max(150 + (alpha * scaleX), 25), 285);
+      
+      vectorMiniLine.setAttribute('x2', arrowX);
+      vectorMiniPoint.setAttribute('cx', arrowX);
+      vectorMiniAlphaText.setAttribute('x', Math.min(arrowX + 8, 230));
+      vectorMiniAlphaText.textContent = `α = ${(alpha >= 0 ? '+' : '') + alpha.toFixed(1)}`;
+      
+      if (alpha > 0) {
+        vectorMiniLine.setAttribute('stroke', '#F59E0B');
+        vectorMiniPoint.setAttribute('fill', '#F59E0B');
+        vectorMiniAlphaText.setAttribute('fill', '#F59E0B');
+        vectorDirectionLabel.textContent = "+v (Formal / Diplomatic)";
+        vectorDirectionLabel.className = "text-accent font-bold";
+      } else if (alpha < 0) {
+        vectorMiniLine.setAttribute('stroke', '#F43F5E');
+        vectorMiniPoint.setAttribute('fill', '#F43F5E');
+        vectorMiniAlphaText.setAttribute('fill', '#F43F5E');
+        vectorDirectionLabel.textContent = "-v (Informal / Anti-Steered)";
+        vectorDirectionLabel.className = "text-rose-400 font-bold";
+      } else {
+        vectorMiniLine.setAttribute('stroke', '#94A3B8');
+        vectorMiniPoint.setAttribute('fill', '#94A3B8');
+        vectorMiniAlphaText.setAttribute('fill', '#94A3B8');
+        vectorDirectionLabel.textContent = "Unsteered (Residual Stream Baseline)";
+        vectorDirectionLabel.className = "text-slate-400 font-bold";
+      }
+
+      // Update the active token trajectory ribbon at bottom of stage
+      updateAnnotationRibbon(alpha, regime.tier);
+
+      // UPDATE MULTI-LINE LIVE METRICS GRAPH (Layer-dependent profiling & Alpha curves)
+      updateMetricsGraph(alpha, state.selectedLayer);
+    }
+
+    // LAYER-SPECIFIC METRIC STORAGE & DYNAMIC PROFILES
+    // Real steering physics: Mid layers (L12-L18) yield maximum formality with gentle degradation.
+    // Early layers (L1-L9) have weaker effect on style, while late layers (L21+) cause earlier syntax breakdown.
+    const LAYER_PROFILES = {
+      // mid-optimal default
+      default: {
+        formalitySlope: 0.88,
+        entailmentResilience: 0.94,
+        cosineStability: 0.88
+      }
+    };
+
+    function getLayerEfficacy(layer) {
+      // Optimal peak around L16
+      const dist = Math.abs(layer - 16);
+      const efficacy = Math.max(0.45, 1.0 - (dist * 0.055)); // 1.0 at L16, ~0.65 at L10
+      const fragility = 1.0 + (layer > 18 ? (layer - 18) * 0.12 : 0); // later layers break syntax faster
+      return { efficacy, fragility };
+    }
+
+    function computeLayerMetricsAtAlpha(a, layer) {
+      const { efficacy, fragility } = getLayerEfficacy(layer);
+      
+      // 1. Formality (0 to 100%): Sigmoidal saturation dependent on layer efficacy
+      let formality;
+      if (a >= 0) {
+        formality = Math.min(99, Math.round(48 + (Math.tanh(a * 0.75 * efficacy) * 50)));
+      } else {
+        formality = Math.max(8, Math.round(48 - (Math.tanh(Math.abs(a) * 0.7 * efficacy) * 40)));
+      }
+
+      // 2. NLI Entailment (Meaning preservation): Starts at 98%, drops as alpha increases and with layer fragility
+      const penalty = (Math.pow(Math.abs(a), 1.6) * 5.8 * fragility);
+      const entailment = Math.max(35, Math.min(99, Math.round(98 - penalty)));
+
+      // 3. Cosine Similarity (Residual drift from baseline): 1.0 at alpha=0
+      const drift = Math.pow(Math.abs(a), 1.25) * 0.075 * (1.1 - efficacy * 0.2);
+      const cosine = Math.max(0.42, Math.min(1.0, 1.0 - drift));
+
+      return { formality, entailment, cosine };
+    }
+
+    function updateMetricsGraph(currentAlpha, currentLayer) {
+      const graphLayerTag = document.getElementById('graph-layer-tag');
+      const storedLayerStatus = document.getElementById('stored-layer-status');
+      if (graphLayerTag) graphLayerTag.textContent = `Layer L${currentLayer}`;
+      if (storedLayerStatus) storedLayerStatus.textContent = `L${currentLayer} Vector Profiling`;
+
+      // Readouts for current instantaneous alpha
+      const currentStats = computeLayerMetricsAtAlpha(currentAlpha, currentLayer);
+      const fReadout = document.getElementById('graph-metric-formality');
+      const eReadout = document.getElementById('graph-metric-entail');
+      const cReadout = document.getElementById('graph-metric-cosine');
+
+      if (fReadout) fReadout.textContent = `${currentStats.formality}%`;
+      if (eReadout) eReadout.textContent = `${currentStats.entailment}%`;
+      if (cReadout) cReadout.textContent = currentStats.cosine.toFixed(2);
+
+      // SVG Coordinate mapping:
+      // X: Alpha [-2.0, +1.5] -> SVG X [30, 310] (width = 280px, range = 3.5)
+      // When a = -2.0 -> x = 30
+      // When a = 0.0  -> x = 30 + (2.0 / 3.5) * 280 = 190.0
+      // When a = +1.5 -> x = 30 + (3.5 / 3.5) * 280 = 310.0
+      // Y: Percentage [0%, 100%] -> SVG Y [145, 15] (height = 130px, 0% at y=145, 100% at y=15)
+      const alphaToX = (a) => {
+        const clamped = Math.max(-2.0, Math.min(1.5, a));
+        return 30 + ((clamped - (-2.0)) / 3.5) * 280;
+      };
+      const pctToY = (pct) => 145 - ((pct / 100) * 130);
+
+      // Sample 22 points along alpha [-2.0 to +1.5] with step ~0.166 to generate smooth curves
+      let pathF = '';
+      let pathE = '';
+      let pathC = '';
+
+      for (let i = 0; i <= 21; i++) {
+        const aSample = -2.0 + (i * (3.5 / 21));
+        const stats = computeLayerMetricsAtAlpha(aSample, currentLayer);
+        
+        const x = alphaToX(aSample).toFixed(1);
+        const yF = pctToY(stats.formality).toFixed(1);
+        const yE = pctToY(stats.entailment).toFixed(1);
+        const yC = pctToY(stats.cosine * 100).toFixed(1);
+
+        if (i === 0) {
+          pathF = `M ${x} ${yF}`;
+          pathE = `M ${x} ${yE}`;
+          pathC = `M ${x} ${yC}`;
+        } else {
+          pathF += ` L ${x} ${yF}`;
+          pathE += ` L ${x} ${yE}`;
+          pathC += ` L ${x} ${yC}`;
+        }
+      }
+
+      // Update Path strings
+      const curveF = document.getElementById('curve-formality');
+      const curveE = document.getElementById('curve-entailment');
+      const curveC = document.getElementById('curve-cosine');
+
+      if (curveF) curveF.setAttribute('d', pathF);
+      if (curveE) curveE.setAttribute('d', pathE);
+      if (curveC) curveC.setAttribute('d', pathC);
+
+      // Position Active Alpha Cursor & Probes
+      const cursorX = alphaToX(currentAlpha).toFixed(1);
+      const cursorLine = document.getElementById('graph-cursor-line');
+      const probeF = document.getElementById('probe-formality');
+      const probeE = document.getElementById('probe-entailment');
+      const probeC = document.getElementById('probe-cosine');
+
+      if (cursorLine) {
+        cursorLine.setAttribute('x1', cursorX);
+        cursorLine.setAttribute('x2', cursorX);
+      }
+
+      if (probeF) {
+        probeF.setAttribute('cx', cursorX);
+        probeF.setAttribute('cy', pctToY(currentStats.formality).toFixed(1));
+      }
+      if (probeE) {
+        probeE.setAttribute('cx', cursorX);
+        probeE.setAttribute('cy', pctToY(currentStats.entailment).toFixed(1));
+      }
+      if (probeC) {
+        probeC.setAttribute('cx', cursorX);
+        probeC.setAttribute('cy', pctToY(currentStats.cosine * 100).toFixed(1));
+      }
+    }
+
+    // Render morphism pills (inspired by whiteboard arrows: h1 -> h2 -> h3)
+    function updateAnnotationRibbon(alpha, tier) {
+      if (alpha <= -1.0) {
+        annotationPillsContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600 shadow-xs">going to</span>
+          <span class="text-rose-400">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-rose-300 font-medium">straight up gonna</span>
+          <span class="text-slate-600">|</span>
+          <span class="text-rose-400 text-[11px] font-bold">Negative activation polarity</span>
+        `;
+      } else if (alpha > -1.0 && alpha < 1.0) {
+        annotationPillsContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600 shadow-xs">Baseline Residual Output</span>
+          <span class="text-slate-600">|</span>
+          <span class="text-slate-400 text-[11px]">No contrastive vector injected (α ≈ 0)</span>
+        `;
+      } else if (alpha >= 1.0 && alpha <= 2.2) {
+        annotationPillsContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 line-through">fucking</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-tensor/15 border border-cyan-tensor/30 text-cyan-tensor font-medium">definitely</span>
+          <span class="text-slate-600">|</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 line-through">today</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/15 border border-accent/30 text-accent font-medium">before sunrise</span>
+        `;
+      } else {
+        annotationPillsContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/20 border border-accent/40 text-accent font-medium">Hyper-Steered Synthesis</span>
+          <span class="text-accent font-bold">→</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-tensor/20 border border-cyan-tensor/40 text-cyan-tensor font-medium">High Victorian / Bureaucratic Latent State</span>
+        `;
+      }
+    }
+
+    // Set strength helper for quick detent buttons
+    window.setStrength = function(val) {
+      alphaSlider.value = val;
+      state.alpha = val;
+      updateInteractiveLab();
+    };
+
+    // Load sample text helper
+    window.loadSampleText = function(key) {
+      if (key === 'whiteboard') {
+        bottomInput.value = "I'm gonna fucking do it today.";
+      } else if (key === 'meeting') {
+        bottomInput.value = "I can't make this meeting, your agenda is totally unstructured and a waste of time.";
+      } else if (key === 'code') {
+        bottomInput.value = "This PR is broken, why did you merge code with zero test coverage?";
+      }
+      updateInteractiveLab();
+    };
+
+    // Event listeners
+    alphaSlider.addEventListener('input', (e) => {
+      state.alpha = parseFloat(e.target.value);
+      updateInteractiveLab();
+    });
+
+    bottomInput.addEventListener('input', () => {
+      updateInteractiveLab();
+    });
+
+    // Vector pill buttons
+    document.querySelectorAll('.vector-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.vector-pill').forEach(b => {
+          b.classList.remove('active', 'bg-accent', 'text-dark-surface', 'shadow-sm');
+          b.classList.add('text-slate-400');
+        });
+        btn.classList.remove('text-slate-400');
+        btn.classList.add('active', 'bg-accent', 'text-dark-surface', 'shadow-sm');
+        state.vector = btn.dataset.vector;
+        updateInteractiveLab();
+      });
+    });
+
+    // Toggle Diff
+    diffToggleBtn.addEventListener('click', () => {
+      state.diffMode = !state.diffMode;
+      diffToggleBtn.textContent = `Token Annotations: ${state.diffMode ? 'ON' : 'OFF'}`;
+      diffToggleBtn.classList.toggle('text-accent', state.diffMode);
+      updateInteractiveLab();
+    });
+
+    // Copy to clipboard
+    copySteeredBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(bigOutput.textContent.replace(/^"|"$/g, '').trim());
+      const orig = copySteeredBtn.innerHTML;
+      copySteeredBtn.innerHTML = '<span class="material-symbols-outlined text-xs">done</span><span>Copied!</span>';
+      setTimeout(() => {
+        copySteeredBtn.innerHTML = orig;
+      }, 1500);
+    });
+
+    // Model selection dropdown
+    const modelDropdown = document.getElementById('model-selector-dropdown');
+    if (modelDropdown) {
+      modelDropdown.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === 'qwen-0.5b') {
+          state.totalLayers = 24;
+          state.supportedLayers = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+          state.selectedLayer = 16;
+        } else if (val === 'qwen-2.5-7b') {
+          state.totalLayers = 28;
+          state.supportedLayers = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+          state.selectedLayer = 18;
+        } else if (val === 'llama-3-8b') {
+          state.totalLayers = 32;
+          state.supportedLayers = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
+          state.selectedLayer = 19;
+        } else if (val === 'gemma-2-2b') {
+          state.totalLayers = 26;
+          state.supportedLayers = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+          state.selectedLayer = 15;
+        }
+        initLayerStack();
+        updateInteractiveLab();
+      });
+    }
+
+    // Golden Dataset User Feedback Handlers
+    state.userRating = null;
+    state.feedbackTags = [];
+
+    window.rateResponse = function(sentiment) {
+      const btnLike = document.getElementById('btn-rating-like');
+      const btnDislike = document.getElementById('btn-rating-dislike');
+      
+      if (sentiment === 'positive') {
+        state.userRating = (state.userRating === 'positive') ? null : 'positive';
+      } else {
+        state.userRating = (state.userRating === 'negative') ? null : 'negative';
+      }
+
+      if (btnLike) {
+        if (state.userRating === 'positive') {
+          btnLike.className = 'group p-2 rounded-lg border border-emerald-500 bg-emerald-600 text-white transition-all shadow-xs flex items-center gap-1.5 cursor-pointer font-bold';
+        } else {
+          btnLike.className = 'group p-2 rounded-lg border border-slate-200 bg-white hover:border-emerald-400 hover:bg-emerald-50 text-slate-500 hover:text-emerald-700 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer';
+        }
+      }
+
+      if (btnDislike) {
+        if (state.userRating === 'negative') {
+          btnDislike.className = 'group p-2 rounded-lg border border-rose-500 bg-rose-600 text-white transition-all shadow-xs flex items-center gap-1.5 cursor-pointer font-bold';
+        } else {
+          btnDislike.className = 'group p-2 rounded-lg border border-slate-200 bg-white hover:border-rose-400 hover:bg-rose-50 text-slate-500 hover:text-rose-700 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer';
+        }
+      }
+    };
+
+    window.toggleFeedbackTag = function(btn) {
+      const text = btn.textContent.trim();
+      const idx = state.feedbackTags.indexOf(text);
+      if (idx > -1) {
+        state.feedbackTags.splice(idx, 1);
+        btn.className = 'feedback-tag px-2.5 py-1 rounded-md text-[11px] font-code font-medium border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer';
+      } else {
+        state.feedbackTags.push(text);
+        btn.className = 'feedback-tag px-2.5 py-1 rounded-md text-[11px] font-code font-medium border border-amber-500 bg-amber-500 text-white shadow-2xs transition-all cursor-pointer font-semibold';
+      }
+    };
+
+    window.commitToGoldenDataset = function() {
+      const btn = document.getElementById('btn-commit-feedback');
+      if (!btn) return;
+      
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<span class="material-symbols-outlined text-sm text-emerald-400">check_circle</span><span>Saved to Dataset!</span>';
+      btn.classList.add('bg-emerald-800');
+
+      setTimeout(() => {
+        btn.innerHTML = orig;
+        btn.classList.remove('bg-emerald-800');
+        // Reset local selection feedback
+        rateResponse(null);
+        document.querySelectorAll('.feedback-tag').forEach(b => {
+          b.className = 'feedback-tag px-2.5 py-1 rounded-md text-[11px] font-code font-medium border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer';
+        });
+        state.feedbackTags = [];
+      }, 2000);
+    };
+
+    // Base System Prompt Handlers
+    state.basePrompt = 'neutral';
+    const basePromptTexts = {
+      neutral: "You are a helpful, neutral language assistant.",
+      raw: "",
+      executive: "Communicate concisely with diplomatic precision.",
+      research: "Analyze and restate objectively."
+    };
+
+    window.selectBasePrompt = function(presetKey, btn) {
+      state.basePrompt = presetKey;
+      document.querySelectorAll('.base-prompt-chip').forEach(b => {
+        b.className = 'base-prompt-chip px-3 py-1.5 rounded-lg text-xs font-code font-medium border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 flex items-center gap-1.5 transition-all cursor-pointer';
+        const dot = b.querySelector('span');
+        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-400';
+      });
+      btn.className = 'base-prompt-chip active px-3 py-1.5 rounded-lg text-xs font-code font-bold border border-slate-900 bg-slate-900 text-white shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer';
+      const activeDot = btn.querySelector('span');
+      if (activeDot) activeDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+
+      const customInput = document.getElementById('custom-system-prompt-input');
+      if (customInput) {
+        customInput.value = basePromptTexts[presetKey] || "";
+      }
+      updateInteractiveLab();
+    };
+
+    window.toggleCustomPromptEditor = function() {
+      const container = document.getElementById('custom-prompt-editor-container');
+      const label = document.getElementById('custom-prompt-btn-label');
+      if (!container) return;
+      const isHidden = container.classList.contains('hidden');
+      if (isHidden) {
+        container.classList.remove('hidden');
+        if (label) label.textContent = 'Hide Prompt Editor';
+        const customInput = document.getElementById('custom-system-prompt-input');
+        if (customInput && !customInput.value) {
+          customInput.value = basePromptTexts[state.basePrompt] || "";
+        }
+      } else {
+        container.classList.add('hidden');
+        if (label) label.textContent = 'Edit Custom Prompt';
+      }
+    };
+
+    // Initial trigger on load
+    initLayerStack();
+    updateInteractiveLab();
+  </script>
+
+
+</body></html>

@@ -32,8 +32,12 @@ The website API currently runs from the repository checkout, not a standalone wh
 
 ## Current scope and model behavior
 
-- Overview and the formality interface are functional. The other sections explain
-  the existing repository workflows and their current limitations.
+- The site has individual Home (`/`), Steering Lab (`/steering`), Extension
+  (`/extension`), Evaluation (`/evaluation`), and About (`/about`) pages. Navigation
+  loads a new page rather than scrolling through sections of a single document.
+  Only the Steering Lab loads the steering JavaScript and makes generation requests.
+- Templates share `frontend/base.html` for consistent navigation and active-page
+  labels. Home includes an introduction and method explanation, without a lab below it.
 - Alpha ranges from -2 to +2 in steps of 0.1. Default: +0.5.
 - Formality uses the raw GYAFC `negative_layer11_mean` vector at decoder layer 11.
 - Beta is fixed to zero for this website. The core still supports independent
@@ -45,8 +49,37 @@ The website API currently runs from the repository checkout, not a standalone wh
 - A 64-token completion limit bounds work. If the limit is reached, the page labels
   the result as partial. It is not saved in the result cache.
 
-The original Stitch export is retained as `frontend/code 2.html` for reference.
-The server serves only `frontend/index.html` and `frontend/assets/`.
+The Steering Lab is a wide application workspace, with styling isolated in
+`assets/lab.css`. At desktop widths of 1,200px and above, the layers sit on the
+left, the streamed output and draft/alpha controls share the center, and an
+inspector sits on the right. The main controls fit together at normal desktop
+viewport sizes; long outputs and side panels can scroll independently. The layout
+uses available width up to 1,800px without enlarging all typography. Smaller
+screens reflow the panels and retain mobile slider docking. Informational pages
+keep their narrower reading layouts.
+
+Inspector tabs expose evaluation placeholders, actual run metadata (generation
+time, generated tokens, applied alpha, finish reason, cache source), and word
+counts/differences against the submitted original. Run details and text changes
+describe the last completed run; editing the draft or alpha does not relabel old
+results as new. Clearing the draft clears those details. Switching tabs does not
+request inference, and the tabs support arrow/Home/End keyboard navigation.
+
+Alpha, draft input, streaming, copy, and highlights remain connected to the
+existing API. Model/layer/pooling controls and feedback are disabled; the exact
+backend prompt is read only and expandable in the model panel. Evaluation is
+explicitly unconnected and displays no fabricated scores or curves. Layer indices
+are 0–23; index 11 is the twelfth decoder block. The layer panel reads down the
+first column, then down the second on desktop, and across rows on smaller screens.
+
+The original Stitch exports are retained as `frontend/code 2.html`,
+`frontend/code 3.html`, and `frontend/code 4.html` for reference.
+The server renders the five page templates through a shared base and serves only
+the public `frontend/assets/` directory as static files. The original export and
+raw templates are not exposed as downloadable routes.
+
+See [the staged integration plan](STEERING_LAB_INTEGRATION.md) for connecting the
+new controls without changing the finalized experiment accidentally.
 
 ## Interaction and scheduling
 
@@ -80,8 +113,10 @@ is cleared by Clear, and disappears when the page is reloaded. No drafts, accoun
 history, or generated results are written to persistent storage by this service.
 The server logs request paths/status and failures, not normal draft text.
 
-Word highlights compare actual generated text with the previous completed result
-for that source, or the source on the first run. They are text differences, not
+Word highlights always compare completed generated text with the original source
+draft submitted for that response. Identical responses at different alpha values,
+cached responses, and toggling highlights retain the same source comparison.
+They are text differences, not
 measurements of internal attention or token attribution. All dynamic text is
 rendered as DOM text nodes; user/model text is never interpreted as HTML. Reduced
 motion, keyboard slider controls, and accessible status messages are supported.
@@ -96,6 +131,10 @@ Interactive schema: **http://127.0.0.1:8001/docs**.
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/` | Website |
+| GET | `/steering` | Steering Lab |
+| GET | `/extension` | Extension information |
+| GET | `/evaluation` | Evaluation information |
+| GET | `/about` | About SecondThought |
 | GET | `/health/live` | Process responds |
 | GET | `/health/ready` | 200 only after model load; otherwise 503 |
 | GET | `/api/v1/steering/config` | Model status, controls, limits, and version |
