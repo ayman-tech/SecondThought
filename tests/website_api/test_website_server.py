@@ -228,3 +228,4 @@ def test_extension_download_is_a_loadable_zip():
         names = zipfile.ZipFile(io.BytesIO(response.content)).namelist()
         assert "SecondThought/manifest.json" in names
         assert "SecondThought/content.js" in names
+        assert "SecondThought/HOW TO INSTALL.txt" in names

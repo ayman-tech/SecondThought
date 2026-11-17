@@ -38,6 +38,31 @@ PAGES = {
 }
 
 
+INSTALL_NOTE = """SecondThought for Chrome
+=======================
+
+1. Keep this folder somewhere it can stay, like Documents/SecondThought.
+   Chrome runs the extension from here, so don't move or delete it.
+
+2. Open chrome://extensions, switch on "Developer mode" (top right),
+   click "Load unpacked" and choose this SecondThought folder.
+
+3. Start the rewriting service. From the project folder, run:
+
+       uv run python -m extension.api.server
+
+   Leave that window open. First time on this computer? Run
+   "uv sync --extra evaluation" first, and put the both-t5 model
+   folder in models/.
+
+4. Pin SecondThought from the puzzle-piece icon, then type something
+   heated in Gmail or Slack. A small "SecondThought?" pill appears.
+
+The full guide, with a live check of the service, is on the website's
+Community page.
+"""
+
+
 def extension_zip() -> bytes:
     """The Chrome extension as a zip, built from extension/frontend so it's never stale."""
     buffer = io.BytesIO()
@@ -45,6 +70,7 @@ def extension_zip() -> bytes:
         for path in sorted(EXTENSION_FRONTEND.rglob("*")):
             if path.is_file():
                 archive.write(path, Path("SecondThought") / path.relative_to(EXTENSION_FRONTEND))
+        archive.writestr("SecondThought/HOW TO INSTALL.txt", INSTALL_NOTE)
     return buffer.getvalue()
 
 
