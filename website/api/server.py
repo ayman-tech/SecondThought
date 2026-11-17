@@ -10,24 +10,23 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
 
-from secondthought.steering_rewriter import BASE_REWRITE_PROMPT, SteeredQwenRewriter
+from secondthought.steering_rewriter import BASE_REWRITE_PROMPT
 from .generation import AdmissionError, GenerationManager, VERSION
 from .schemas import CancelRequest, RewriteRequest
+from .layers import ExploreRewriter, layer_manifest
 
 logger = logging.getLogger(__name__)
 FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
 TERMINAL = {"completed", "cancelled", "error"}
 PAGES = {
-    "home": ("/", "Home", "Find the words you mean with SecondThought."),
-    "steering": ("/steering", "Steering Lab", "Experiment with Qwen formality steering and inspect its rewrites."),
-    "extension": ("/extension", "Extension", "Learn about the separate local T5 browser-extension workflow."),
-    "evaluation": ("/evaluation", "Evaluation", "How SecondThought evaluates style changes and meaning preservation."),
-    "about": ("/about", "About", "The SecondThought project and its current experimental direction."),
+    "steering": ("/explore", "Explore", "Explore activation steering, one layer at a time."),
+    "community": ("/community", "Community", "Bring a second thought to your everyday writing."),
+    "evaluation": ("/evaluation", "Evaluation", "SecondThought evaluation."),
 }
 
 
@@ -41,7 +40,7 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
             try:
                 loaded = service
                 if loaded is None:
-                    factory = service_factory or (lambda: SteeredQwenRewriter(
+                    factory = service_factory or (lambda: ExploreRewriter(
                         device=os.getenv("SECONDTHOUGHT_WEBSITE_DEVICE") or None,
                     ))
                     loaded = await asyncio.to_thread(factory)
@@ -110,6 +109,7 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
             steering_version=VERSION, objective="formality", layer=11,
             alpha=dict(min=-2, max=2, step=0.1, default=0.5), beta=0,
             max_characters=2000, max_prompt_tokens=384, max_new_tokens=64,
+            layers=layer_manifest(),
         )
 
     @app.post("/api/v1/steering/rewrite")
@@ -151,7 +151,7 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
                 name="index.html" if page == "home" else f"{page}.html",
                 context=dict(
                     page=page, title=title, description=description,
-                    rewrite_prompt=BASE_REWRITE_PROMPT,
+                    rewrite_prompt=BASE_REWRITE_PROMPT, layers=layer_manifest(),
                     navigation=[(key, path, label) for key, (path, label, _) in PAGES.items()],
                 ),
             )
@@ -160,6 +160,15 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
     for page, (path, _, _) in PAGES.items():
         app.add_api_route(path, page_handler(page), response_class=HTMLResponse,
                           include_in_schema=False, name=f"{page}_page")
+
+    def redirect_handler(destination):
+        async def redirect():
+            return RedirectResponse(destination, status_code=307)
+        return redirect
+
+    for old_path, target in (("/", "/explore"), ("/steering", "/explore"),
+                             ("/extension", "/community"), ("/about", "/community")):
+        app.add_api_route(old_path, redirect_handler(target), include_in_schema=False)
 
     app.mount("/assets", StaticFiles(directory=FRONTEND / "assets", check_dir=False), name="assets")
     return app

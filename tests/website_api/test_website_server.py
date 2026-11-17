@@ -63,24 +63,38 @@ def test_static_page_configuration_and_stream_contract():
         assert client.post("/api/v1/steering/rewrite", json=body).status_code == 409
 
 
-@pytest.mark.parametrize("path,section", [
-    ("/", "overview"), ("/steering", "experimental"),
-    ("/extension", "extension"), ("/evaluation", "evaluation"), ("/about", "about"),
-])
-def test_pages_have_separate_content_and_navigation(path, section):
+@pytest.mark.parametrize("path", ["/explore", "/community", "/evaluation"])
+def test_pages_have_separate_content_and_navigation(path):
     with TestClient(create_app(FakeService())) as client:
         response = client.get(path)
         assert response.status_code == 200
-        assert response.headers["content-type"].startswith("text/html")
         html = response.text
-        assert f'<section id="{section}"' in html
         assert f'href="{path}" class="nav-active" aria-current="page"' in html
-        for other in {"overview", "experimental", "extension", "evaluation", "about"} - {section}:
-            assert f'<section id="{other}"' not in html
-        assert ('src="/assets/steering.js"' in html) == (path == "/steering")
-        for target in ("/", "/steering", "/extension", "/evaluation", "/about"):
+        assert ('src="/assets/steering.js"' in html) == (path == "/explore")
+        for target in ("/explore", "/community", "/evaluation"):
             assert f'href="{target}"' in html
         assert "{%" not in html and "{{" not in html
+        if path == "/evaluation":
+            assert '<section class="evaluation-page" aria-label="Evaluation"></section>' in html
+
+
+def test_multilayer_contract_and_legacy_redirects():
+    class Capture(FakeService):
+        def stream_rewrite(self, *args, **kwargs):
+            self.strengths = kwargs.get("layer_strengths")
+            return super().stream_rewrite(*args, **kwargs)
+    service = Capture()
+    with TestClient(create_app(service)) as client:
+        wait_ready(client)
+        for path, target in [("/", "/explore"), ("/steering", "/explore"), ("/extension", "/community"), ("/about", "/community")]:
+            assert client.get(path, follow_redirects=False).headers["location"] == target
+        manifest = client.get("/api/v1/steering/config").json()["layers"]
+        assert len(manifest) == 24
+        assert [x["index"] for x in manifest if x["available"]] == [0,4,11,21,22]
+        response = client.post("/api/v1/steering/rewrite", json=payload(layer_strengths={"4": 0.3,"11": 0.5}))
+        assert response.status_code == 200
+        assert service.strengths == {4: 0.3,11: 0.5}
+        assert response.json()["layer_strengths"] == {"4":0.3,"11":0.5}
 
 
 def test_json_endpoint_and_cancel_are_revision_scoped():
@@ -99,7 +113,8 @@ def test_json_endpoint_and_cancel_are_revision_scoped():
     {"message": " "}, {"message": "x" * 2001}, {"alpha": 3},
     {"alpha": "NaN"}, {"alpha": "Infinity"}, {"beta": 1},
     {"revision": -1}, {"revision": 1.5}, {"session_id": "not-a-uuid"},
-    {"unexpected": "setting"},
+    {"unexpected": "setting"}, {"layer_strengths": {"3": 0.5}},
+    {"layer_strengths": {"11": 3}}, {"layer_strengths": {"0": "NaN"}},
 ])
 def test_invalid_input_never_reaches_the_model(changes):
     service = FakeService()

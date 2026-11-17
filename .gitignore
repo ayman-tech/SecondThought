@@ -13,6 +13,7 @@ build/
 flagged/
 models/
 testing/
+tests/
 
 # Generated experiment artifacts
 research/outputs/*.jsonl

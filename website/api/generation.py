@@ -15,7 +15,7 @@ from secondthought.steering_rewriter import GenerationCancelled
 from .schemas import RewriteRequest
 
 logger = logging.getLogger(__name__)
-VERSION = "qwen-formality-v1"
+VERSION = "qwen-multilayer-v3"
 
 
 class AdmissionError(Exception):
@@ -41,6 +41,7 @@ class Job:
         self.events.put_nowait(dict(
             event=kind, request_id=self.request_id,
             revision=self.request.revision, alpha=self.request.alpha, beta=0,
+            layer_strengths=self.request.layer_strengths,
             **data,
         ))
 
@@ -125,6 +126,8 @@ class GenerationManager:
                     self.service.stream_rewrite, job.request.message, job.request.alpha, 0,
                     on_text=on_text, cancelled=job.cancelled,
                     max_input_tokens=384, timeout_seconds=self.timeout_seconds,
+                    **({"layer_strengths": dict(job.request.layer_strengths)}
+                       if job.request.layer_strengths is not None else {}),
                 )
                 if job.cancelled.is_set():
                     job.emit("cancelled")

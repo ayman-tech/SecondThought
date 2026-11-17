@@ -18,7 +18,9 @@ The page serves while the model initializes and reports readiness automatically.
 The first model load may download Qwen from Hugging Face; later launches prefer
 the local snapshot. Runtime directions come from the root `artifacts/` directory.
 
-Device selection is MPS, CUDA, then CPU. To override:
+Device selection is MPS, CUDA, then CPU. MPS and CPU use float32; CUDA uses
+float16. MPS float16 caused baseline repetition on the tested Mac runtime.
+To override:
 
 ```bash
 SECONDTHOUGHT_WEBSITE_DEVICE=cpu make website
@@ -30,67 +32,60 @@ is intended for local use; authentication, a public deployment, and infrastructu
 are outside this first version. Restart the Python process after backend changes.
 The website API currently runs from the repository checkout, not a standalone wheel.
 
-## Current scope and model behavior
+## Pages and layer controls
 
-- The site has individual Home (`/`), Steering Lab (`/steering`), Extension
-  (`/extension`), Evaluation (`/evaluation`), and About (`/about`) pages. Navigation
-  loads a new page rather than scrolling through sections of a single document.
-  Only the Steering Lab loads the steering JavaScript and makes generation requests.
-- Templates share `frontend/base.html` for consistent navigation and active-page
-  labels. Home includes an introduction and method explanation, without a lab below it.
-- Alpha ranges from -2 to +2 in steps of 0.1. Default: +0.5.
-- Formality uses the raw GYAFC `negative_layer11_mean` vector at decoder layer 11.
-- Beta is fixed to zero for this website. The core still supports independent
-  ParaDetox `best_final` steering at layer 22, as in the finalized experiments.
-- The fixed neutral prompt and greedy decoding match the finalized notebooks.
-- Alpha zero still runs a prompted rewrite. It is not an identity/copy mode.
-- Text may remain identical at adjacent strengths. Strong settings may change
-  meaning, facts, or who is being asked to act; there is no live reliability score.
-- A 64-token completion limit bounds work. If the limit is reached, the page labels
-  the result as partial. It is not saved in the result cache.
+- **Explore** (`/explore`): animated 24-layer schematic above the live draft/rewrite
+  comparison. Click a layer to inspect it, check **Select layer** to include it,
+  and set its independent alpha from -2 to +2. Default: layer 11 at +0.5.
+- **Community** (`/community`): extension introduction. Download is deliberately
+  disabled until packaging is ready.
+- **Evaluation** (`/evaluation`): empty content area for the upcoming evaluation UI.
 
-The Steering Lab is a wide application workspace, with styling isolated in
-`assets/lab.css`. At desktop widths of 1,200px and above, the layers sit on the
-left, the streamed output and draft/alpha controls share the center, and an
-inspector sits on the right. The main controls fit together at normal desktop
-viewport sizes; long outputs and side panels can scroll independently. The layout
-uses available width up to 1,800px without enlarging all typography. Smaller
-screens reflow the panels and retain mobile slider docking. Informational pages
-keep their narrower reading layouts.
+Old `/` and `/steering` links redirect to Explore; `/extension` and `/about`
+redirect to Community. Only Explore loads the generation JavaScript. Shared
+styles live in `assets/styles.css`; `assets/lab.css` is a retained legacy asset
+and is no longer loaded.
 
-Inspector tabs expose evaluation placeholders, actual run metadata (generation
-time, generated tokens, applied alpha, finish reason, cache source), and word
-counts/differences against the submitted original. Run details and text changes
-describe the last completed run; editing the draft or alpha does not relabel old
-results as new. Clearing the draft clears those details. Switching tabs does not
-request inference, and the tabs support arrow/Home/End keyboard navigation.
+Available directions come from the existing artifacts, never synthetic vectors:
 
-Alpha, draft input, streaming, copy, and highlights remain connected to the
-existing API. Model/layer/pooling controls and feedback are disabled; the exact
-backend prompt is read only and expandable in the model panel. Evaluation is
-explicitly unconnected and displays no fabricated scores or curves. Layer indices
-are 0–23; index 11 is the twelfth decoder block. The layer panel reads down the
-first column, then down the second on desktop, and across rows on smaller screens.
+| Layer (zero-based) | Direction | Artifact candidate | Scale |
+| --- | --- | --- | --- |
+| 0 | Detoxification | `best_mean` | Unit norm |
+| 4 | Formality | `alternative_layer4_final` | Raw |
+| 11 | Formality | `negative_layer11_mean` | Raw |
+| 21 | Formality | `primary_layer21_mean` | Raw |
+| 22 | Detoxification | `best_final` | Unit norm |
 
-The original Stitch exports are retained as `frontend/code 2.html`,
-`frontend/code 3.html`, and `frontend/code 4.html` for reference.
-The server renders the five page templates through a shared base and serves only
-the public `frontend/assets/` directory as static files. The original export and
-raw templates are not exposed as downloadable routes.
+Other layers can be selected and adjusted as **preview only**. They never enter
+an inference request or trigger generation. Clicking a layer only inspects it;
+the checkbox controls selection. Selected available vectors combine in a single
+forward pass at their respective blocks. Magnitudes are not comparable across
+raw and normalized directions. These combinations are experimental, not a
+validated quality improvement. The layer-11 default preserves the previous lab.
+The map is in `api/layers.py`; shuffled control vectors are not exposed.
 
-See [the staged integration plan](STEERING_LAB_INTEGRATION.md) for connecting the
-new controls without changing the finalized experiment accidentally.
+The moving paths are illustrative, not real activation traces. Motion honors reduced-motion preferences. An optional ? guide explains layer
+selection, strengths and preview behavior without persistent tutorial text. Layer buttons support arrow keys,
+Home and End; the slider supports native keyboard adjustment. Reset restores
+layer 11 at +0.5 and clears other selections. The writing area retains animated
+original-to-rewrite word highlights, copy, live status, and expandable run details.
+
+The neutral rewrite prompt and greedy decoding are unchanged. With no selected
+available layers (or all zero strengths), the prompted model still rewrites.
+Adjacent settings can yield identical wording. Review meaning, names, numbers,
+and intent; validation of combinations remains future work. The 64-token output
+limit is labeled when reached, and partial results are not cached.
 
 ## Interaction and scheduling
 
 Slider movement updates its numeric readout immediately. Requests start after a
 250ms pause, with a maximum scheduling interval of one second during a continuous
-drag. Releasing the slider flushes the final value. Typing waits 450ms; input
+drag. The final value runs after the same short pause. Typing waits 450ms; input
 method composition is respected. These intervals schedule generation; they do not
 promise a new completed sentence at every slider position or animation frame.
 
 Each tab creates an ephemeral UUID and increasing revision numbers. The client
-accepts text only for its latest revision. Requested alpha and the alpha used for
+accepts text only for its latest revision. Requested layer strengths and the strengths used for
 the displayed result are tracked separately. The previous completed result remains
 visible, explicitly labeled, until current text starts streaming. Copy is disabled
 for stale and incomplete streams.
@@ -108,7 +103,7 @@ kernel. Session revision records expire after ten inactive minutes, with a maxim
 of 128 records. Restarting the process resets all sessions.
 
 The result cache is a bounded, 24-entry LRU in browser memory, keyed by exact trimmed
-source text, alpha, beta, and steering version. It stores only completed results,
+source text, all applied layer strengths, legacy alpha/beta, and steering version. It stores only completed results,
 is cleared by Clear, and disappears when the page is reloaded. No drafts, account
 history, or generated results are written to persistent storage by this service.
 The server logs request paths/status and failures, not normal draft text.
@@ -120,9 +115,6 @@ They are text differences, not
 measurements of internal attention or token attribution. All dynamic text is
 rendered as DOM text nodes; user/model text is never interpreted as HTML. Reduced
 motion, keyboard slider controls, and accessible status messages are supported.
-On small screens the slider docks near the bottom while the experiment is in
-view, so its output stays visible as you adjust it. It undocks when the draft
-field receives focus, leaving space for the on-screen keyboard.
 
 ## API
 
@@ -130,11 +122,9 @@ Interactive schema: **http://127.0.0.1:8001/docs**.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/` | Website |
-| GET | `/steering` | Steering Lab |
-| GET | `/extension` | Extension information |
-| GET | `/evaluation` | Evaluation information |
-| GET | `/about` | About SecondThought |
+| GET | `/explore` | Interactive steering lab |
+| GET | `/community` | Extension introduction |
+| GET | `/evaluation` | Empty evaluation page |
 | GET | `/health/live` | Process responds |
 | GET | `/health/ready` | 200 only after model load; otherwise 503 |
 | GET | `/api/v1/steering/config` | Model status, controls, limits, and version |
@@ -150,9 +140,16 @@ Rewrite/stream request:
   "revision": 1,
   "message": "its really hard when u want to know what happened",
   "alpha": 0.5,
-  "beta": 0
+  "beta": 0,
+  "layer_strengths": {"4": 0.3, "11": 0.5}
 }
 ```
+
+`layer_strengths` is the authoritative map when supplied. An empty map means
+no vector hooks. Omitting it retains the legacy layer-11 alpha behavior.
+Unavailable layer indices are rejected. The frontend sends alpha equal to the
+layer-11 setting (or zero if deselected) for compatibility. Events also include
+`layer_strengths`, so consumers can identify the settings used.
 
 Use a new, higher revision for every request in a session. Messages must be
 nonblank and at most 2,000 characters. The worker also limits the complete chat
@@ -188,11 +185,10 @@ packages. Start `make website` first:
 node website/frontend/tests/browser-smoke.mjs
 ```
 
-It exercises real model steering, latest-revision handling, rapid slider changes,
-Clear while a response is pending, caching, safe rendering of HTML-like text,
-network-error retry, and desktop/mobile layout. Browser fixtures intercept some
-requests to reproduce races deterministically; normal product code has no fake
-rewrite path. `CHROME_PATH` and `WEBSITE_URL` can override defaults.
+It exercises real generation, independent layer strengths, preview exclusion,
+source-based word highlights, reset/cache, Clear, reduced motion and all three
+pages. Screenshots are saved to a temporary directory printed on completion.
+`CHROME_PATH` and `WEBSITE_URL` can override defaults.
 
 Before submitting, try your own sentences at alpha -1, 0, +0.5, and +1; drag quickly,
 clear mid-generation, then enter another draft. Review semantic changes as well as

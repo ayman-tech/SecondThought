@@ -1,72 +1,95 @@
 {% extends "base.html" %}
-{% block styles %}<link rel="stylesheet" href="/assets/lab.css">{% endblock %}
 {% block scripts %}<script type="module" src="/assets/steering.js"></script>{% endblock %}
 {% block content %}
-<section id="experimental" class="workspace section-wrap lab-workspace">
-  <div class="lab-heading">
-    <div class="heading-with-icon"><span class="section-icon" aria-hidden="true">≋</span><div><p class="eyebrow">SECONDTHOUGHT / EXPERIMENTS</p><h1 class="page-title">Steering Lab <span class="lab-heading-note">Change the wording. Inspect the effect.</span></h1></div></div>
-    <div class="model-status"><span id="model-dot" class="status-dot loading"></span><span id="model-status">Loading model…</span><button id="reconnect" class="link-button" hidden>Reconnect</button></div>
-  </div>
 
-  <div class="lab-workbench">
-    <aside class="lab-card architecture-card" aria-labelledby="architecture-title">
-      <div class="panel-heading"><span class="lab-step">01 / MODEL</span><h2 id="architecture-title">Inside the model <span class="lab-tag">24 layers</span></h2></div>
-      <div class="model-picker"><label for="lab-model">MODEL BACKEND</label><select id="lab-model" disabled aria-describedby="model-note"><option>Qwen 2.5 · 0.5B Instruct</option></select></div>
-      <div class="layer-diagram">
-        <div class="pipeline-end"><span aria-hidden="true">↓</span> Input embeddings</div>
-        <div class="layer-stack" role="group" aria-label="24 decoder layers, numbered from zero. Layer selection is not connected yet.">
-          {% for layer in range(24) %}
-          <button type="button" class="layer-tile{% if layer == 11 %} active{% endif %}" disabled aria-label="Decoder index {{ layer }}{% if layer == 11 %}, current formality injection{% else %}, selection not connected{% endif %}"><span class="layer-dot" aria-hidden="true"></span><span>L{{ '%02d' | format(layer) }}</span><small>{% if layer == 11 %}+αv{% else %}block{% endif %}</small></button>
-          {% endfor %}
-        </div>
-        <div class="pipeline-end">Output logits <span aria-hidden="true">↓</span></div>
-        <p class="layer-index-note"><i class="legend-dot amber-dot" aria-hidden="true"></i>Injection at index 11 · twelfth block<br><span class="layer-reading-desktop">Read each column top to bottom.</span><span class="layer-reading-mobile">Read rows left to right.</span> Indices 0–23.</p>
-      </div>
-      <div class="pooling-control"><span class="lab-micro">VECTOR EXTRACTION POOLING</span><div class="lab-pills"><span class="lab-pill selected subtle">Mean</span><button class="lab-pill" type="button" disabled aria-describedby="model-note">Last token</button></div></div>
-      <p id="model-note" class="lab-caption">Layer and pooling selection are not connected yet. This schematic shows the current configuration, not measured activations.</p>
-      <details class="prompt-panel"><summary>System prompt <span class="lab-tag">Read only</span></summary><label for="system-prompt" class="lab-micro">CURRENT INSTRUCTION</label><textarea id="system-prompt" rows="4" readonly aria-describedby="prompt-note">{{ rewrite_prompt }}</textarea><p id="prompt-note" class="lab-caption">Exact backend instruction. Custom prompts will be connected next.</p></details>
-    </aside>
+<section class="explore" id="experimental">
 
-    <div class="lab-center">
-      <div class="output-card" id="output-card" aria-busy="false">
-        <div class="output-toolbar"><div class="output-title"><span class="live-indicator" id="live-indicator"></span><span>02 / REWRITE</span><span class="badge">FORMALITY · L11</span></div><div class="output-tools"><button id="changes-toggle" type="button" aria-pressed="true">Highlight changes <span id="changes-check" aria-hidden="true">✓</span></button><button id="copy" type="button" disabled>Copy output <span aria-hidden="true">↗</span></button></div></div>
-        <div class="output-stage"><div class="output-subheading"><span id="output-context">Your next wording starts here.</span><span id="output-parameters" class="parameter-label"></span></div><div class="output-scroll" tabindex="0" aria-label="Rewrite text, scrollable for longer results"><div id="output" class="big-output placeholder" aria-label="Generated rewrite">A small shift.<br>A new way to say it.</div></div><div class="output-bottom"><span id="change-note">Type a draft below. Your rewrite appears automatically.</span><span id="latency"></span></div></div>
-        <div class="vector-strip"><span class="code-label">h₁₁ + α · v<sub>formal</sub></span><div class="vector-axis" aria-hidden="true"><span class="axis-center"></span><span id="vector-line"></span><span id="vector-point"></span></div><span class="code-label" id="vector-description">Along the learned direction</span></div>
-      </div>
+<div class="intro">
+<div><p class="eyebrow">THE STEERING LAB</p><h1>A different direction<span>.</span></h1><p class="lede">Small shifts inside the model. New ways to say what you mean.</p>
+</div>
+<div class="model-state"><span id="model-dot" class="status-dot loading"></span><span id="model-status">Connecting to the model…</span><button id="reconnect" hidden>Reconnect</button>
+</div>
+</div>
 
-      <div class="controller-card lab-controller">
-        <div class="draft-heading"><label for="draft">YOUR DRAFT</label><div class="samples"><span>Try</span><button type="button" data-sample="its really hard when u want to know what happened">Everyday</button><button type="button" data-sample="hey can u send the report by 3 PM?">Work</button><button type="button" data-sample="I can't make this meeting. Can we move it to Friday?">Change of plans</button></div></div>
-        <div class="draft-field"><textarea id="draft" rows="2" maxlength="2000" placeholder="Write something you want to rephrase…" aria-describedby="draft-help error-message" spellcheck="true"></textarea><button id="clear" type="button" title="Clear draft" aria-label="Clear draft">×</button></div>
-        <div class="draft-footer"><span id="draft-help">Processed by this server. No draft history saved.</span><span id="character-count">0 / 2,000</span></div>
-        <div id="slider-panel" class="slider-panel">
-          <div class="slider-heading"><div><label for="alpha">Formality strength <span class="greek">α</span></label><p>Adjust to rewrite automatically.</p></div><output for="alpha" id="alpha-value">+0.5</output></div>
-          <input id="alpha" type="range" min="-2" max="2" value="0.5" step="0.1" aria-describedby="slider-help">
-          <div class="slider-stops"><button type="button" data-alpha="-2">−2 <span>Against the direction</span></button><button type="button" data-alpha="0">0 <span>Unsteered baseline</span></button><button type="button" data-alpha="2">+2 <span>Stronger intervention</span></button></div>
-          <p id="slider-help" class="slider-help">Results vary by sentence. Nearby values can produce the same wording.</p>
-        </div>
-        <div id="error-box" class="error-box" hidden><p id="error-message" role="alert"></p><button id="retry" type="button">Retry ↗</button></div>
-      </div>
-      <div class="workspace-footer"><p id="status" role="status" aria-live="polite">Waiting for a draft.</p></div>
-    </div>
+<section class="model-section" aria-label="Interactive model layers">
 
-    <aside class="lab-card inspector-card" aria-labelledby="inspector-title">
-      <div class="panel-heading"><span class="lab-step">03 / OBSERVE</span><h2 id="inspector-title">Inspect the response</h2><p>Quality, execution, and wording.</p></div>
-      <div class="inspector-tabs" role="tablist" aria-label="Response inspection"><button type="button" id="tab-evaluation" role="tab" aria-selected="true" aria-controls="panel-evaluation" tabindex="0">Evaluation</button><button type="button" id="tab-run" role="tab" aria-selected="false" aria-controls="panel-run" tabindex="-1">Run details</button><button type="button" id="tab-changes" role="tab" aria-selected="false" aria-controls="panel-changes" tabindex="-1">Text changes</button></div>
-      <div id="panel-evaluation" class="inspector-panel" role="tabpanel" aria-labelledby="tab-evaluation" tabindex="0">
-        <div class="inspector-section-heading"><h3>Response quality</h3><span class="lab-tag">Not connected</span></div>
-        <div class="metric-readouts"><div><span>Formality</span><strong>—</strong></div><div><span>Entailment</span><strong>—</strong></div><div><span>Similarity</span><strong>—</strong></div></div>
-        <div class="metric-chart" role="img" aria-label="Empty evaluation chart. No scores have been calculated."><div class="chart-grid" aria-hidden="true"><span></span><span></span><span></span><span></span></div><div class="chart-empty"><span aria-hidden="true">⌁</span><strong>Measure the change.</strong><span>Evaluation is not connected yet.</span></div><div class="chart-axis" aria-hidden="true"><span>α −2</span><span>0</span><span>+2</span></div></div>
-        <div class="metric-legend"><span><i class="legend-dot amber-dot" aria-hidden="true"></i>Formality</span><span><i class="legend-dot cyan-dot" aria-hidden="true"></i>Entailment</span><span><i class="legend-dot green-dot" aria-hidden="true"></i>Similarity</span></div>
-        <p class="lab-caption">Future scores will compare each completed rewrite with its source. No simulated curves or reliability claims.</p>
-        <div class="review-panel"><h3>Review the meaning</h3><p>Check facts, names, deadlines, and who is doing what.</p><div class="feedback-actions"><button type="button" disabled>Preserved</button><button type="button" disabled>Changed</button><button type="button" disabled>Save pair ↗</button></div><p class="lab-caption">Feedback collection is not connected.</p></div>
-      </div>
-      <div id="panel-run" class="inspector-panel" role="tabpanel" aria-labelledby="tab-run" tabindex="0" hidden>
-        <h3>Current request</h3><dl class="run-details"><div><dt>Requested α</dt><dd id="requested-alpha">+0.5</dd></div><div><dt>Objective</dt><dd>Formality · β 0</dd></div><div><dt>Decoder index</dt><dd>11 of 0–23</dd></div><div><dt>Extraction pooling</dt><dd>Mean</dd></div><div><dt>Decoding</dt><dd>Greedy · 64 tokens max</dd></div></dl>
-        <h3>Last completed run</h3><dl class="run-details"><div><dt>Applied α</dt><dd id="run-alpha">—</dd></div><div><dt>Generation time</dt><dd id="run-time">—</dd></div><div><dt>Generated tokens</dt><dd id="run-tokens">—</dd></div><div><dt>Finish reason</dt><dd id="run-finish">—</dd></div><div><dt>Result source</dt><dd id="run-source">—</dd></div></dl><p class="lab-caption">Measured metadata for the last completed response. New settings may still be generating. Cached results retain their original generation time.</p>
-      </div>
-      <div id="panel-changes" class="inspector-panel" role="tabpanel" aria-labelledby="tab-changes" tabindex="0" hidden><h3>Compared with the original</h3><dl class="run-details"><div><dt>Source words</dt><dd id="change-source-count">—</dd></div><div><dt>Output words</dt><dd id="change-output-count">—</dd></div><div><dt>Added / replaced words</dt><dd id="change-added-count">—</dd></div></dl><p id="change-summary" class="lab-caption">Complete a rewrite to inspect its wording.</p><p class="lab-caption">Counts use whitespace-separated words and the same comparison as the highlights. These are text differences, not a semantic score or attribution of changes to the steering vector.</p></div>
-      <details class="experiment-notes"><summary>About this experiment</summary><p>At α = 0, Qwen still follows the neutral rewrite prompt. Adjacent alpha values may produce identical text. Strong interventions can alter meaning.</p><p>The mean-pooled formality direction is added to every token representation at decoder index 11. The diagram and strength indicator are schematics. Detoxification remains at β = 0.</p></details>
-    </aside>
-  </div>
+<div class="section-caption">
+<div class="legend"><span><i class="available-dot"></i> Vector available</span><span><i class="preview-dot"></i> Preview only</span><button class="guide-trigger" popovertarget="layer-guide" aria-label="How to use the steering lab" title="How it works">?</button>
+</div>
+</div>
+
+<div class="layer-scene" id="layer-scene">
+<div class="scene-glow">
+</div>
+<svg class="pathways" viewBox="0 0 1200 260" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="flow"><stop stop-color="#7654e8" stop-opacity="0"/><stop offset=".15" stop-color="#7654e8"/><stop offset=".85" stop-color="#7654e8"/><stop offset="1" stop-color="#7654e8" stop-opacity="0"/></linearGradient></defs><path id="violet-path" d="M0 145 C150 185 250 75 400 115 S650 185 800 125 S1050 100 1200 145"/><path class="teal" d="M0 115 C170 65 240 180 400 155 S600 65 780 125 S1050 180 1200 110"/><path class="flow-pulse" d="M0 145 C150 185 250 75 400 115 S650 185 800 125 S1050 100 1200 145"/><path class="flow-pulse teal" d="M0 115 C170 65 240 180 400 155 S600 65 780 125 S1050 180 1200 110"/></svg>
+
+<div class="layer-grid" id="layer-grid">{% for layer in layers %}<button class="layer {{ 'available' if layer.available else 'preview' }} {{ 'selected focused' if layer.index == 11 else '' }}" data-layer="{{ layer.index }}" data-concept="{{ layer.concept|default('') }}" aria-pressed="{{ 'true' if layer.index == 11 else 'false' }}" aria-label="Layer {{ layer.index }}: {{ layer.concept if layer.available else 'preview only' }}"><span class="layer-fin"></span><span class="layer-label">{{ '%02d'|format(layer.index) }}</span><span class="layer-dot"></span></button>{% endfor %}
+</div>
+</div>
+
+<div class="layer-inspector" id="slider-panel">
+<div class="layer-title"><strong id="layer-name">Layer 11</strong><span id="layer-kind">Formality vector</span>
+</div><label class="enable-control"><input id="layer-enabled" type="checkbox" checked> Select layer</label>
+<div class="strength-control"><label for="alpha">Strength <span>α</span></label><span class="range-edge">−2</span><input id="alpha" type="range" min="-2" max="2" step="0.1" value="0.5"><span class="range-edge">+2</span><output id="alpha-value" for="alpha">+0.5</output>
+</div><button id="reset-layers" class="quiet-button">Reset</button>
+</div>
+
+<aside id="layer-guide" class="layer-guide" popover aria-labelledby="guide-title">
+  <h2 id="guide-title">A quick guide</h2>
+  <ol>
+    <li><strong>Pick a layer.</strong> Click a panel, then check Select layer.</li>
+    <li><strong>Set its strength.</strong> Adjust α. Select more layers to combine directions.</li>
+    <li><strong>Try a sentence.</strong> Your rewrite updates automatically; highlights show changed words.</li>
+  </ol>
+  <p>Preview layers have no saved vector and won’t affect the rewrite. The moving lines are illustrative.</p>
+  <p>Set all strengths to zero or deselect all layers to compare without steering.</p>
+</aside>
+
 </section>
-{% endblock %}
+
+<section class="writing-section" aria-label="Rewrite experiment">
+<div class="section-caption"><span class="live-label"><i id="live-indicator" class="live-indicator"></i> Live rewriting</span>
+</div>
+
+<div class="writing-grid">
+<div class="writing-card draft-card">
+<div class="card-heading"><label for="draft">Your draft</label><button id="clear" class="text-button">Clear</button>
+</div><textarea id="draft" maxlength="2000" placeholder="What would you like to say?" aria-describedby="character-count"></textarea>
+<div class="card-bottom"><span>Try a thought <span aria-hidden="true">↗</span></span><span id="character-count">0 / 2,000</span>
+</div>
+</div>
+
+<div class="writing-card output-card" id="output-card" aria-busy="false">
+<div class="card-heading"><span>A second thought</span><span class="output-spark" aria-hidden="true">✧</span>
+</div>
+<div id="output" class="output-text placeholder">Your next wording starts here.
+</div>
+<div class="card-bottom"><span id="output-context">A little room to reconsider.</span><span id="latency"></span>
+</div>
+</div>
+</div>
+
+<div class="writing-tools">
+<div class="samples"><span>Try:</span><button data-sample="hey can u send the report by 3 PM?">A quick request</button><button data-sample="This plan is ridiculous. We already wasted 3 days on it.">A difficult conversation</button>
+</div>
+<div class="output-actions"><button id="changes-toggle" aria-pressed="true"><span id="changes-check">✓</span> Highlight changes</button><button id="copy" disabled>Copy <span aria-hidden="true">⧉</span></button>
+</div>
+</div>
+
+<div class="run-status" hidden><span id="status" role="status"></span>
+</div><p id="change-note" class="small-note"></p>
+
+<div id="error-box" class="error-box" hidden><p id="error-message"></p><button id="retry">Try again</button>
+</div>
+<details class="run-details"><summary>Behind this rewrite <span>Model & run details</span></summary>
+<div class="detail-grid">
+<div><h3>Experiment</h3><p>Qwen2.5 · 0.5B · 24 layers (0–23)</p><p>Directions are experimental. Review meaning, names and numbers.</p><p>Zero strength keeps the rewrite prompt active.</p>
+</div>
+<div><h3>Last completed run</h3><p>Layers <span id="run-alpha">—</span></p><p>Time <span id="run-time">—</span> · Tokens <span id="run-tokens">—</span></p><p><span id="run-finish">—</span> · <span id="run-source">—</span></p>
+</div>
+<div><h3>Word comparison</h3><p>Original <span id="change-source-count">—</span> · Rewritten <span id="change-output-count">—</span> · New <span id="change-added-count">—</span></p><p id="change-summary">Complete a rewrite to inspect its wording.</p>
+</div>
+</div></details>
+
+</section>
+</section>{% endblock %}

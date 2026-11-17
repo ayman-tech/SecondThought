@@ -1,3 +1,6 @@
+> Historical integration plan. The multi-layer Explore implementation now ships;
+> see [website README](README.md) for the current controls and API contract.
+
 # Steering Lab integration
 
 ## 1. Design and regression check — implemented

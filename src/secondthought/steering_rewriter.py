@@ -201,7 +201,9 @@ class SteeredQwenRewriter:
             "toxicity": detox_direction.cpu(),
         }
 
-        dtype = torch.float16 if self.device.type in {"mps", "cuda"} else torch.float32
+        # MPS float16 produced repetition even with no steering (e.g. "hello").
+        # Full precision matches the CPU baseline on the supported Mac runtime.
+        dtype = torch.float16 if self.device.type == "cuda" else torch.float32
         model_source = resolve_model_source(self.model_id)
         self.tokenizer = AutoTokenizer.from_pretrained(model_source)
         if self.tokenizer.pad_token_id is None:
@@ -265,14 +267,16 @@ class SteeredQwenRewriter:
 
     def _generate_result(
         self, model_inputs, alpha: float, beta: float, *,
-        streamer=None, stopping_criteria=None,
+        streamer=None, stopping_criteria=None, layer_strengths=None,
     ) -> GenerationResult:
         extra = {}
         if streamer is not None:
             extra["streamer"] = streamer
         if stopping_criteria is not None:
             extra["stopping_criteria"] = stopping_criteria
-        with self._mixed_steering_context(alpha, beta), torch.inference_mode():
+        context = (self._mixed_steering_context(alpha, beta) if layer_strengths is None
+                   else self._layer_steering_context(layer_strengths))
+        with context, torch.inference_mode():
             generated_ids = self.model.generate(
                 **model_inputs,
                 max_new_tokens=self.max_new_tokens,
@@ -301,6 +305,7 @@ class SteeredQwenRewriter:
         self, message: str, alpha: float, beta: float, *,
         on_text: Callable[[str], None], cancelled: Event,
         max_input_tokens: int = 384, timeout_seconds: float = 25.0,
+        layer_strengths: dict[int, float] | None = None,
     ) -> GenerationResult:
         """Stream the same deterministic generation with cooperative cancellation.
 
@@ -327,6 +332,7 @@ class SteeredQwenRewriter:
                     inputs, alpha, beta,
                     streamer=_CallbackStreamer(self.tokenizer, on_text),
                     stopping_criteria=StoppingCriteriaList([_StopGeneration(cancelled, deadline)]),
+                    **({"layer_strengths": layer_strengths} if layer_strengths is not None else {}),
                 )
             except Exception:
                 # A stop before any decoded text can produce an empty-output
