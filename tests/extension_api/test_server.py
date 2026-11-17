@@ -90,3 +90,9 @@ def test_cors_allows_only_chrome_extension_origins(client):
 
     assert allowed.headers.get("access-control-allow-origin") == EXTENSION_ORIGIN
     assert "access-control-allow-origin" not in refused.headers
+
+
+def test_cors_allows_the_local_website(client):
+    response = client.get("/health", headers={"Origin": "http://127.0.0.1:8001"})
+
+    assert response.headers.get("access-control-allow-origin") == "http://127.0.0.1:8001"
