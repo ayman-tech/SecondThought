@@ -33,6 +33,78 @@
     $("[data-eval-note]").textContent = `${description}. ${data.note}`;
   }
 
+  // "Ready to send": not toxic, every fact kept, same meaning, and actually changed.
+  // ponytail: one fixed cut-off per check; revisit once the team agrees on thresholds.
+  const READY = { toxicity: 0.5, similarity: 0.9 };
+  const REASONS = [ // checked in this order; the first failing check names the group
+    ["No suggestion", (m) => m.original.trim() === m.rewritten.trim()],
+    ["Still toxic", (m) => m.toxicity[1] >= READY.toxicity],
+    ["Fact lost or added", (m) => !m.facts_kept],
+    ["Meaning drifted", (m) => m.similarity < READY.similarity],
+  ];
+  const tip = (m) => `${m.original}\n→ ${m.rewritten}`;
+
+  function ready() {
+    const messages = data.systems[0].messages;
+    const groups = new Map([["Ready to send", []], ...REASONS.map(([name]) => [name, []])]);
+    for (const m of messages) groups.get(REASONS.find(([, fails]) => fails(m))?.[0] ?? "Ready to send").push(m);
+    const ok = groups.get("Ready to send").length;
+    $("[data-eval-ready-kpi]").textContent =
+      `${ok} of ${messages.length} rewrites ready to send (${Math.round((ok / messages.length) * 100)}%)`;
+    $("[data-eval-ready-rule]").textContent =
+      `Ready means toxicity below ${READY.toxicity}, every fact kept, meaning similarity ${READY.similarity.toFixed(2)} or higher, ` +
+      "and the message actually changed. The other groups show the first check each rewrite failed.";
+    const ordered = [...groups].sort(([a, x], [b, y]) => (a === "Ready to send" ? -1 : b === "Ready to send" ? 1 : y.length - x.length));
+    $("[data-eval-units]").replaceChildren(...ordered.filter(([, list]) => list.length).map(([name, list]) => {
+      const group = el("div", { class: `unit-group${name === "Ready to send" ? " is-ready" : ""}` });
+      const label = el("p", { class: "unit-label" });
+      label.append(el("strong", {}, String(list.length)), ` ${name}`);
+      const units = el("div", { class: "units", role: "list", "aria-label": `${name}: ${list.length} messages` });
+      units.append(...list.map((m) => el("span", { class: "unit", role: "listitem", title: tip(m), "aria-label": tip(m) })));
+      group.append(label, units);
+      return group;
+    }));
+  }
+
+  function strip() {
+    const figure = $("[data-eval-strip]");
+    const messages = [...data.systems[0].messages].sort((a, b) => a.edit_ratio - b.edit_ratio);
+    const values = messages.map((m) => m.edit_ratio);
+    const median = (values[(values.length - 1) >> 1] + values[values.length >> 1]) / 2;
+    $("[data-eval-touch-kpi]").textContent =
+      `Median ${(median * 100).toFixed(1)}% of the text changed · at most ${Math.round(values.at(-1) * 100)}%`;
+    const width = Math.max(figure.clientWidth - 32, 260), max = 0.25, r = 5, left = 4, right = 10;
+    const x = (v) => left + (Math.min(v, max) / max) * (width - left - right);
+    const lastX = []; // per level, the x of its right-most dot: each dot takes the lowest level it fits on
+    const dots = messages.map((m) => {
+      const cx = x(m.edit_ratio);
+      let level = lastX.findIndex((px) => cx - px >= r * 2 + 1);
+      if (level === -1) level = lastX.length;
+      lastX[level] = cx;
+      return { m, level };
+    });
+    const levels = lastX.length;
+    const base = 18 + levels * (r * 2 + 2);
+    const svg = el("svg:svg", { viewBox: `0 0 ${width} ${base + 26}`, role: "img",
+      "aria-label": `Share of text changed per message. Median ${(median * 100).toFixed(1)} percent.` });
+    const axis = el("svg:g", { class: "axis" });
+    [0, 0.05, 0.1, 0.15, 0.2, 0.25].forEach((t) => {
+      axis.append(el("svg:line", { class: "tick", x1: x(t), x2: x(t), y1: base + 2, y2: base + 6 }),
+        el("svg:text", { x: x(t), y: base + 20, "text-anchor": t === 0 ? "start" : t === max ? "end" : "middle" }, `${Math.round(t * 100)}%`));
+    });
+    axis.append(el("svg:line", { class: "baseline", x1: x(0), x2: x(max), y1: base + 2, y2: base + 2 }));
+    const mid = el("svg:g", { class: "median" });
+    mid.append(el("svg:line", { x1: x(median), x2: x(median), y1: 4, y2: base + 2 }),
+      el("svg:text", { x: x(median) + 6, y: 12 }, `median ${(median * 100).toFixed(1)}%`));
+    svg.append(axis, mid);
+    for (const { m, level } of dots) {
+      const dot = el("svg:circle", { class: "dot", cx: x(m.edit_ratio), cy: base - r - level * (r * 2 + 2), r });
+      dot.append(el("svg:title", {}, `${(m.edit_ratio * 100).toFixed(1)}% changed\n${tip(m)}`));
+      svg.append(dot);
+    }
+    figure.replaceChildren(svg);
+  }
+
   function controls() {
     document.querySelectorAll("[data-metric]").forEach((button) =>
       button.addEventListener("click", () => { state.metric = button.dataset.metric; update(); }));
@@ -133,6 +205,8 @@
       return;
     }
     tiles();
+    ready();
+    strip();
     controls();
     update();
     let pending, lastWidth = $("[data-eval-chart]").clientWidth;
@@ -141,7 +215,7 @@
       if (width === lastWidth) return;
       lastWidth = width;
       cancelAnimationFrame(pending);
-      pending = requestAnimationFrame(() => chart(rows()));
+      pending = requestAnimationFrame(() => { chart(rows()); strip(); });
     }).observe($("[data-eval-chart]"));
   }
 

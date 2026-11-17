@@ -248,6 +248,14 @@ try {
         ),
         35,
       );
+      assert.equal(
+        await evaluate(`document.querySelectorAll('[data-eval-units] .unit').length`),
+        35,
+      );
+      assert.equal(
+        await evaluate(`document.querySelectorAll('[data-eval-strip] .dot').length`),
+        35,
+      );
     }
     await writeFile(
       join(directory, path.slice(1) + ".png"),
