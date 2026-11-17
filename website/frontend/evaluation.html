@@ -45,9 +45,19 @@
     <section class="eval-block" aria-labelledby="touch-title">
       <p class="eyebrow">LIGHT TOUCH</p>
       <h2 id="touch-title">We edit your message, we don't replace it.</h2>
-      <p class="eval-lede">How much of each message's text the rewrite changed, counted in characters. Each dot is one message; hover for the text.</p>
+      <p class="eval-lede">How much of each message's text the rewrite changed, counted in characters. Each dot is one message; hover or tab to a dot for its text, scores and ready-to-send result.</p>
       <p class="eval-kpi" data-eval-touch-kpi></p>
-      <figure class="eval-chart eval-strip" data-eval-strip></figure>
+      <div class="eval-controls">
+        <div class="eval-toggle" role="group" aria-label="View">
+          <button type="button" data-touch="spread" aria-pressed="true">Spread</button>
+          <button type="button" data-touch="scatter" aria-pressed="false">Change vs. toxicity drop</button>
+        </div>
+      </div>
+      <p class="eval-headline" data-eval-touch-insight aria-live="polite"></p>
+      <div class="eval-legend" aria-hidden="true"><span><i class="mark-ready"></i>Ready to send</span><span><i class="mark-not-ready"></i>Not ready (hover for the reason)</span></div>
+      <figure class="eval-chart eval-strip" data-eval-strip>
+        <div class="eval-tooltip" role="tooltip" hidden></div>
+      </figure>
     </section>
 
     <section class="eval-block" aria-labelledby="dumbbell-title">

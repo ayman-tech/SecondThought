@@ -218,23 +218,75 @@
   background:var(--after);
 }
 
-/* Light touch strip */
-.eval-strip svg .dot {
-  fill:var(--after);
-  stroke:#fff;
+/* Light touch: swarm and scatter */
+.eval-strip {
+  padding:16px;
+}
+.eval-strip svg .grid .major {
+  stroke:#e4dfeb;
+}
+.eval-strip svg .grid .minor {
+  stroke:var(--grid);
+}
+.eval-strip svg .grid .zero {
+  stroke:#b5afbd;
   stroke-width:1.5;
 }
-.eval-strip svg .baseline,
-.eval-strip svg .tick {
-  stroke:#d9dbe2;
+.eval-strip svg .axis .axis-title,
+.eval-strip svg .zero-label {
+  fill:var(--muted);
+  font:500 11px "DM Sans",sans-serif;
+  letter-spacing:0;
+}
+.eval-strip svg .band rect,
+.eval-strip svg .zone rect {
+  fill:var(--pale);
+}
+.eval-strip svg .band text,
+.eval-strip svg .zone text {
+  fill:#4c3c70;
+  font:600 11px "DM Sans",sans-serif;
 }
 .eval-strip svg .median line {
   stroke:var(--ink);
-  stroke-dasharray:3 3;
+  stroke-width:1.5;
+  stroke-dasharray:4 3;
 }
-.eval-strip svg .median text {
+.eval-strip svg .p90 line {
+  stroke:#9b94a2;
+  stroke-dasharray:1 3;
+  stroke-width:1.5;
+}
+.eval-strip svg .median text,
+.eval-strip svg .p90 text {
   fill:var(--ink);
   font:600 11px "DM Sans",sans-serif;
+}
+.eval-strip svg .dot {
+  stroke-width:2;
+  cursor:pointer;
+  transition:r .15s;
+}
+.eval-strip svg .dot.ready {
+  fill:var(--after);
+  stroke:#fff;
+}
+.eval-strip svg .dot.not-ready {
+  fill:#fff;
+  stroke:#9b94a2;
+}
+.eval-strip svg .dot:hover,
+.eval-strip svg .dot:focus-visible {
+  r:9;
+  stroke:var(--ink);
+  outline:none;
+}
+.mark-ready {
+  background:var(--after);
+}
+.mark-not-ready {
+  border:2px solid #9b94a2;
+  background:#fff;
 }
 
 /* Controls, styled like the site navigation */
