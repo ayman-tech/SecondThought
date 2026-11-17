@@ -5,7 +5,7 @@
   {
    "id": "both-t5-jsonl-noguard",
    "label": "both-t5",
-   "description": "One T5-small model for both jobs, run twice: detoxify, then formalize",
+   "description": "One model for both jobs, run twice: detoxify, then formalize",
    "run": "2026-11-10_055350_existing-results-workplace35_both-t5-jsonl-noguard_workplace35_27bc2faf",
    "mlflow_run_id": "ce18e0f00f3146939453b0726a4fa336",
    "summary": {
