@@ -1,32 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="{{ description }}">
-  <meta name="theme-color" content="#f8fafc">
-  <title>{{ title }} — SecondThought</title>
-  <link rel="stylesheet" href="/assets/styles.css">
-  {% block styles %}{% endblock %}
-  {% block scripts %}{% endblock %}
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="{{ description }}"><title>{{ title }} — SecondThought</title><link rel="stylesheet" href="/assets/styles.css">{% block styles %}{% endblock %}{% block scripts %}{% endblock %}
 </head>
-<body class="page-{{ page }}">
-  <a class="skip-link" href="{{ '#draft' if page == 'steering' else '#main' }}">Skip to {{ 'the writing tool' if page == 'steering' else 'content' }}</a>
-  <header class="site-header">
-    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span>SecondThought</a>
-    <nav aria-label="Main navigation">
-      {% for key, path, label in navigation %}
-      <a href="{{ path }}"{% if key == page %} class="nav-active" aria-current="page"{% endif %}>{{ label }}</a>
-      {% endfor %}
-    </nav>
-  </header>
-  <main id="main">
-    {% block content %}{% endblock %}
-  </main>
-  <footer class="site-footer">
-    <a class="brand" href="/">SecondThought</a>
-    <span>Consider the words. Keep the thought.</span>
-    <a href="/docs">API documentation ↗</a>
-  </footer>
-</body>
-</html>
+
+<body class="page-{{ page }}"><a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><a class="brand" href="/explore"><span class="brand-mark" aria-hidden="true">↗</span>SecondThought<span class="brand-period">.</span></a>
+<nav aria-label="Main navigation">{% for key,path,label in navigation %}<a href="{{ path }}"{% if key == page %} class="nav-active" aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+</nav><span class="header-note">A little pause. A better message.</span>
+</header>
+<main id="main">{% block content %}{% endblock %}
+</main>
+</body></html>

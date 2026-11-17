@@ -86,3 +86,26 @@ def test_cancellation_and_timeout_stopping_criteria():
     event.set()
     assert criterion(None, None)
     assert _StopGeneration(Event(), monotonic() - 1)(None, None)
+
+@pytest.mark.parametrize("fail", [False, True])
+def test_explore_multilayer_hooks_and_cleanup(fail):
+    from types import MethodType
+    from website.api.layers import ExploreRewriter
+    service, observed = tiny_service(fail=fail)
+    service.layer_vectors = {0: torch.tensor([1., 0.]), 1: torch.tensor([0., 1.])}
+    service._layer_steering_context = MethodType(ExploreRewriter._layer_steering_context, service)
+    def run():
+        return service.stream_rewrite("draft", 0.5, 0, on_text=lambda text: None,
+                                      cancelled=Event(), layer_strengths={0: -0.5, 1: 1.2})
+    if fail:
+        with pytest.raises(RuntimeError):
+            run()
+    else:
+        run()
+    assert torch.allclose(observed[0], torch.tensor([[[-0.5, 1.2]]]))
+    assert all(not layer._forward_hooks for layer in service.decoder_layers)
+    assert not service._generation_lock.locked()
+    with pytest.raises(ValueError):
+        with service._layer_steering_context({0: 1, 9: 1}):
+            pass
+    assert all(not layer._forward_hooks for layer in service.decoder_layers)
