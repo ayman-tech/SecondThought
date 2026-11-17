@@ -35,6 +35,12 @@ change them without touching code.
 
 ## Running it
 
+**Just want to use it?** Run the website (`make website`) and open
+http://127.0.0.1:8001/community. It has a download button and a four-step setup
+guide with a live check that the service is running. The download is a zip of
+`extension/frontend/` with a short `HOW TO INSTALL.txt` inside. The steps below
+are the same thing, from the repo.
+
 You need Python 3.12+ and the project installed as described in the main
 README (`uv sync` is the easiest route).
 
@@ -160,6 +166,9 @@ entries that are normal at work.
   the server is running.
 - All of these read the same values from `settings.js`, so a change in one
   shows up in the others straight away.
+- **Advanced controls ↗** in the popup and settings page opens the steering site,
+  and the "can't reach the server" message links to the setup guide. The site's
+  address is `SITE_URL` in `settings.js` (the local site for now).
 
 The page can't call the local server directly (sites block requests to
 `127.0.0.1`), so the request goes through the extension's background worker

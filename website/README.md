@@ -32,6 +32,23 @@ is intended for local use; authentication, a public deployment, and infrastructu
 are outside this first version. Restart the Python process after backend changes.
 The website API currently runs from the repository checkout, not a standalone wheel.
 
+## The extension download
+
+The Community page (`/community`) is the extension's home: a download button and
+a four-step setup guide. `/downloads/secondthought-extension.zip` zips
+`extension/frontend/` on the fly (plus a short `HOW TO INSTALL.txt`), so it's
+always the current version. The guide also checks live whether the extension's
+service is running.
+
+Both point at this machine for now. Once we deploy, set these instead of
+changing code:
+
+- `SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL`: where the download button goes
+- `SECONDTHOUGHT_EXTENSION_API_URL`: the service the guide checks (default `http://127.0.0.1:8000`)
+
+On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
+`SITE_URL` (`extension/frontend/settings.js`) are the matching switches.
+
 ## Pages and layer controls
 
 - **Explore** (`/explore`): animated 24-layer schematic above the live draft/rewrite
