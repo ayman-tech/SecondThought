@@ -5,7 +5,7 @@
   {
    "id": "both-t5-jsonl-noguard",
    "label": "both-t5",
-   "description": "One T5 model, two passes: detoxify, then formalize",
+   "description": "One T5-small model for both jobs, run twice: detoxify, then formalize",
    "run": "2026-11-10_055350_existing-results-workplace35_both-t5-jsonl-noguard_workplace35_27bc2faf",
    "mlflow_run_id": "ce18e0f00f3146939453b0726a4fa336",
    "summary": {
@@ -547,8 +547,8 @@
   },
   {
    "id": "t5-chain",
-   "label": "t5-chain",
-   "description": "Two single-task T5 models chained: detox, then formal",
+   "label": "Two-model chain",
+   "description": "t5-small-paradetox, then t5-small-gyafc-formal (T5-small fine-tuned on the ParaDetox and GYAFC datasets)",
    "run": "2026-11-10_055413_existing-results-workplace35_t5-chain_workplace35_8321c77e",
    "mlflow_run_id": "161e32bd25ac492c9d8970ae3dc3f33f",
    "summary": {
@@ -1090,8 +1090,8 @@
   },
   {
    "id": "epoch3-paradetox",
-   "label": "paradetox",
-   "description": "ParaDetox T5 (epoch 3), detox only",
+   "label": "t5-small-paradetox",
+   "description": "T5-small fine-tuned on the ParaDetox dataset (epoch 3), detox only",
    "run": "2026-11-10_055420_existing-results-workplace35_epoch3-paradetox_workplace35_a7f5a504",
    "mlflow_run_id": "dc85fe15f25640ccb28bfacc7ab8c2a8",
    "summary": {
