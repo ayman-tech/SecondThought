@@ -75,7 +75,7 @@ def tone_check_options(config: str | Path) -> dict[str, Any]:
         with Path(config).open("rb") as handle:
             return dict(tomllib.load(handle).get("tone_check", {}))
     except OSError:
-        return {}
+        return {"enabled": False}  # no config, no heavy models (e.g. in tests)
 
 
 def load_dotenv(path: Path) -> None:

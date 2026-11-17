@@ -42,7 +42,7 @@ def test_health_reports_the_loaded_model(client):
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "model": "fake: drop the word stupid"}
+    assert response.json() == {"status": "ok", "model": "fake: drop the word stupid", "tone_check": "off"}
 
 
 def test_rewrite_returns_the_contract_the_extension_expects(client):
