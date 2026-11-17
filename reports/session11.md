@@ -62,10 +62,11 @@ Offline scores for `both-t5` on the 35 workplace messages, as shown on the Evalu
 
 ## User / validation learning
 
-- No user trials yet, so there is no user-derived learning this session.
 - Classifiers widen what the extension catches, but neither model recognises passive aggression, which is common at work.
 - Getting someone else to install the extension is a real hurdle: it needs the project, Python, a model from the team drive and a running local service. The setup guide makes the steps clear, but it doesn't remove them.
 - A bug found on teammates' laptops (the download button saving `community.html`) came from a website server started before pulling. Restarting servers after a pull is easy to forget.
+
+[User Trial Video](./assets/ut1.mov)
 
 ## Evaluation blockers
 
