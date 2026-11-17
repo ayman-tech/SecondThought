@@ -66,7 +66,9 @@ Offline scores for `both-t5` on the 35 workplace messages, as shown on the Evalu
 - Getting someone else to install the extension is a real hurdle: it needs the project, Python, a model from the team drive and a running local service. The setup guide makes the steps clear, but it doesn't remove them.
 - A bug found on teammates' laptops (the download button saving `community.html`) came from a website server started before pulling. Restarting servers after a pull is easy to forget.
 
-[User Trial Video](./assets/ut1.mov)
+### 🎥 User Trial Video
+
+[![Watch User Trial Video](https://img.youtube.com/vi/4wZt2JJuM5s/hqdefault.jpg)](https://youtu.be/4wZt2JJuM5s)
 
 ## Evaluation blockers
 
