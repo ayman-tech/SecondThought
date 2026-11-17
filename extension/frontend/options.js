@@ -3,6 +3,7 @@
 const API_BASE = "http://127.0.0.1:8000";
 
 const nudgeToggle = document.getElementById("nudge-enabled");
+const idleToggle = document.getElementById("idle-check");
 const kindsSection = document.getElementById("kinds-section");
 const kindsEl = document.getElementById("kinds");
 const sitesEl = document.getElementById("sites");
@@ -54,9 +55,11 @@ function siteRow(site) {
 }
 
 async function render() {
-  const { nudgeEnabled, triggerKinds, disabledSites } = await SecondThoughtSettings.load();
+  const { nudgeEnabled, idleCheck, triggerKinds, disabledSites } = await SecondThoughtSettings.load();
   nudgeToggle.checked = nudgeEnabled;
+  idleToggle.checked = idleCheck;
   kindsSection.classList.toggle("off", !nudgeEnabled);
+  document.getElementById("idle-row").classList.toggle("off", !nudgeEnabled);
   kindsEl.replaceChildren(
     ...SecondThoughtSettings.KINDS.map((kind) => kindRow(kind, triggerKinds[kind.key], triggerKinds)),
   );
@@ -72,7 +75,10 @@ async function checkServer() {
     setTimeout(() => controller.abort(), 3000);
     const body = await (await fetch(`${API_BASE}/health`, { signal: controller.signal })).json();
     dot.className = body.status === "ok" ? "status-dot ok" : "status-dot down";
-    text.textContent = body.status === "ok" ? `Running · ${body.model}` : `Running, but not ready: ${body.detail}`;
+    const tone = { ready: "tone check ready", loading: "tone check starting up", off: "tone check off", error: "tone check failed to start" }[body.tone_check];
+    text.textContent = body.status === "ok"
+      ? `Running · ${body.model}${tone ? ` · ${tone}` : ""}`
+      : `Running, but not ready: ${body.detail}`;
   } catch {
     dot.className = "status-dot down";
     text.textContent = "Not running";
@@ -80,6 +86,7 @@ async function checkServer() {
 }
 
 nudgeToggle.addEventListener("change", () => save({ nudgeEnabled: nudgeToggle.checked }));
+idleToggle.addEventListener("change", () => save({ idleCheck: idleToggle.checked }));
 // Stay in sync when the popup changes something while this page is open.
 chrome.storage.onChanged.addListener(render);
 

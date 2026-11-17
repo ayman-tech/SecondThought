@@ -36,7 +36,8 @@ section .hint:last-child { margin-bottom: 0; }
 .row small { display: block; color: var(--muted); font-size: 12px; }
 
 /* The kinds only matter while the pill is on. */
-#kinds-section.off { opacity: 0.5; }
+#kinds-section.off,
+#idle-row.off { opacity: 0.5; }
 
 #sites { list-style: none; margin: 0; padding: 0; }
 #sites li {

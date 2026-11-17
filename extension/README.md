@@ -125,6 +125,30 @@ appears in the corner of the text box.
 - **Turn it off for a site** with the "Suggest while typing on <site>" switch
   in the popup. It's on by default everywhere.
 
+## The "Check tone?" pill
+
+Word lists only catch what's on them, so there's a second layer for everything
+else. If you stop typing for about 5 seconds and the message has at least four
+words but nothing on the lists, a **Check tone?** pill appears. Nothing is sent
+until you click it.
+
+- Clicking sends your lines (or just your selection) to `POST /check` on the
+  local server, which runs two small classifiers: Detoxify for toxicity and a
+  RoBERTa formality ranker trained on GYAFC for informality.
+- If nothing is flagged, the card says it looks good and that text isn't
+  offered again. Otherwise only the flagged lines get rewritten, with the same
+  diff, Replace and Undo.
+- The classifiers load in the background when the server starts (the first run
+  downloads about 500 MB). After that a check takes about 0.2 s on CPU.
+- They need the project's evaluation extras: `uv sync --extra evaluation`. Without
+  them the server still runs, and `/health` reports the tone check as `error`.
+- Models and thresholds are in `[tone_check]` in `extension/api/config.toml`, so they're
+  easy to swap. The pill can be switched off on the settings page.
+
+The trigger lists also include the open "List of Dirty, Naughty, Obscene, and
+Otherwise Bad Words" (CC BY 4.0, credited in `badwords.js`), minus a few
+entries that are normal at work.
+
 ## The popup and settings
 
 - **The popup** shows the suggestion with the same struck-out and highlighted
@@ -156,6 +180,7 @@ SECONDTHOUGHT_CONFIG=config/default.toml python -m extension.api.server
 |--------|------------|-----------------------------------|---------|
 | GET    | `/health`  | nothing                           | `{"status": "ok", "model": ...}` or `{"status": "error", "detail": ...}` |
 | POST   | `/rewrite` | `{"message": "..."}` (1–4000 chars) | `{"original_text", "rewritten_text", "model_info", "latency_ms", "kept_values"}` |
+| POST   | `/check`   | `{"lines": ["...", ...]}` (1–50 lines) | `{"flagged", "lines": [{"text", "toxicity", "informality", "toxic", "informal"}], "model_info"}` |
 
 Errors come back as `{"detail": "..."}`: 400 for a blank message or a sentence
 over the T5 limit (128 tokens), 422 for a malformed body, 502 when the model
@@ -163,6 +188,10 @@ fails, and 503 when the server couldn't load its models. Only
 `chrome-extension://` origins are allowed through CORS.
 
 ## Not done yet
+
+- The tone check misses passive aggression: "Did you even read my email?" and
+  "Nice of you to finally show up" both score as fine. Its thresholds (0.5 toxic,
+  0.8 informal) were picked from a handful of examples, not labelled data.
 
 - The nudge suggests rather than intercepting the Send button. Because it can
   run on every site, Chrome warns at install that it can read and change data

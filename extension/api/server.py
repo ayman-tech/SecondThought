@@ -14,6 +14,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
+import tomllib
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -26,10 +28,12 @@ from pydantic import BaseModel, Field
 from secondthought.cli import build_rewriter
 from secondthought.config import load_settings
 from evaluation.evaluation import critical_value_metrics, extract_critical_values
+from secondthought.tone_check import ToneChecker
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = Path(__file__).resolve().parent / "config.toml"
 MAX_MESSAGE_CHARS = 4000
+MAX_CHECK_LINES = 50
 
 logger = logging.getLogger("secondthought.api")
 
@@ -45,6 +49,33 @@ class RewriteResponse(BaseModel):
     latency_ms: float
     # Numbers, dates, amounts and the like from the message that the rewrite kept.
     kept_values: list[str] = []
+
+
+class CheckRequest(BaseModel):
+    lines: list[str] = Field(min_length=1, max_length=MAX_CHECK_LINES)
+
+
+class LineResult(BaseModel):
+    text: str
+    toxicity: float
+    informality: float
+    toxic: bool
+    informal: bool
+
+
+class CheckResponse(BaseModel):
+    flagged: bool
+    lines: list[LineResult]
+    model_info: str
+
+
+def tone_check_options(config: str | Path) -> dict[str, Any]:
+    """The [tone_check] section of the config; missing keys use ToneChecker's defaults."""
+    try:
+        with Path(config).open("rb") as handle:
+            return dict(tomllib.load(handle).get("tone_check", {}))
+    except OSError:
+        return {}
 
 
 def load_dotenv(path: Path) -> None:
@@ -76,7 +107,11 @@ def kept_values(original: str, rewritten: str) -> list[str]:
     return list(dict.fromkeys(kept))
 
 
-def create_app(rewriter: Any | None = None, config_path: str | Path | None = None) -> FastAPI:
+def create_app(
+    rewriter: Any | None = None,
+    config_path: str | Path | None = None,
+    checker: Any | None = None,
+) -> FastAPI:
     app = FastAPI(title="SecondThought API")
     # Only Chrome extension pages may call this from a browser.
     app.add_middleware(
@@ -96,11 +131,53 @@ def create_app(rewriter: Any | None = None, config_path: str | Path | None = Non
             setup_error = f"{type(exc).__name__}: {exc}"
             logger.error("Rewriter could not be created: %s", setup_error)
 
+    # The tone-check classifiers take a while to load, so they load in the
+    # background and /check answers 503 until they're ready.
+    tone = {"checker": checker, "status": "ready" if checker else "off", "error": None}
+    if checker is None:
+        options = tone_check_options(config_path or os.getenv("SECONDTHOUGHT_CONFIG", DEFAULT_CONFIG))
+        if options.pop("enabled", True):
+            tone["status"] = "loading"
+
+            def load_checker() -> None:
+                try:
+                    loaded = ToneChecker(**options)
+                    loaded.check(["warm up"])  # the first call is slow; don't make the user wait for it
+                    tone["checker"] = loaded
+                    tone["status"] = "ready"
+                except Exception as exc:
+                    tone["status"] = "error"
+                    tone["error"] = f"{type(exc).__name__}: {exc}"
+                    logger.error("Tone checker could not be created: %s", tone["error"])
+
+            threading.Thread(target=load_checker, daemon=True).start()
+
     @app.get("/health")
     def health() -> dict[str, Any]:
         if rewriter is None:
             return {"status": "error", "detail": setup_error}
-        return {"status": "ok", "model": getattr(rewriter, "model", "")}
+        return {"status": "ok", "model": getattr(rewriter, "model", ""), "tone_check": tone["status"]}
+
+    @app.post("/check", response_model=CheckResponse)
+    def check(request: CheckRequest) -> CheckResponse:
+        if tone["status"] != "ready":
+            detail = {
+                "loading": "The tone check is still starting up. Try again in a moment.",
+                "off": "The tone check is turned off in the server config.",
+                "error": f"The tone check couldn't start. {tone['error']}",
+            }[tone["status"]]
+            raise HTTPException(503, detail)
+        lines = [line for line in request.lines if line.strip()]
+        if not lines:
+            raise HTTPException(400, "Nothing to check")
+        if any(len(line) > MAX_MESSAGE_CHARS for line in lines):
+            raise HTTPException(400, f"Lines must be at most {MAX_MESSAGE_CHARS} characters")
+        results = tone["checker"].check(lines)
+        return CheckResponse(
+            flagged=any(result.toxic or result.informal for result in results),
+            lines=[LineResult(**vars(result)) for result in results],
+            model_info=tone["checker"].model,
+        )
 
     @app.post("/rewrite", response_model=RewriteResponse)
     def rewrite(request: RewriteRequest) -> RewriteResponse:

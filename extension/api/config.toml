@@ -31,3 +31,12 @@ prefix = "formalize: "
 
 # To go back to the separate single-task models, point the steps at
 # models/t5-small-paradetox and models/t5-small-gyafc-formal instead.
+
+# Tone check behind the "Check tone?" pill (POST /check). Only runs when the
+# user asks, never per keystroke. Swap the models here to experiment.
+[tone_check]
+enabled = true
+toxicity_model = "original"                              # Detoxify variant
+formality_model = "s-nlp/roberta-base-formality-ranker"  # trained on GYAFC
+toxic_threshold = 0.5
+informal_threshold = 0.8

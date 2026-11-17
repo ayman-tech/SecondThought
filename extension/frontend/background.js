@@ -5,8 +5,13 @@ const API_BASE = "http://127.0.0.1:8000";
 const REQUEST_TIMEOUT_MS = 30000;
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  if (request?.type !== "secondthought:rewrite") return false;
-  rewrite(request.message).then(sendResponse);
+  if (request?.type === "secondthought:rewrite") {
+    post("/rewrite", { message: request.message }).then(sendResponse);
+  } else if (request?.type === "secondthought:check") {
+    post("/check", { lines: request.lines }).then(sendResponse);
+  } else {
+    return false;
+  }
   return true; // reply asynchronously
 });
 
@@ -17,14 +22,14 @@ function errorDetail(body, status) {
   return `Server returned HTTP ${status}.`;
 }
 
-async function rewrite(message) {
+async function post(path, payload) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const response = await fetch(`${API_BASE}/rewrite`, {
+    const response = await fetch(`${API_BASE}${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
     const body = await response.json().catch(() => null);
