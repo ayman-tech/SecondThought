@@ -1,6 +1,9 @@
-{% extends "base.html" %}{% block content %}
+{% extends "base.html" %}
+{% block styles %}<link rel="stylesheet" href="/assets/install.css">{% endblock %}
+{% block scripts %}<script src="/assets/install.js" defer></script>{% endblock %}
+{% block content %}
 <section class="community">
-<div class="community-copy"><p class="eyebrow">SECONDTHOUGHT, WHERE YOU WRITE</p><h1>Keep the thought.<br><span>Find the words.</span></h1><p class="lede">A little pause can change a conversation. Detoxify or formalize your writing with our browser extension, before you hit send.</p><button class="download-button" disabled>Download extension <span aria-hidden="true">↓</span></button><p class="small-note">A new package is on the way.</p>
+<div class="community-copy"><p class="eyebrow">SECONDTHOUGHT, WHERE YOU WRITE</p><h1>Keep the thought.<br><span>Find the words.</span></h1><p class="lede">A little pause can change a conversation. Detoxify or formalize your writing with our browser extension, before you hit send.</p><a class="download-button" href="{{ extension_download_url }}" download>Download extension <span aria-hidden="true">↓</span></a><p class="small-note">Free · For Chrome · Runs on your own computer. <a class="text-link" href="#install">How to set it up ↓</a></p>
 <div class="community-features">
 <div><span>01 / DETOXIFY</span><p>Less heat.<br>Same intention.</p>
 </div>
@@ -22,4 +25,58 @@
 </div>
 </div><span class="art-caption">A preview of a better-worded everyday.</span>
 </div>
-</section>{% endblock %}
+</section>
+
+<section id="install" class="install" data-api="{{ extension_api_url }}" aria-labelledby="install-title">
+  <p class="eyebrow">SET IT UP</p>
+  <h2 id="install-title">Four steps, about five minutes.</h2>
+  <p class="install-intro">The extension isn't in the Chrome Web Store yet, so you add it yourself. It's quick, and you only do it once.</p>
+
+  <ol class="install-steps">
+    <li>
+      <h3>Download and unzip</h3>
+      <p>Unzip it somewhere it can stay, like <strong>Documents › SecondThought</strong>. Chrome runs the extension from that folder, so don't move or delete it later.</p>
+      <a class="install-button" href="{{ extension_download_url }}" download>Download the zip</a>
+    </li>
+    <li>
+      <h3>Add it to Chrome</h3>
+      <p>Open this address in a new tab:</p>
+      <div class="command"><code>chrome://extensions</code><button type="button" class="copy" data-copy="chrome://extensions">Copy</button></div>
+      <p>Switch on <strong>Developer mode</strong> in the top-right corner, click <strong>Load unpacked</strong>, and choose the <strong>SecondThought</strong> folder you just unzipped.</p>
+    </li>
+    <li>
+      <h3>Start the rewriting service</h3>
+      <p>Rewrites happen on your own computer, so a small service needs to be running. In a terminal, from the project folder, run:</p>
+      <div class="command"><code>uv run python -m extension.api.server</code><button type="button" class="copy" data-copy="uv run python -m extension.api.server">Copy</button></div>
+      <p class="service-status" role="status" aria-live="polite"><span class="dot"></span><span class="label">Checking…</span></p>
+      <details>
+        <summary>First time on this computer?</summary>
+        <ul>
+          <li>Get the project and install it: <code>uv sync --extra evaluation</code></li>
+          <li>Put the <code>both-t5</code> model folder in <code>models/</code> (ask the team for it).</li>
+          <li>The first start downloads the tone-check models, about 500 MB. After that it starts in seconds.</li>
+        </ul>
+      </details>
+    </li>
+    <li>
+      <h3>Pin it and try it</h3>
+      <p>Click the puzzle-piece icon in Chrome's toolbar and pin <strong>SecondThought</strong>. Then type something heated in Gmail or Slack. A small <strong>SecondThought?</strong> pill appears; click it for a calmer version you can drop in with one click.</p>
+    </li>
+  </ol>
+
+  <div class="install-notes">
+    <div>
+      <h3>Updating</h3>
+      <p>Download the new zip, replace what's in your SecondThought folder, then click ↻ on SecondThought in <code>chrome://extensions</code>.</p>
+    </div>
+    <div>
+      <h3>Pill not showing?</h3>
+      <p>Refresh the page after installing. If the dot in the extension's popup is red, the service isn't running.</p>
+    </div>
+    <div>
+      <h3>Your words stay yours</h3>
+      <p>Nothing leaves the page until you click the pill, and then it only goes to the service on your own computer.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
