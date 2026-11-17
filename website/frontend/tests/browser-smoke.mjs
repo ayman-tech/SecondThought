@@ -238,11 +238,25 @@ try {
         await evaluate(`document.querySelector('.download-button').disabled`),
         true,
       );
-    if (path === "/evaluation")
-      assert.equal(
-        await evaluate(`document.querySelector('main').textContent.trim()`),
-        "",
+    if (path === "/evaluation") {
+      await until(
+        `document.querySelectorAll('[data-eval-tiles] .eval-tile').length===4`,
       );
+      assert.equal(
+        await evaluate(
+          `document.querySelectorAll('[data-eval-chart] .row').length`,
+        ),
+        35,
+      );
+      assert.equal(
+        await evaluate(`document.querySelectorAll('[data-eval-units] .unit').length`),
+        35,
+      );
+      assert.equal(
+        await evaluate(`document.querySelectorAll('[data-eval-strip] .dot').length`),
+        35,
+      );
+    }
     await writeFile(
       join(directory, path.slice(1) + ".png"),
       Buffer.from(

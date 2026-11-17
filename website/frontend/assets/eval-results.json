@@ -1,0 +1,584 @@
+{
+ "dataset": "35 workplace messages (data/workplace_eval/input.jsonl)",
+ "note": "Rewritten in a batch run on whole messages without the facts guard, so not exactly the live product path, then scored offline.",
+ "systems": [
+  {
+   "id": "both-t5-jsonl-noguard",
+   "label": "both-t5",
+   "description": "One T5-small model for both jobs, run twice: detoxify, then formalize",
+   "run": "2026-11-10_055350_existing-results-workplace35_both-t5-jsonl-noguard_workplace35_27bc2faf",
+   "mlflow_run_id": "ce18e0f00f3146939453b0726a4fa336",
+   "summary": {
+    "examples": 35,
+    "critical_value_exact_rate": 0.9429,
+    "average_toxicity_original": 0.6042,
+    "average_toxicity_rewritten": 0.0604,
+    "average_semantic_similarity": 0.9546,
+    "average_formality_original": 0.5581,
+    "average_formality_rewritten": 0.8004
+   },
+   "messages": [
+    {
+     "id": "input_001",
+     "original": "Seriously, Maya, this invoice is a damn mess. Change the total from $480 to $450 before you send it.",
+     "rewritten": "Seriously, Maya, this invoice is a mess. Change the total from $480 to $450 before you send it.",
+     "toxicity": [
+      0.737,
+      0.041
+     ],
+     "formality": [
+      0.596,
+      0.658
+     ],
+     "similarity": 0.998,
+     "edit_ratio": 0.026,
+     "facts_kept": true
+    },
+    {
+     "id": "input_002",
+     "original": "You dumped 18 broken laptops on my desk like an idiot. Get them out of room 204 by 3 PM.",
+     "rewritten": "You dumped 18 broken laptops on my desk. Get them out of room 204 by 3 PM.",
+     "toxicity": [
+      0.963,
+      0.021
+     ],
+     "formality": [
+      0.508,
+      0.53
+     ],
+     "similarity": 0.984,
+     "edit_ratio": 0.086,
+     "facts_kept": true
+    },
+    {
+     "id": "input_003",
+     "original": "I'm sick of your bullshit excuses, Daniel. The client needs those 6 drawings by Friday.",
+     "rewritten": "I am sick of your excuses Daniel. The client needs those six drawings by Friday.",
+     "toxicity": [
+      0.94,
+      0.059
+     ],
+     "formality": [
+      0.478,
+      0.806
+     ],
+     "similarity": 0.978,
+     "edit_ratio": 0.102,
+     "facts_kept": true
+    },
+    {
+     "id": "input_004",
+     "original": "Who the hell sent the boxes to 47 Willow Lane? They were supposed to go to 92 Cedar Court.",
+     "rewritten": "Who sent the boxes to 47 Willow Lane? They were supposed to go to 92 Cedar Court.",
+     "toxicity": [
+      0.157,
+      0.001
+     ],
+     "formality": [
+      0.432,
+      0.53
+     ],
+     "similarity": 0.972,
+     "edit_ratio": 0.053,
+     "facts_kept": true
+    },
+    {
+     "id": "input_005",
+     "original": "This lazy crap has cost us 2 hours already. Restart the scanner and call Priya if it fails again.",
+     "rewritten": "This has cost us two hours already. Restart the scanner and call Priya if it fails again.",
+     "toxicity": [
+      0.859,
+      0.002
+     ],
+     "formality": [
+      0.57,
+      0.815
+     ],
+     "similarity": 0.954,
+     "edit_ratio": 0.075,
+     "facts_kept": true
+    },
+    {
+     "id": "input_006",
+     "original": "Alex, did you pull that 15% discount out of your ass? We agreed on 10%, so fix the quote.",
+     "rewritten": "Alex, did you pull that 15% discount out of your mind? We agreed on 10%, so fix the quote.",
+     "toxicity": [
+      0.909,
+      0.002
+     ],
+     "formality": [
+      0.53,
+      0.853
+     ],
+     "similarity": 0.982,
+     "edit_ratio": 0.039,
+     "facts_kept": true
+    },
+    {
+     "id": "input_007",
+     "original": "Your stupid spreadsheet lists 32 chairs when we only ordered 23. Check it before blaming the supplier.",
+     "rewritten": "Your spreadsheet lists 32 chairs when we only ordered 23. Check it before blaming the supplier.",
+     "toxicity": [
+      0.977,
+      0.001
+     ],
+     "formality": [
+      0.736,
+      0.815
+     ],
+     "similarity": 0.974,
+     "edit_ratio": 0.035,
+     "facts_kept": true
+    },
+    {
+     "id": "input_008",
+     "original": "Stop being such a jerk to Nina. She's covering 3 shifts this week because you bailed.",
+     "rewritten": "Stop being rude to Nina because she is covering three shifts this week because you bailed.",
+     "toxicity": [
+      0.932,
+      0.035
+     ],
+     "formality": [
+      0.497,
+      0.99
+     ],
+     "similarity": 0.94,
+     "edit_ratio": 0.177,
+     "facts_kept": true
+    },
+    {
+     "id": "input_009",
+     "original": "I don't care about your pathetic excuses. Refund the $79.50 charge to Jordan today.",
+     "rewritten": "I do not care about your excuses. Refund the $79.50 charge to Jordan today.",
+     "toxicity": [
+      0.717,
+      0.06
+     ],
+     "formality": [
+      0.641,
+      0.787
+     ],
+     "similarity": 0.977,
+     "edit_ratio": 0.076,
+     "facts_kept": true
+    },
+    {
+     "id": "input_010",
+     "original": "What kind of moron schedules a delivery for 7 AM when the warehouse opens at 9 AM? Call them back.",
+     "rewritten": "What kind of person schedules a delivery for 7 AM when the warehouse opens at 9 AM? Call them back.",
+     "toxicity": [
+      0.748,
+      0.002
+     ],
+     "formality": [
+      0.342,
+      0.701
+     ],
+     "similarity": 0.939,
+     "edit_ratio": 0.025,
+     "facts_kept": true
+    },
+    {
+     "id": "input_011",
+     "original": "Sam, your presentation was a complete shitshow. Cut it to 8 slides and fix the sales figures.",
+     "rewritten": "Sam, your presentation was a complete show. Cut it to eight slides and fix the sales figures.",
+     "toxicity": [
+      0.622,
+      0.001
+     ],
+     "formality": [
+      0.389,
+      0.61
+     ],
+     "similarity": 0.957,
+     "edit_ratio": 0.054,
+     "facts_kept": true
+    },
+    {
+     "id": "input_012",
+     "original": "You've screwed up the address again. It's 160 Maple Avenue, Suite 12, not Suite 21.",
+     "rewritten": "You have screwed up the address again. It is 160 Maple Avenue, Suite 12, and not Suite 21.",
+     "toxicity": [
+      0.002,
+      0.002
+     ],
+     "formality": [
+      0.726,
+      0.992
+     ],
+     "similarity": 0.992,
+     "edit_ratio": 0.064,
+     "facts_kept": true
+    },
+    {
+     "id": "input_013",
+     "original": "I'm not cleaning up your damn mess for the fourth time. Send Omar the corrected file by noon.",
+     "rewritten": "I am not cleaning up your mess for the fourth time. Send Omar the corrected file by noon.",
+     "toxicity": [
+      0.619,
+      0.003
+     ],
+     "formality": [
+      0.388,
+      0.767
+     ],
+     "similarity": 0.97,
+     "edit_ratio": 0.044,
+     "facts_kept": true
+    },
+    {
+     "id": "input_014",
+     "original": "This useless update made the page take 12 seconds to load. Roll it back before the demo.",
+     "rewritten": "This update made the page take 12 seconds to load. Roll it back before the demo.",
+     "toxicity": [
+      0.049,
+      0.001
+     ],
+     "formality": [
+      0.406,
+      0.419
+     ],
+     "similarity": 0.955,
+     "edit_ratio": 0.048,
+     "facts_kept": true
+    },
+    {
+     "id": "input_015",
+     "original": "Leah, stop talking out of your ass. We have 4 people available, not 9.",
+     "rewritten": "Stop talking out of your mind. We have four people available, not nine.",
+     "toxicity": [
+      0.988,
+      0.096
+     ],
+     "formality": [
+      0.481,
+      0.814
+     ],
+     "similarity": 0.829,
+     "edit_ratio": 0.177,
+     "facts_kept": false
+    },
+    {
+     "id": "input_016",
+     "original": "Why the hell are there 25 missing badges? Ask Marcus to check the cabinet in room 310.",
+     "rewritten": "Why are there 25 missing badges? Ask Marcus to check the cabinet in room 310.",
+     "toxicity": [
+      0.101,
+      0.001
+     ],
+     "formality": [
+      0.57,
+      0.93
+     ],
+     "similarity": 0.993,
+     "edit_ratio": 0.055,
+     "facts_kept": true
+    },
+    {
+     "id": "input_017",
+     "original": "Your careless packing is ridiculous. Put 2 kg of ice in each cooler, not 200 g.",
+     "rewritten": "Your packing is ridiculous. Put 2 kg of ice in each cooler, not 200 g.",
+     "toxicity": [
+      0.473,
+      0.516
+     ],
+     "formality": [
+      0.847,
+      0.845
+     ],
+     "similarity": 0.985,
+     "edit_ratio": 0.06,
+     "facts_kept": true
+    },
+    {
+     "id": "input_018",
+     "original": "I told you twice, Ben, stop being an idiot and use order 8472. Order 8427 was canceled.",
+     "rewritten": "I told you twice, Ben, stop being unsuitable and use order 8472. Order 8427 was canceled.",
+     "toxicity": [
+      0.944,
+      0.001
+     ],
+     "formality": [
+      0.821,
+      0.843
+     ],
+     "similarity": 0.959,
+     "edit_ratio": 0.091,
+     "facts_kept": true
+    },
+    {
+     "id": "input_019",
+     "original": "That report is garbage. The defect rate went from 2.5% to 4%, and you somehow called that an improvement.",
+     "rewritten": "That report is bad. The defect rate went from 2,5% to 4%, and you somehow called that an improvement.",
+     "toxicity": [
+      0.277,
+      0.001
+     ],
+     "formality": [
+      0.421,
+      0.529
+     ],
+     "similarity": 0.987,
+     "edit_ratio": 0.039,
+     "facts_kept": false
+    },
+    {
+     "id": "input_020",
+     "original": "You left the customer waiting for 45 minutes, you absolute clown. Call Elena and apologize.",
+     "rewritten": "You left the customer waiting for 45 minutes. Call Elena and apologize.",
+     "toxicity": [
+      0.46,
+      0.001
+     ],
+     "formality": [
+      0.918,
+      0.993
+     ],
+     "similarity": 0.98,
+     "edit_ratio": 0.123,
+     "facts_kept": true
+    },
+    {
+     "id": "input_021",
+     "original": "Quit screwing around with the schedule. Luis starts at 8:30, and Erin takes over at 12:30.",
+     "rewritten": "Quit screwing around with the schedule. Luis starts at 8:30, and Erin takes over at 12:30.",
+     "toxicity": [
+      0.005,
+      0.005
+     ],
+     "formality": [
+      0.592,
+      0.592
+     ],
+     "similarity": 1.0,
+     "edit_ratio": 0.0,
+     "facts_kept": true
+    },
+    {
+     "id": "input_022",
+     "original": "This is such sloppy crap. Send the 14 replacement cables to 83 Birch Street by Thursday.",
+     "rewritten": "This is so bad. Send the 14 replacement cables to 83 Birch Street by Thursday.",
+     "toxicity": [
+      0.87,
+      0.005
+     ],
+     "formality": [
+      0.556,
+      0.63
+     ],
+     "similarity": 0.961,
+     "edit_ratio": 0.096,
+     "facts_kept": true
+    },
+    {
+     "id": "input_023",
+     "original": "Rachel, your budget is a joke. We approved $600 for travel, not $900.",
+     "rewritten": "Rachel, your budget is a joke. We approved $600 for travel, not $900.",
+     "toxicity": [
+      0.022,
+      0.022
+     ],
+     "formality": [
+      0.781,
+      0.781
+     ],
+     "similarity": 1.0,
+     "edit_ratio": 0.0,
+     "facts_kept": true
+    },
+    {
+     "id": "input_024",
+     "original": "How the hell did you book 11 rooms for 7 guests? Cancel the extras and tell Theo what happened.",
+     "rewritten": "How did you book 11 rooms for seven guests? Cancel the extras and tell Theo what happened.",
+     "toxicity": [
+      0.232,
+      0.001
+     ],
+     "formality": [
+      0.615,
+      0.992
+     ],
+     "similarity": 0.982,
+     "edit_ratio": 0.081,
+     "facts_kept": true
+    },
+    {
+     "id": "input_025",
+     "original": "You've made a bloody mess of the labels. Mark the cartons 5 kg each and leave them at loading bay 2.",
+     "rewritten": "You have made a mess of the labels. Mark the cartons 5 kg each and leave them at loading bay 2.",
+     "toxicity": [
+      0.054,
+      0.001
+     ],
+     "formality": [
+      0.391,
+      0.789
+     ],
+     "similarity": 0.979,
+     "edit_ratio": 0.056,
+     "facts_kept": true
+    },
+    {
+     "id": "input_026",
+     "original": "I can't believe this crap, Aisha. You promised the draft on May 6, and now you're saying May 16.",
+     "rewritten": "I cannot believe this, Aisha. You promised the draft on May 6, and now you are saying May 16.",
+     "toxicity": [
+      0.806,
+      0.001
+     ],
+     "formality": [
+      0.419,
+      0.986
+     ],
+     "similarity": 0.989,
+     "edit_ratio": 0.058,
+     "facts_kept": true
+    },
+    {
+     "id": "input_027",
+     "original": "Stop acting like a smug know-it-all and actually read the customer's complaint.",
+     "rewritten": "Stop acting like a bad person and actually read the customer's complaint.",
+     "toxicity": [
+      0.585,
+      0.48
+     ],
+     "formality": [
+      0.426,
+      0.924
+     ],
+     "similarity": 0.907,
+     "edit_ratio": 0.145,
+     "facts_kept": true
+    },
+    {
+     "id": "input_028",
+     "original": "Your handover notes are useless garbage. Tell me what's broken and who's supposed to fix it.",
+     "rewritten": "Your handover notes are useless. Tell me what is broken and who is supposed to fix it.",
+     "toxicity": [
+      0.9,
+      0.097
+     ],
+     "formality": [
+      0.566,
+      0.993
+     ],
+     "similarity": 0.948,
+     "edit_ratio": 0.079,
+     "facts_kept": true
+    },
+    {
+     "id": "input_029",
+     "original": "Don't dump your unfinished crap on me and then disappear when I ask questions.",
+     "rewritten": "Do not dump your unfinished stuff on me and then disappear when I ask questions.",
+     "toxicity": [
+      0.945,
+      0.044
+     ],
+     "formality": [
+      0.212,
+      0.995
+     ],
+     "similarity": 0.929,
+     "edit_ratio": 0.076,
+     "facts_kept": true
+    },
+    {
+     "id": "input_030",
+     "original": "That was a nasty, stupid thing to say in the meeting. Apologize to Sofia.",
+     "rewritten": "That was a bad thing to say at the meeting. Apologize to Sofia.",
+     "toxicity": [
+      0.724,
+      0.001
+     ],
+     "formality": [
+      0.693,
+      0.93
+     ],
+     "similarity": 0.974,
+     "edit_ratio": 0.118,
+     "facts_kept": true
+    },
+    {
+     "id": "input_031",
+     "original": "I'm tired of your lazy half-assed answers. Explain why the test failed instead of waving it away.",
+     "rewritten": "I am tired of your answers. Explain why the test failed instead of waving it away.",
+     "toxicity": [
+      0.825,
+      0.003
+     ],
+     "formality": [
+      0.899,
+      0.994
+     ],
+     "similarity": 0.941,
+     "edit_ratio": 0.106,
+     "facts_kept": true
+    },
+    {
+     "id": "input_032",
+     "original": "You're being a complete asshole about this. Let the new hire finish speaking.",
+     "rewritten": "You are being unsuitable about this. Let the new hire finish speaking.",
+     "toxicity": [
+      0.986,
+      0.001
+     ],
+     "formality": [
+      0.404,
+      0.691
+     ],
+     "similarity": 0.77,
+     "edit_ratio": 0.17,
+     "facts_kept": true
+    },
+    {
+     "id": "input_033",
+     "original": "This design is ugly as hell, and the tiny labels are impossible to read. Make them clearer.",
+     "rewritten": "This design is unsuitable and the tiny labels are impossible to read. Make them clearer.",
+     "toxicity": [
+      0.471,
+      0.001
+     ],
+     "formality": [
+      0.542,
+      0.939
+     ],
+     "similarity": 0.892,
+     "edit_ratio": 0.095,
+     "facts_kept": true
+    },
+    {
+     "id": "input_034",
+     "original": "Quit whining and blaming everyone else for your screwup. Tell us how you're going to fix it.",
+     "rewritten": "Stop whining and blaming everyone else for your screwup. Tell us how you are going to fix it.",
+     "toxicity": [
+      0.495,
+      0.606
+     ],
+     "formality": [
+      0.318,
+      0.615
+     ],
+     "similarity": 0.992,
+     "edit_ratio": 0.049,
+     "facts_kept": true
+    },
+    {
+     "id": "input_035",
+     "original": "What a ridiculous pile of nonsense. Remove the made-up claims from the proposal before it goes out.",
+     "rewritten": "Remove the made-up claims from the proposal before it goes out.",
+     "toxicity": [
+      0.753,
+      0.001
+     ],
+     "formality": [
+      0.823,
+      0.938
+     ],
+     "similarity": 0.843,
+     "edit_ratio": 0.222,
+     "facts_kept": true
+    }
+   ]
+  }
+ ]
+}

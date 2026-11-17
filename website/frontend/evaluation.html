@@ -1,1 +1,85 @@
-{% extends "base.html" %}{% block content %}<section class="evaluation-page" aria-label="Evaluation"></section>{% endblock %}
+{% extends "base.html" %}
+{% block styles %}<link rel="stylesheet" href="/assets/evaluation.css">{% endblock %}
+{% block scripts %}<script src="/assets/evaluation.js" defer></script>{% endblock %}
+{% block content %}<section class="evaluation-page" aria-label="Evaluation">
+    <header class="eval-block eval-intro">
+      <p class="eyebrow">EVALUATION</p>
+      <h1>How we measure a rewrite.</h1>
+      <p>Toxicity, formality, meaning and facts, measured offline on a fixed set of workplace messages. These are diagnostic signals, not a guarantee that any single rewrite is correct.</p>
+    </header>
+
+    <section class="eval-block" aria-labelledby="pipeline-title">
+      <p class="eyebrow">HOW A REWRITE IS CHECKED</p>
+      <h2 id="pipeline-title">One message, two passes, a fact check after each.</h2>
+      <ol class="eval-pipeline">
+        <li><span class="step-num">1</span><strong>Spotting</strong><span>Word lists catch swearing, insults, texting shorthand and shouting, on your device. If none match, a tone check can score each line when you ask. Only flagged lines go on.</span></li>
+        <li><span class="step-num">2</span><strong>Detoxify pass</strong><span>The T5 model removes insults and hostility, sentence by sentence.</span><em class="eval-tag">Toxicity</em></li>
+        <li><span class="step-num">3</span><strong>Facts guard</strong><span>Numbers, dates, amounts, links and IDs must survive unchanged.</span><em class="eval-tag">Facts kept</em></li>
+        <li><span class="step-num">4</span><strong>Formalize pass</strong><span>The same model makes the wording professional.</span><em class="eval-tag">Formality</em></li>
+        <li><span class="step-num">5</span><strong>Facts guard</strong><span>The check runs again on the final wording.</span><em class="eval-tag">Facts kept</em></li>
+        <li><span class="step-num">6</span><strong>Suggestion</strong><span>You see the rewrite and decide whether to use it.</span><em class="eval-tag">Meaning kept</em></li>
+      </ol>
+      <dl class="eval-metrics">
+        <div><dt>Toxicity</dt><dd>0 to 1 from the Detoxify classifier. Lower is better.</dd></div>
+        <div><dt>Formality</dt><dd>0 to 1 from a RoBERTa formality ranker, scored per sentence. Higher is more formal.</dd></div>
+        <div><dt>Meaning kept</dt><dd>Sentence-embedding similarity between original and rewrite. 1 means the same meaning.</dd></div>
+        <div><dt>Facts kept</dt><dd>Share of messages where every number, date, amount, link and ID survives exactly.</dd></div>
+      </dl>
+    </section>
+
+    <section class="eval-block" aria-labelledby="glance-title">
+      <p class="eyebrow">AT A GLANCE</p>
+      <h2 id="glance-title">both-t5 on 35 workplace messages.</h2>
+      <p class="eval-lede" data-eval-note>Loading results…</p>
+      <dl class="eval-tiles" data-eval-tiles></dl>
+    </section>
+
+    <section class="eval-block" aria-labelledby="ready-title">
+      <p class="eyebrow">READY TO SEND</p>
+      <h2 id="ready-title">Could you send the rewrite as it is?</h2>
+      <p class="eval-lede" data-eval-ready-rule></p>
+      <p class="eval-kpi" data-eval-ready-kpi></p>
+      <div class="eval-units" data-eval-units></div>
+    </section>
+
+    <section class="eval-block" aria-labelledby="touch-title">
+      <p class="eyebrow">LIGHT TOUCH</p>
+      <h2 id="touch-title">We edit your message, we don't replace it.</h2>
+      <p class="eval-lede">How much of each message's text the rewrite changed, counted in characters. Each dot is one message; hover or tab to a dot for its text, scores and ready-to-send result.</p>
+      <p class="eval-kpi" data-eval-touch-kpi></p>
+      <div class="eval-controls">
+        <div class="eval-toggle" role="group" aria-label="View">
+          <button type="button" data-touch="spread" aria-pressed="true">Spread</button>
+          <button type="button" data-touch="scatter" aria-pressed="false">Change vs. toxicity drop</button>
+        </div>
+      </div>
+      <p class="eval-headline" data-eval-touch-insight aria-live="polite"></p>
+      <div class="eval-legend" aria-hidden="true"><span><i class="mark-ready"></i>Ready to send</span><span><i class="mark-not-ready"></i>Not ready (hover for the reason)</span></div>
+      <figure class="eval-chart eval-strip" data-eval-strip>
+        <div class="eval-tooltip" role="tooltip" hidden></div>
+      </figure>
+    </section>
+
+    <section class="eval-block" aria-labelledby="dumbbell-title">
+      <p class="eyebrow">MESSAGE BY MESSAGE</p>
+      <h2 id="dumbbell-title">Before and after, for every message.</h2>
+      <div class="eval-controls">
+        <div class="eval-toggle" role="group" aria-label="Score">
+          <button type="button" data-metric="toxicity" aria-pressed="true">Toxicity</button>
+          <button type="button" data-metric="formality" aria-pressed="false">Formality</button>
+        </div>
+      </div>
+      <p class="eval-headline" data-eval-headline aria-live="polite"></p>
+      <div class="eval-legend" aria-hidden="true"><span><i class="mark-before"></i>Original message</span><span><i class="mark-after"></i>Rewrite</span></div>
+      <figure class="eval-chart" data-eval-chart>
+        <div class="eval-tooltip" role="tooltip" hidden></div>
+      </figure>
+      <details class="eval-details">
+        <summary>Show as a table</summary>
+        <div class="eval-table-wrap"><table class="eval-messages" data-eval-messages>
+          <thead><tr><th scope="col">Original</th><th scope="col">Rewrite</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </details>
+    </section>
+</section>{% endblock %}

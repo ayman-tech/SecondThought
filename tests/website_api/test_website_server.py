@@ -75,7 +75,12 @@ def test_pages_have_separate_content_and_navigation(path):
             assert f'href="{target}"' in html
         assert "{%" not in html and "{{" not in html
         if path == "/evaluation":
-            assert '<section class="evaluation-page" aria-label="Evaluation"></section>' in html
+            assert '<section class="evaluation-page" aria-label="Evaluation">' in html
+            assert 'src="/assets/evaluation.js"' in html and "data-eval-chart" in html
+            data = client.get("/assets/eval-results.json").json()
+            assert [len(s["messages"]) for s in data["systems"]] == [35]
+            assert all("edit_ratio" in m for m in data["systems"][0]["messages"])
+            assert "data-eval-units" in html and "data-eval-strip" in html
 
 
 def test_multilayer_contract_and_legacy_redirects():
