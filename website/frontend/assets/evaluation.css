@@ -1,10 +1,11 @@
-/* Evaluation page visuals. Before/after colours checked with a colour-blindness validator. */
+/* Evaluation page visuals. Uses only colours from styles.css; the before/after
+   pair (site teal, site purple) was checked with a colour-blindness validator. */
 .page-evaluation {
-  --before:#d97706;
+  --before:var(--teal);
   --after:var(--purple);
-  --grid:#f1f0f5;
-  --display:Manrope,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  --grid:#f0edf5;
+  --soft-line:#e5e1eb;
+  --label:#a69aaf;
 }
 .eval-block {
   max-width:1160px;
@@ -17,9 +18,8 @@
   padding-bottom:24px;
 }
 .eval-intro h1 {
-  font:700 clamp(30px,4vw,44px)/1.15 var(--display);
-  letter-spacing:-1px;
-  margin:6px 0 14px;
+  font-size:clamp(30px,4vw,44px);
+  margin:0 0 14px;
 }
 .eval-intro p:not(.eyebrow) {
   color:var(--muted);
@@ -27,21 +27,27 @@
   margin:0;
 }
 .eval-block .eyebrow {
-  font:600 11px var(--mono);
-  letter-spacing:.8px;
-  color:var(--purple);
-  margin:0;
+  margin:0 0 10px;
 }
 .eval-block h2 {
-  font:700 clamp(22px,2.6vw,30px)/1.25 var(--display);
-  letter-spacing:-.6px;
-  margin:6px 0 24px;
+  font:650 clamp(22px,2.6vw,30px)/1.25 Manrope,sans-serif;
+  letter-spacing:-1px;
+  margin:0 0 24px;
 }
 .eval-lede {
   color:var(--muted);
   font-size:14px;
   max-width:720px;
   margin:-12px 0 20px;
+}
+/* Small labels, as .demo-label on other pages */
+.step-num,
+.eval-tooltip .tip-label,
+.eval-block thead small,
+.score-best {
+  font-size:10px;
+  letter-spacing:1.3px;
+  color:var(--label);
 }
 
 /* Pipeline */
@@ -52,7 +58,6 @@
   display:grid;
   grid-template-columns:repeat(6,1fr);
   gap:10px;
-  counter-reset:none;
 }
 .eval-pipeline li {
   position:relative;
@@ -61,7 +66,7 @@
   gap:6px;
   padding:16px 14px;
   background:#fff;
-  border:1px solid var(--line);
+  border:1px solid var(--soft-line);
   border-radius:10px;
 }
 .eval-pipeline li:not(:last-child)::after {
@@ -70,32 +75,29 @@
   right:-10px;
   top:50%;
   transform:translate(50%,-50%);
-  color:var(--muted);
+  color:var(--label);
   font-size:13px;
   z-index:1;
 }
 .eval-pipeline strong {
-  font:600 14px var(--display);
+  font:650 14px Manrope,sans-serif;
 }
 .eval-pipeline span:not(.step-num) {
   color:var(--muted);
   font-size:12px;
   line-height:1.5;
 }
-.step-num {
-  font:10px var(--mono);
-  color:var(--purple);
-}
 .eval-tag {
   margin-top:auto;
   align-self:flex-start;
-  font:normal 10px var(--mono);
-  letter-spacing:.4px;
-  padding:3px 7px;
-  border-radius:4px;
+  font-style:normal;
+  font-size:10px;
+  letter-spacing:.6px;
+  padding:3px 8px;
+  border-radius:6px;
   background:var(--pale);
-  border:1px solid #ddd2f5;
-  color:var(--purple);
+  border:1px solid #e9dcfc;
+  color:#4c3c70;
 }
 .eval-metrics {
   display:grid;
@@ -104,7 +106,7 @@
   margin:0;
 }
 .eval-metrics dt {
-  font:600 13px var(--display);
+  font:650 13px Manrope,sans-serif;
 }
 .eval-metrics dd {
   margin:4px 0 0;
@@ -116,7 +118,7 @@
 .eval-table-wrap {
   overflow-x:auto;
   background:#fff;
-  border:1px solid var(--line);
+  border:1px solid var(--soft-line);
   border-radius:10px;
 }
 .eval-block table {
@@ -136,14 +138,13 @@
   border-bottom:0;
 }
 .eval-block thead th {
-  font:600 12px var(--display);
+  font:650 12px Manrope,sans-serif;
   white-space:nowrap;
 }
 .eval-block thead small {
   display:block;
-  font:9px var(--mono);
-  color:var(--muted);
-  letter-spacing:.4px;
+  font-family:"DM Sans",sans-serif;
+  font-weight:400;
 }
 .eval-scorecard tbody th {
   font-weight:600;
@@ -169,15 +170,14 @@
   max-width:120px;
 }
 .score-best {
-  font:9px var(--mono);
-  letter-spacing:.4px;
-  color:var(--ink);
-  border:1px solid var(--line);
+  border:1px solid #e9dcfc;
+  background:var(--pale);
+  color:#4c3c70;
   border-radius:4px;
   padding:1px 5px;
 }
 
-/* Controls */
+/* Controls, styled like the site navigation */
 .eval-controls {
   display:flex;
   flex-wrap:wrap;
@@ -186,29 +186,26 @@
 }
 .eval-toggle {
   display:inline-flex;
-  border:1px solid var(--line);
+  gap:2px;
+  border:1px solid var(--soft-line);
   border-radius:8px;
   background:#fff;
   padding:3px;
 }
 .eval-toggle button {
   border:0;
-  background:none;
-  padding:6px 12px;
+  padding:6px 14px;
   border-radius:6px;
   font-size:13px;
-  color:var(--muted);
+  color:#85838d;
 }
 .eval-toggle button[aria-pressed="true"] {
-  background:var(--ink);
-  color:#fff;
-}
-.eval-toggle button:focus-visible {
-  outline:2px solid var(--after);
-  outline-offset:1px;
+  background:#f0edf5;
+  color:#4c3c70;
+  font-weight:600;
 }
 .eval-headline {
-  font:600 16px var(--display);
+  font:650 16px Manrope,sans-serif;
   margin:0 0 8px;
 }
 .eval-legend {
@@ -241,7 +238,7 @@
   position:relative;
   margin:0;
   background:#fff;
-  border:1px solid var(--line);
+  border:1px solid var(--soft-line);
   border-radius:10px;
   padding:12px 16px 8px;
 }
@@ -255,11 +252,12 @@
   stroke:var(--grid);
 }
 .eval-chart .axis text {
-  fill:var(--muted);
-  font:10px var(--mono);
+  fill:var(--label);
+  font:10px "DM Sans",sans-serif;
+  letter-spacing:.6px;
 }
 .eval-chart .row line {
-  stroke:#d9d7e2;
+  stroke:#e4dfeb;
   stroke-width:2;
 }
 .eval-chart .row .before {
@@ -283,7 +281,7 @@
   outline:none;
 }
 .eval-chart .row:focus-visible .hit {
-  stroke:var(--after);
+  stroke:var(--purple);
   stroke-width:1;
 }
 .eval-tooltip {
@@ -292,9 +290,9 @@
   max-width:340px;
   padding:10px 12px;
   background:#fff;
-  border:1px solid var(--line);
-  border-radius:8px;
-  box-shadow:0 6px 20px rgb(19 32 54 / 12%);
+  border:1px solid var(--soft-line);
+  border-radius:10px;
+  box-shadow:0 8px 24px #35264518;
   font-size:12px;
   pointer-events:none;
 }
@@ -302,9 +300,6 @@
   margin:0 0 6px;
 }
 .eval-tooltip .tip-label {
-  font:9px var(--mono);
-  color:var(--muted);
-  letter-spacing:.4px;
   display:block;
 }
 .eval-tooltip .tip-score {
