@@ -11,11 +11,13 @@ from time import monotonic
 from uuid import uuid4
 
 from secondthought.steering_rewriter import GenerationCancelled
+from secondthought.lab.plans import InterventionPlan
 
-from .schemas import RewriteRequest
+from .schemas import RewriteRequest, RunRequest
+from .runs import canonical_request, resolve_run, DEFAULT_MODEL
 
 logger = logging.getLogger(__name__)
-VERSION = "qwen-multilayer-v3"
+VERSION = "lab-interventions-v6"
 
 
 class AdmissionError(Exception):
@@ -25,7 +27,10 @@ class AdmissionError(Exception):
 
 @dataclass
 class Job:
-    request: RewriteRequest
+    request: RewriteRequest | RunRequest
+    run: RunRequest | None = None
+    plan: InterventionPlan | None = None
+    configuration: dict = field(default_factory=dict)
     request_id: str = field(default_factory=lambda: str(uuid4()))
     cancelled: Event = field(default_factory=Event)
     events: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=128))
@@ -38,17 +43,29 @@ class Job:
             while not self.events.empty():
                 self.events.get_nowait()
             kind, data = "error", {"detail": "The response consumer is too slow. Retry."}
-        self.events.put_nowait(dict(
+        envelope = dict(
             event=kind, request_id=self.request_id,
-            revision=self.request.revision, alpha=self.request.alpha, beta=0,
-            layer_strengths=self.request.layer_strengths,
-            **data,
-        ))
+            revision=self.request.revision, plan_id=self.plan.plan_id if self.plan else None,
+            experiment_id=self.configuration.get('experiment_id'))
+        if isinstance(self.request, RewriteRequest):
+            envelope.update(alpha=self.request.alpha,beta=0,
+                layer_strengths=self.request.layer_strengths,layer_vector_ids=self.request.layer_vector_ids,
+                task=self.request.task,system_prompt=self.request.system_prompt,
+                max_input_tokens=self.request.max_input_tokens,max_new_tokens=self.request.max_new_tokens)
+        else:
+            envelope.update(schema_version=2,model_id=self.run.model_id,
+                            catalog_version=self.plan.catalog_version)
+        if kind == 'completed':
+            envelope['applied'] = self.configuration
+        envelope.update(data)
+        self.events.put_nowait(envelope)
 
 
 class GenerationManager:
-    def __init__(self, service, *, max_pending=8, max_sessions=128, timeout_seconds=25):
+    def __init__(self, service, *, max_pending=8, max_sessions=128, timeout_seconds=90):
         self.service = service
+        catalog_version = getattr(service, 'catalog_version', None)
+        self.version = f'{VERSION}:{catalog_version}' if catalog_version else VERSION
         self.max_pending = max_pending
         self.max_sessions = max_sessions
         self.timeout_seconds = timeout_seconds
@@ -62,9 +79,20 @@ class GenerationManager:
     def start(self):
         self.worker = asyncio.create_task(self._run())
 
-    def submit(self, request: RewriteRequest) -> Job:
+    def resolve(self, request):
+        catalog = getattr(self.service,'catalog',None)
+        run = canonical_request(request,catalog)
+        plan, configuration = resolve_run(run,catalog)
+        return run,plan,configuration
+
+    def submit(self, request: RewriteRequest | RunRequest) -> Job:
         if self.closing:
             raise AdmissionError(503, "The model is shutting down.")
+        run,plan,configuration = self.resolve(request)
+        if isinstance(request, RunRequest) and not callable(getattr(self.service,'stream_run',None)):
+            raise AdmissionError(503,'This worker does not support the v2 run protocol')
+        if run.model_id != getattr(self.service,'catalog_model_id',DEFAULT_MODEL):
+            raise AdmissionError(503,'The requested catalog model is not loaded in this worker')
         sid = str(request.session_id)
         active_sid = str(self.active.request.session_id) if self.active else None
         for key, (_, seen) in list(self.sessions.items()):
@@ -82,7 +110,7 @@ class GenerationManager:
             old.emit("cancelled")
         if self.active and active_sid == sid:
             self.active.cancelled.set()
-        job = Job(request)
+        job = Job(request,run=run,plan=plan,configuration=configuration)
         # Replacing the value retains its queue position: other tabs get a turn.
         self.pending[sid] = job
         self.sessions[sid] = (request.revision, monotonic())
@@ -122,21 +150,27 @@ class GenerationManager:
                     loop.call_soon_threadsafe(lambda: current.emit("delta", text=text)
                                               if not current.cancelled.is_set() else None)
             try:
-                result = await asyncio.to_thread(
-                    self.service.stream_rewrite, job.request.message, job.request.alpha, 0,
-                    on_text=on_text, cancelled=job.cancelled,
-                    max_input_tokens=384, timeout_seconds=self.timeout_seconds,
-                    **({"layer_strengths": dict(job.request.layer_strengths)}
-                       if job.request.layer_strengths is not None else {}),
-                )
+                options = dict(on_text=on_text,cancelled=job.cancelled,
+                    system_prompt=job.run.system_prompt,**job.run.generation.model_dump(),
+                    timeout_seconds=self.timeout_seconds)
+                if callable(getattr(self.service,'stream_run',None)):
+                    result = await asyncio.to_thread(self.service.stream_run,job.plan,job.run.input,**options)
+                else:
+                    # Compatibility for injected v1-only services. Production
+                    # ExploreRewriter executes v1 and v2 through stream_run.
+                    result = await asyncio.to_thread(
+                        self.service.stream_rewrite,job.request.message,job.request.alpha,0,**options,
+                        **({'layer_strengths':dict(job.request.layer_strengths)} if job.request.layer_strengths is not None else {}),
+                        **({'layer_vector_ids':dict(job.request.layer_vector_ids)} if job.request.layer_vector_ids else {}))
                 if job.cancelled.is_set():
                     job.emit("cancelled")
                 else:
-                    job.emit("completed", rewritten_text=result.text,
+                    job.emit("completed", **({'text':result.text} if isinstance(job.request,RunRequest) else {'rewritten_text':result.text}),
                              generated_tokens=result.generated_tokens,
                              finish_reason=result.finish_reason,
                              latency_ms=round((monotonic() - started) * 1000, 1),
-                             model_id=self.service.model_id, steering_version=VERSION)
+                             model_id=job.run.model_id if isinstance(job.request,RunRequest) else self.service.model_id,
+                             model_repository=self.service.model_id, steering_version=self.version)
             except GenerationCancelled:
                 job.emit("cancelled")
             except ValueError as exc:

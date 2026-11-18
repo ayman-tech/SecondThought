@@ -1,4 +1,10 @@
 // Small, browser-independent pieces of the request and output lifecycle.
+export function experimentCacheKey(text,model,version,interventions,settings) {
+  return JSON.stringify([text.trim(),model,version,
+    [...interventions].sort((a,b)=>a.vector_id.localeCompare(b.vector_id))
+      .map(i=>[i.vector_id,i.strength]),
+    settings.task,settings.system_prompt,settings.max_input_tokens,settings.max_new_tokens]);
+}
 export class Revisions {
   constructor() {
     this.value = 0;
@@ -11,7 +17,7 @@ export class Revisions {
   }
 }
 
-export function cacheKey(text, alpha, version, strengths) {
+export function cacheKey(text, alpha, version, strengths, vectorIds, promptSettings) {
   return JSON.stringify([
     text.trim(),
     Number(alpha).toFixed(1),
@@ -22,6 +28,9 @@ export function cacheKey(text, alpha, version, strengths) {
       : Object.entries(strengths)
           .sort(([a], [b]) => Number(a) - Number(b))
           .map(([i, a]) => [i, Number(a).toFixed(1)]),
+    Object.entries(vectorIds || {}).sort(([a], [b]) => Number(a) - Number(b)),
+    promptSettings == null ? null : [promptSettings.task, promptSettings.system_prompt,
+      promptSettings.max_input_tokens, promptSettings.max_new_tokens],
   ]);
 }
 

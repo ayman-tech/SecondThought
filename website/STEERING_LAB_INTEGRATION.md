@@ -1,5 +1,7 @@
 > Historical integration plan. The multi-layer Explore implementation now ships;
 > see [website README](README.md) for the current controls and API contract.
+> The [backend design](../docs/STEERING_LAB_BACKEND_DESIGN.md) supersedes this plan
+> for the next implementation phases, including live evaluation and sweeps.
 
 # Steering Lab integration
 

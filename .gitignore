@@ -14,6 +14,13 @@ flagged/
 models/
 testing/
 tests/
+# Catalog/extraction regression tests are part of the backend implementation.
+!tests/
+tests/*
+!tests/lab/
+!tests/website_api/
+# Frontend regression tests are versioned with the lab.
+!website/frontend/tests/
 
 # Generated experiment artifacts
 research/outputs/*.jsonl

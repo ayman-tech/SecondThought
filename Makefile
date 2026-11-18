@@ -27,7 +27,7 @@ website-health:
 	@curl -fsS http://127.0.0.1:8001/health/ready
 
 website-test:
-	uv run python -m pytest tests/website_api -q
+	uv run python -m pytest tests/website_api tests/lab -q
 	cd website/frontend && node --test tests/*.test.js
 
 test:

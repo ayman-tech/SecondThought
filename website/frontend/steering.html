@@ -1,70 +1,119 @@
 {% extends "base.html" %}
-{% block scripts %}<script type="module" src="/assets/steering.js"></script>{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ frontend_assets }}/experiment.css">{% endblock %}
+{% block scripts %}<script type="module" src="{{ frontend_assets }}/steering.js"></script>{% endblock %}
 {% block content %}
 
 <section class="explore" id="experimental">
 
 <div class="intro">
-<div><p class="eyebrow">THE STEERING LAB</p><h1>A different direction<span>.</span></h1><p class="lede">Small shifts inside the model. New ways to say what you mean.</p>
+<div><h1 class="lab-title">Steering Lab</h1>
 </div>
 <div class="model-state"><span id="model-dot" class="status-dot loading"></span><span id="model-status">Connecting to the model…</span><button id="reconnect" hidden>Reconnect</button>
 </div>
 </div>
 
+<section class="experiment-settings" aria-labelledby="settings-title">
+  <div class="settings-heading"><h2 id="settings-title">Experiment setup</h2></div>
+  <div class="settings-grid">
+    <div class="setup-field"><label for="experiment-model">Model <span>Fixed</span></label><select id="experiment-model" disabled aria-describedby="settings-note"><option value="Qwen/Qwen2.5-0.5B-Instruct">Qwen 2.5 · 0.5B Instruct</option></select><small>24 decoder blocks · indices 0–23</small></div>
+    <div class="setup-field"><label>Features</label><div id="feature-selection" class="feature-selection"></div></div>
+    <div class="setup-field"><label for="focused-feature">Edit layers for</label><select id="focused-feature" aria-label="Feature whose layers are being edited"></select></div>
+    <div class="setup-field"><label for="focused-pooling">Extraction pooling <span>Per feature</span></label><select id="focused-pooling" aria-describedby="settings-note"><option value="mean" selected>Mean pooling</option><option value="final_token">Last-token pooling</option></select></div>
+    <div class="setup-field"><label for="experiment-prompt">Task</label><select id="experiment-prompt">{% for id,preset in task_presets.items() %}<option value="{{ id }}">{{ preset.label }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="settings-bottom" hidden><p id="settings-note">Feature × pooling chooses one of four vector families. Select layers and set their strengths to apply it. Model switching awaits backend integration.</p></div>
+  <script id="prompt-limits" type="application/json">{{ prompt_limits | tojson }}</script>
+  <script id="task-presets" type="application/json">{{ task_presets | tojson }}</script>
+  <details class="advanced-settings" id="prompt-settings"><summary>Instructions &amp; limits</summary>
+    <div class="advanced-settings-grid">
+      <div class="prompt-editor"><div class="prompt-editor-heading"><label for="system-prompt">System instruction</label><span id="prompt-state" class="setup-badge">Applied</span></div><textarea id="system-prompt" rows="5" maxlength="{{ prompt_limits.system_characters }}" aria-label="System instruction">{{ rewrite_prompt }}</textarea></div>
+      <div class="budget-controls"><label for="input-budget">Input budget <span>tokens</span></label><input id="input-budget" type="number" min="{{ prompt_limits.input.min }}" max="{{ prompt_limits.input.max }}" step="1" value="{{ prompt_limits.input.default }}" title="Full formatted prompt, including system instructions" required><label for="output-budget">Output limit <span>tokens</span></label><input id="output-budget" type="number" min="{{ prompt_limits.output.min }}" max="{{ prompt_limits.output.max }}" step="1" value="{{ prompt_limits.output.default }}" required></div>
+      <button id="apply-prompt" type="button" disabled>Apply</button>
+    </div>
+  </details>
+</section>
+
 <section class="model-section" aria-label="Interactive model layers">
 
-<div class="section-caption">
-<div class="legend"><span><i class="available-dot"></i> Vector available</span><span><i class="preview-dot"></i> Preview only</span><button class="guide-trigger" popovertarget="layer-guide" aria-label="How to use the steering lab" title="How it works">?</button>
+<script id="layer-vector-data" type="application/json">{{ layer_vectors | tojson }}</script>
+<script id="layer-evidence-data" type="application/json">{{ layer_evidence | tojson }}</script>
+<div class="model-visual"><div class="model-map">
+<div class="layer-evidence-toolbar">
+<fieldset class="layer-mode"><legend class="sr-only">Layer selection mode</legend><label><input id="layer-mode-single" type="radio" name="layer-mode" value="single" checked> Single layer</label><label><input id="layer-mode-multi" type="radio" name="layer-mode" value="multi"> Multi-layer</label></fieldset>
+  <span class="evidence-heading"><strong id="layer-family-label"></strong></span>
+  <div class="layer-evidence-legend"><span class="heat-scale">50% <i aria-hidden="true"></i> 100%</span><span><i class="heat-missing" aria-hidden="true"></i>No measurement</span><span><i class="heat-selected" aria-hidden="true"></i>Selected</span><button class="guide-trigger" popovertarget="layer-guide" aria-label="How to use the steering lab and colour evidence" title="How it works">?</button></div>
 </div>
-</div>
+
+
 
 <div class="layer-scene" id="layer-scene">
 <div class="scene-glow">
 </div>
 <svg class="pathways" viewBox="0 0 1200 260" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="flow"><stop stop-color="#7654e8" stop-opacity="0"/><stop offset=".15" stop-color="#7654e8"/><stop offset=".85" stop-color="#7654e8"/><stop offset="1" stop-color="#7654e8" stop-opacity="0"/></linearGradient></defs><path id="violet-path" d="M0 145 C150 185 250 75 400 115 S650 185 800 125 S1050 100 1200 145"/><path class="teal" d="M0 115 C170 65 240 180 400 155 S600 65 780 125 S1050 180 1200 110"/><path class="flow-pulse" d="M0 145 C150 185 250 75 400 115 S650 185 800 125 S1050 100 1200 145"/><path class="flow-pulse teal" d="M0 115 C170 65 240 180 400 155 S600 65 780 125 S1050 180 1200 110"/></svg>
 
-<div class="layer-grid" id="layer-grid">{% for layer in layers %}<button class="layer {{ 'available' if layer.available else 'preview' }} {{ 'selected focused' if layer.index == 11 else '' }}" data-layer="{{ layer.index }}" data-concept="{{ layer.concept|default('') }}" aria-pressed="{{ 'true' if layer.index == 11 else 'false' }}" aria-label="Layer {{ layer.index }}: {{ layer.concept if layer.available else 'preview only' }}"><span class="layer-fin"></span><span class="layer-label">{{ '%02d'|format(layer.index) }}</span><span class="layer-dot"></span></button>{% endfor %}
+<div class="layer-grid" id="layer-grid">{% for layer in layers %}<button class="layer {{ 'available' if layer.available else 'preview' }} {{ 'selected focused' if layer.index == 11 else '' }}" data-layer="{{ layer.index }}" data-concept="{{ layer.concept|default('') }}" data-pooling="{{ layer.pooling|default('') }}" data-candidate="{{ layer.candidate|default('') }}" data-scale="{{ 'unit norm' if layer.normalized|default(false) else 'raw' }}" data-behavior="{{ layer.behavioral_status|default('experimental') }}" aria-pressed="{{ 'true' if layer.index == 11 else 'false' }}" aria-label="Layer {{ layer.index }}: {{ layer.concept if layer.available else 'preview only' }}"><span class="layer-fin"></span><span class="layer-label">{{ '%02d'|format(layer.index) }}</span><span class="layer-score" aria-hidden="true">—</span><span class="layer-feature-marks" aria-hidden="true"></span></button>{% endfor %}
 </div>
 </div>
+
+</div>
+<aside class="feature-mixer" aria-labelledby="mix-title" title="Each slider controls its feature at the displayed layer. Other enabled layers retain their strengths.">
+  <div class="mix-title"><h2 id="mix-title">Feature mix</h2><span>α</span></div>
+  <div class="mix-dial" title="Drag a coloured feature point or use its slider. Angles are schematic, not measured vector similarity."><svg id="mix-wheel" viewBox="0 0 200 200" role="img" aria-label="Schematic feature strengths; equivalent keyboard controls are in the sliders below"></svg></div>
+  <div id="mix-controls"></div>
+</aside></div>
 
 <div class="layer-inspector" id="slider-panel">
 <div class="layer-title"><strong id="layer-name">Layer 11</strong><span id="layer-kind">Formality vector</span>
-</div><label class="enable-control"><input id="layer-enabled" type="checkbox" checked> Select layer</label>
+</div><label class="enable-control"><input id="layer-enabled" type="checkbox" checked> Enable layer</label>
 <div class="strength-control"><label for="alpha">Strength <span>α</span></label><span class="range-edge">−2</span><input id="alpha" type="range" min="-2" max="2" step="0.1" value="0.5"><span class="range-edge">+2</span><output id="alpha-value" for="alpha">+0.5</output>
 </div><button id="reset-layers" class="quiet-button">Reset</button>
 </div>
+<div class="active-layers"><strong id="active-layer-summary" role="status" aria-live="polite">1 layer steering</strong><div id="active-layer-list" aria-label="Enabled layers and strengths"></div><button id="clear-layers" class="text-button">Clear layers</button></div>
+
+
+
 
 <aside id="layer-guide" class="layer-guide" popover aria-labelledby="guide-title">
   <h2 id="guide-title">A quick guide</h2>
+<p id="layer-profile-note" class="layer-profile-note">Colours show held-out pair ordering, not measured rewrite quality.</p>
+<span id="layer-mode-help">Single layer: clicking a layer replaces the enabled layer.</span>
+<p class="focused-vector-note" id="focused-vector">Focused vector: negative_layer11_mean · raw</p>
+<p class="focused-evidence-note" id="layer-evidence-summary" role="status" aria-live="polite"></p>
+<p id="multi-layer-note" class="multi-layer-note" hidden>All listed nonzero shifts are applied together, at every token. Combining layers can cause repetition or change meaning.</p>
   <ol>
-    <li><strong>Pick a layer.</strong> Click a panel, then check Select layer.</li>
-    <li><strong>Set its strength.</strong> Adjust α. Select more layers to combine directions.</li>
+    <li><strong>Pick a layer.</strong> Single layer mode replaces the enabled layer when you click a panel. Multi-layer mode lets you inspect panels and check Enable layer to add each one.</li>
+    <li><strong>Choose a vector family.</strong> Pick Formality or Detoxification and mean or last-token pooling. Select layers and adjust their strengths to apply this family.</li>
     <li><strong>Try a sentence.</strong> Your rewrite updates automatically; highlights show changed words.</li>
   </ol>
   <p>Preview layers have no saved vector and won’t affect the rewrite. The moving lines are illustrative.</p>
   <p>Set all strengths to zero or deselect all layers to compare without steering.</p>
+  <p>Each feature keeps its own layers, mode, pooling and strengths. Choose Edit layers for to change the feature shown in the layer diagram. The enabled-layer chips show each retained strength. Click × to disable a layer, or Clear layers for a prompt-only baseline. Returning to Single layer keeps the focused enabled layer, or the first enabled layer. Reset restores Single layer mode.</p>
+  <p><strong>Layer colours:</strong> darker teal means higher held-out pair ordering for the feature and pooling you chose. The number is the percentage of held-out pairs whose target-minus-source activations project positively onto that exact direction. A 50% reference is shown; colours are not adjusted against shuffled controls.</p>
+  <p>Compare within the same feature, pooling and extraction cohort. Hover or focus a layer for its score and Wilson 95% interval. Overlapping intervals do not establish a reliable ranking. Grey means no recorded measurement for that exact vector, not ineffective steering.</p>
+  <p>Colours always describe the exact new-extraction vectors chosen by feature and pooling. Only enabled layers enter generation. Reset selects Formality with mean pooling and layer 11 at +0.5. Older vectors remain available to legacy API clients; this lab uses the four new-extraction families. Pair ordering does not measure formalization, detoxification or meaning preservation in the generated rewrite.</p>
 </aside>
 
 </section>
 
+<div class="experiment-workspace">
 <section class="writing-section" aria-label="Rewrite experiment">
 <div class="section-caption"><span class="live-label"><i id="live-indicator" class="live-indicator"></i> Live rewriting</span>
 </div>
 
 <div class="writing-grid">
 <div class="writing-card draft-card">
-<div class="card-heading"><label for="draft">Your draft</label><button id="clear" class="text-button">Clear</button>
-</div><textarea id="draft" maxlength="2000" placeholder="What would you like to say?" aria-describedby="character-count"></textarea>
-<div class="card-bottom"><span>Try a thought <span aria-hidden="true">↗</span></span><span id="character-count">0 / 2,000</span>
+<div class="card-heading"><label for="draft">Input</label><button id="clear" class="text-button">Clear</button>
+</div><textarea id="draft" maxlength="{{ prompt_limits.characters }}" placeholder="What would you like to say?" aria-describedby="character-count"></textarea>
+<div class="card-bottom"><span>Try a thought <span aria-hidden="true">↗</span></span><span id="character-count">0 / {{ "{:,}".format(prompt_limits.characters) }}</span>
 </div>
 </div>
 
 <div class="writing-card output-card" id="output-card" aria-busy="false">
-<div class="card-heading"><span>A second thought</span><span class="output-spark" aria-hidden="true">✧</span>
+<div class="card-heading"><span>Response</span><span class="output-spark" aria-hidden="true">✧</span>
 </div>
-<div id="output" class="output-text placeholder">Your next wording starts here.
+<div id="output" class="output-text placeholder">Your response starts here.
 </div>
-<div class="card-bottom"><span id="output-context">A little room to reconsider.</span><span id="latency"></span>
+<div class="card-bottom"><span id="output-context">Ready for your input.</span><span id="latency"></span>
 </div>
 </div>
 </div>
@@ -81,15 +130,27 @@
 
 <div id="error-box" class="error-box" hidden><p id="error-message"></p><button id="retry">Try again</button>
 </div>
-<details class="run-details"><summary>Behind this rewrite <span>Model & run details</span></summary>
-<div class="detail-grid">
-<div><h3>Experiment</h3><p>Qwen2.5 · 0.5B · 24 layers (0–23)</p><p>Directions are experimental. Review meaning, names and numbers.</p><p>Zero strength keeps the rewrite prompt active.</p>
-</div>
-<div><h3>Last completed run</h3><p>Layers <span id="run-alpha">—</span></p><p>Time <span id="run-time">—</span> · Tokens <span id="run-tokens">—</span></p><p><span id="run-finish">—</span> · <span id="run-source">—</span></p>
-</div>
-<div><h3>Word comparison</h3><p>Original <span id="change-source-count">—</span> · Rewritten <span id="change-output-count">—</span> · New <span id="change-added-count">—</span></p><p id="change-summary">Complete a rewrite to inspect its wording.</p>
-</div>
-</div></details>
-
 </section>
+
+<aside class="response-inspector" aria-labelledby="response-inspector-title">
+  <div class="settings-heading"><h2 id="response-inspector-title">Response inspector</h2><span class="inspector-symbol" aria-hidden="true">⌁</span></div>
+  <div class="inspection-tabs" role="tablist" aria-label="Response observations"><button type="button" id="inspect-metrics" role="tab" aria-selected="true" aria-controls="inspect-panel-metrics" tabindex="0">Metrics</button><button type="button" id="inspect-curves" role="tab" aria-selected="false" aria-controls="inspect-panel-curves" tabindex="-1">Curves</button><button type="button" id="inspect-run" role="tab" aria-selected="false" aria-controls="inspect-panel-run" tabindex="-1">Run details</button></div>
+  <div class="inspection-panel" id="inspect-panel-metrics" role="tabpanel" aria-labelledby="inspect-metrics" tabindex="0">
+    <div class="inspector-section-heading"><h3>This response</h3><span class="setup-badge">Scoring not connected</span></div>
+    <dl class="quality-metrics"><div><dt>Formality</dt><dd>—</dd></div><div><dt>Toxicity</dt><dd>—</dd></div><div><dt>Similarity</dt><dd>—</dd></div><div><dt>Value preservation</dt><dd>—</dd></div></dl>
+    <p class="inspector-note">Measurements will describe the completed response and may arrive after the text. No live scores are calculated yet.</p>
+    <div class="inspector-footnote"><strong>Review the meaning.</strong><p>Check names, numbers, deadlines, and who is doing what. Text changes are not a guarantee of preserved meaning.</p></div>
+  </div>
+  <div class="inspection-panel" id="inspect-panel-curves" role="tabpanel" aria-labelledby="inspect-curves" tabindex="0" hidden>
+    <div class="setup-field"><label for="curve-intervention">Vary one intervention</label><select id="curve-intervention" disabled><option>Choose a direction after integration</option></select></div>
+    <div class="empty-curve" role="img" aria-label="Empty strength curve. Evaluation and sweep execution are not connected."><div class="curve-grid" aria-hidden="true"><span></span><span></span><span></span></div><div class="curve-empty-label"><strong>Explore the response curve.</strong><span>Measured points will appear here.</span></div><div class="curve-axis" aria-hidden="true"><span>−2</span><span>Strength α</span><span>+2</span></div></div>
+    <p class="inspector-note">Vary one strength while holding other settings fixed. No estimated scores or simulated curves.</p>
+    <div class="sweep-actions"><button type="button" disabled>Run sweep</button><button type="button" disabled>Compare zero baseline</button></div><p class="inspector-note">Scoring, sweep execution, and baseline comparison are not connected yet.</p>
+  </div>
+  <div class="inspection-panel" id="inspect-panel-run" role="tabpanel" aria-labelledby="inspect-run" tabindex="0" hidden>
+    <h3>Last completed run</h3><dl class="inspection-values"><div><dt>Applied layers</dt><dd id="run-alpha">—</dd></div><div><dt>Generation time</dt><dd id="run-time">—</dd></div><div><dt>Generated tokens</dt><dd id="run-tokens">—</dd></div><div><dt>Finish reason</dt><dd id="run-finish">—</dd></div><div><dt>Result source</dt><dd id="run-source">—</dd></div><div><dt>Task</dt><dd id="run-task">—</dd></div><div><dt>System instruction</dt><dd id="run-prompt">—</dd></div><div><dt>Token budgets (input / output)</dt><dd id="run-budgets">—</dd></div></dl>
+    <h3>Input → response</h3><dl class="inspection-values"><div><dt>Source words</dt><dd id="change-source-count">—</dd></div><div><dt>Output words</dt><dd id="change-output-count">—</dd></div><div id="change-added-row"><dt>Added/replaced words</dt><dd id="change-added-count">—</dd></div></dl><p id="change-summary" class="inspector-note">Complete a rewrite to inspect its wording.</p>
+  </div>
+</aside>
+</div>
 </section>{% endblock %}

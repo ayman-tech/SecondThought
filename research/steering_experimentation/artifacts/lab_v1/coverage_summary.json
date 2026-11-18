@@ -1,0 +1,30 @@
+{
+  "catalog_version": "fc0ae8a4b11d417debeccbd4e49f889769de5e711af5e4a25989378592e19bcf",
+  "coverage": {
+    "formality": {
+      "vectors": 48,
+      "layers": 24,
+      "pooling": [
+        "mean",
+        "final_token"
+      ],
+      "extraction_pairs": 8000,
+      "heldout_pairs": 2000,
+      "heldout_ordering_accuracy_min": 0.49900001287460327,
+      "heldout_ordering_accuracy_max": 0.9595000147819519
+    },
+    "detoxification": {
+      "vectors": 48,
+      "layers": 24,
+      "pooling": [
+        "mean",
+        "final_token"
+      ],
+      "extraction_pairs": 8000,
+      "heldout_pairs": 2000,
+      "heldout_ordering_accuracy_min": 0.8600000143051147,
+      "heldout_ordering_accuracy_max": 0.9965000152587891
+    }
+  },
+  "interpretation": "Held-out projection ordering measures feature separation, not causal rewrite quality. No strength calibration or all-layer quality guarantee."
+}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from threading import Event
 from time import sleep
 from uuid import uuid4
@@ -31,7 +32,7 @@ class FakeService:
 
 
 def payload(**overrides):
-    return dict(session_id=str(uuid4()), revision=1, message="hello", alpha=0.5, **overrides)
+    return dict(session_id=str(uuid4()), revision=1, message="hello", alpha=0.5) | overrides
 
 
 def wait_ready(client):
@@ -63,6 +64,21 @@ def test_static_page_configuration_and_stream_contract():
         assert client.post("/api/v1/steering/rewrite", json=body).status_code == 409
 
 
+def test_lab_assets_and_relative_imports_share_a_versioned_prefix():
+    with TestClient(create_app(FakeService())) as client:
+        html = client.get('/explore').text
+        source = re.search(r'<script type="module" src="([^"]+/steering.js)"',html)[1]
+        assert re.fullmatch(r'/assets/build-[0-9a-f]{16}/steering.js',source)
+        prefix = source.rsplit('/',1)[0]
+        assert f'href="{prefix}/experiment.css"' in html
+        assert f'href="{prefix}/styles.css"' in html
+        for filename in ('steering.js','layers.js','layer-evidence.js','lifecycle.js','styles.css'):
+            response = client.get(f'{prefix}/{filename}')
+            assert response.status_code == 200
+            assert response.headers['cache-control'] == 'no-cache'
+        assert client.get('/assets/layers.js').headers['cache-control'] == 'no-cache'
+
+
 @pytest.mark.parametrize("path", ["/explore", "/community", "/evaluation"])
 def test_pages_have_separate_content_and_navigation(path):
     with TestClient(create_app(FakeService())) as client:
@@ -70,7 +86,7 @@ def test_pages_have_separate_content_and_navigation(path):
         assert response.status_code == 200
         html = response.text
         assert f'href="{path}" class="nav-active" aria-current="page"' in html
-        assert ('src="/assets/steering.js"' in html) == (path == "/explore")
+        assert ('/steering.js"' in html) == (path == "/explore")
         for target in ("/explore", "/community", "/evaluation"):
             assert f'href="{target}"' in html
         assert "{%" not in html and "{{" not in html
@@ -95,7 +111,7 @@ def test_multilayer_contract_and_legacy_redirects():
             assert client.get(path, follow_redirects=False).headers["location"] == target
         manifest = client.get("/api/v1/steering/config").json()["layers"]
         assert len(manifest) == 24
-        assert [x["index"] for x in manifest if x["available"]] == [0,4,11,21,22]
+        assert [x["index"] for x in manifest if x["available"]] == list(range(24))
         response = client.post("/api/v1/steering/rewrite", json=payload(layer_strengths={"4": 0.3,"11": 0.5}))
         assert response.status_code == 200
         assert service.strengths == {4: 0.3,11: 0.5}
@@ -114,12 +130,47 @@ def test_json_endpoint_and_cancel_are_revision_scoped():
         }).status_code == 200
 
 
+def test_catalog_is_read_only_and_exposes_full_feature_layer_pooling_coverage():
+    with TestClient(create_app(FakeService())) as client:
+        wait_ready(client)
+        data=client.get('/api/v2/lab/catalog').json()
+        assert data['schema_version']==1 and data['runtime_status']=='ready'
+        assert len(data['catalog_version'])==64
+        assert all(vector['available'] for vector in data['vectors'])
+        for feature in ('formality','detoxification'):
+            entries=[v for v in data['vectors'] if v['feature_id']==feature and v['behavioral_status']=='experimental']
+            assert {(v['layer_index'],v['pooling']) for v in entries} == {(i,p) for i in range(24) for p in ('mean','final_token')}
+        assert client.post('/api/v2/lab/catalog',json={}).status_code==405
+        assert 'raw_directions' not in data
+
+
+def test_catalog_digest_versions_both_config_and_completed_events():
+    from secondthought.lab.catalog import get_catalog
+    service=FakeService()
+    service.catalog_version=get_catalog().version
+    with TestClient(create_app(service)) as client:
+        wait_ready(client)
+        config=client.get('/api/v1/steering/config').json()
+        result=client.post('/api/v1/steering/rewrite',json=payload()).json()
+        assert result['steering_version']==config['steering_version']
+        assert result['steering_version'].endswith(config['catalog_version'])
+
+
 @pytest.mark.parametrize("changes", [
-    {"message": " "}, {"message": "x" * 2001}, {"alpha": 3},
+    {"message": " "}, {"message": "x" * 20001}, {"alpha": 3},
     {"alpha": "NaN"}, {"alpha": "Infinity"}, {"beta": 1},
     {"revision": -1}, {"revision": 1.5}, {"session_id": "not-a-uuid"},
-    {"unexpected": "setting"}, {"layer_strengths": {"3": 0.5}},
+    {"unexpected": "setting"}, {"layer_strengths": {"24": 0.5}},
     {"layer_strengths": {"11": 3}}, {"layer_strengths": {"0": "NaN"}},
+    {"layer_vector_ids": {"11": "qwen-detoxification-l11-mean-v1"}},
+    {"layer_strengths": {"11": .5}, "layer_vector_ids": {"11": "unknown"}},
+    {"layer_strengths": {"11": .5}, "layer_vector_ids": {"11": "qwen-detoxification-l3-mean-v1"}},
+    {"layer_strengths": {}, "layer_vector_ids": {"11": "qwen-detoxification-l11-mean-v1"}},
+    {"task":"unknown"}, {"task":"none","system_prompt":"hidden instruction"},
+    {"task":"custom","system_prompt":" "}, {"system_prompt":"not the rewrite preset"},
+    {"task":"custom","system_prompt":"x"*4001},
+    {"max_input_tokens":4097}, {"max_input_tokens":127}, {"max_input_tokens":True},
+    {"max_new_tokens":513}, {"max_new_tokens":31}, {"max_new_tokens":64.5},
 ])
 def test_invalid_input_never_reaches_the_model(changes):
     service = FakeService()
@@ -234,3 +285,47 @@ def test_extension_download_is_a_loadable_zip():
         assert "SecondThought/manifest.json" in names
         assert "SecondThought/content.js" in names
         assert "SecondThought/HOW TO INSTALL.txt" in names
+
+
+def test_detox_vector_choice_reaches_worker_and_stream_events():
+    from secondthought.lab.catalog import get_catalog
+    vector = next(v for v in get_catalog().spec.vectors if
+                  v.feature_id == 'detoxification' and v.layer_index == 11 and
+                  v.pooling == 'mean' and v.behavioral_status == 'experimental')
+    class Capture(FakeService):
+        def stream_rewrite(self, *args, **kwargs):
+            self.vector_ids = kwargs.get('layer_vector_ids')
+            return super().stream_rewrite(*args, **kwargs)
+    service = Capture()
+    with TestClient(create_app(service)) as client:
+        wait_ready(client)
+        response = client.post('/api/v1/steering/stream', json=payload(
+            layer_strengths={'11': .7}, layer_vector_ids={'11': vector.id}))
+        assert response.status_code == 200
+        events = [json.loads(line) for line in response.text.splitlines()]
+        assert events[-1]['event'] == 'completed'
+        assert all(e['layer_vector_ids'] == {'11': vector.id} for e in events)
+        assert service.vector_ids == {11: vector.id}
+
+
+@pytest.mark.parametrize('task,prompt', [('summarize',None),('custom','Respond in two short sentences.'),('none',None)])
+def test_task_prompt_and_larger_budgets_reach_worker_and_completed_metadata(task,prompt):
+    from website.api.prompts import TASKS
+    class Capture(FakeService):
+        def stream_rewrite(self,*args,**kwargs):
+            self.applied = kwargs
+            return super().stream_rewrite(*args,**kwargs)
+    service = Capture()
+    with TestClient(create_app(service)) as client:
+        wait_ready(client)
+        body = payload(task=task,message='Longer source. '*200,max_input_tokens=4096,max_new_tokens=512)
+        if task == 'custom': body['system_prompt'] = prompt
+        response = client.post('/api/v1/steering/rewrite',json=body)
+        assert response.status_code == 200
+        expected = prompt if task == 'custom' else TASKS[task]['system_prompt']
+        assert service.applied['system_prompt'] == expected
+        assert service.applied['max_input_tokens'] == 4096
+        assert service.applied['max_new_tokens'] == 512
+        result = response.json()
+        assert result['task'] == task and result['system_prompt'] == expected
+        assert result['max_new_tokens'] == 512

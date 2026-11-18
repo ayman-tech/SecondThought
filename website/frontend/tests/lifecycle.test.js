@@ -16,6 +16,14 @@ test('cache keys distinguish settings, model versions, and meaningful source whi
   assert.notEqual(cacheKey('x', 0.5, 'v1'), cacheKey('x', 0.6, 'v1'));
   assert.notEqual(cacheKey('x', 0.5, 'v1'), cacheKey('x', 0.5, 'v2'));
   assert.notEqual(cacheKey('x  y', 0.5, 'v1'), cacheKey('x y', 0.5, 'v1'));
+  assert.notEqual(cacheKey('x', .5, 'v1', {11:.5}, {11:'formality'}),
+    cacheKey('x', .5, 'v1', {11:.5}, {11:'detoxification'}));
+  assert.equal(cacheKey('x', .5, 'v1', {11:.5}), cacheKey('x', .5, 'v1', {11:.5}, {}));
+  const prompt = {task:'custom',system_prompt:'Answer briefly',max_input_tokens:2048,max_new_tokens:128};
+  const key = settings => cacheKey('x',.5,'v1',{11:.5},{},settings);
+  for (const change of [{system_prompt:'Answer in French'}, {system_prompt:null},
+    {max_input_tokens:4096},{max_new_tokens:512},{task:'answer'}])
+    assert.notEqual(key(prompt),key({...prompt,...change}));
 });
 
 test('bounded LRU cache excludes partial or failed generations', () => {
