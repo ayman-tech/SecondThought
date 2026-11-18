@@ -14,17 +14,12 @@ const $ = (id) => document.getElementById(id);
 const elements = Object.fromEntries(
   [
     "draft",
-    "alpha",
-    "alpha-value",
     "output",
     "output-card",
     "output-context",
     "change-note",
     "latency",
     "status",
-    "copy",
-    "changes-toggle",
-    "changes-check",
     "clear",
     "error-box",
     "error-message",
@@ -33,7 +28,6 @@ const elements = Object.fromEntries(
     "model-dot",
     "model-status",
     "reconnect",
-    "live-indicator",
   ].map((id) => [id, $(id)]),
 );
 const revisions = new Revisions();
@@ -46,8 +40,7 @@ let config = null,
 let trailingTimer = null,
   maxWaitTimer = null,
   readinessTimer = null;
-let highlightChanges = true,
-  composing = false;
+let composing = false;
 
 const signed = (n) => `${n >= 0 ? "+" : "−"}${Math.abs(n).toFixed(1)}`;
 const layers = mountLayers(
@@ -82,8 +75,6 @@ function setStatus(message, busy = false) {
   elements.status.textContent = message;
   elements.status.parentElement.hidden = !message;
   elements["output-card"].setAttribute("aria-busy", String(busy));
-  elements["live-indicator"].className =
-    `live-indicator ${busy ? "busy" : completed ? "complete" : ""}`;
 }
 function showError(message) {
   elements["error-box"].hidden = false;
@@ -114,7 +105,7 @@ function cancelActive() {
 function renderText(text, before = null) {
   const fragment = document.createDocumentFragment();
   const segments =
-    before !== null && highlightChanges
+    before !== null
       ? wordChanges(before, text)
       : [{ text, added: false }];
   for (const segment of segments) {
@@ -138,7 +129,6 @@ function keepPrevious() {
     elements.output.classList.add("placeholder");
     elements["output-context"].textContent = "Preparing your response";
   }
-  elements.copy.disabled = true;
 }
 function refreshControls() {
   elements["character-count"].textContent =
@@ -162,7 +152,6 @@ function inputChanged(kind = "text") {
     elements["change-note"].textContent =
       "";
     elements.latency.textContent = "";
-    elements.copy.disabled = true;
     clearInspection();
     setStatus("");
     return;
@@ -201,7 +190,6 @@ function finish(event, snapshot, fromCache = false) {
   elements.latency.textContent = fromCache
     ? `Cached · originally ${(event.latency_ms / 1000).toFixed(2)}s`
     : `${(event.latency_ms / 1000).toFixed(2)}s generation`;
-  elements.copy.disabled = false;
   updateInspection(event, snapshot, fromCache);
   setStatus("");
 }
@@ -317,7 +305,7 @@ async function dispatch() {
           elements.output.classList.remove("placeholder");
           elements["output-context"].textContent = "Generating · partial text";
           elements["change-note"].textContent =
-            "New wording is arriving. Copy becomes available when it is complete.";
+            "New wording is arriving. This response is provisional until complete.";
           elements.latency.textContent = "";
           firstText = false;
         }
@@ -371,9 +359,6 @@ async function checkReadiness() {
     config = await response.json();
     ready = config.status === "ready";
     elements["model-status"].parentElement.hidden = ready;
-    elements.alpha.min = config.alpha.min;
-    elements.alpha.max = config.alpha.max;
-    elements.alpha.step = config.alpha.step;
     elements["model-status"].textContent = ready
       ? ""
       : config.status === "loading"
@@ -416,13 +401,6 @@ elements.clear.addEventListener("click", () => {
   inputChanged();
   elements.draft.focus();
 });
-document.querySelectorAll("[data-sample]").forEach((button) =>
-  button.addEventListener("click", () => {
-    elements.draft.value = button.dataset.sample;
-    inputChanged();
-    void dispatch();
-  }),
-);
 elements.retry.addEventListener("click", () => {
   revisions.next();
   void dispatch();
@@ -430,26 +408,6 @@ elements.retry.addEventListener("click", () => {
 elements.reconnect.addEventListener("click", () => {
   void checkReadiness();
 });
-elements["changes-toggle"].addEventListener("click", () => {
-  highlightChanges = !highlightChanges;
-  elements["changes-toggle"].setAttribute(
-    "aria-pressed",
-    String(highlightChanges),
-  );
-  elements["changes-check"].textContent = highlightChanges ? "✓" : "";
-  if (completed && !elements.copy.disabled)
-    renderText(completed.text, completed.task === 'rewrite' ? completed.source : null);
-});
-elements.copy.addEventListener("click", async () => {
-  if (!completed || elements.copy.disabled) return;
-  try {
-    await navigator.clipboard.writeText(completed.text);
-    setStatus("Copied your response.");
-  } catch {
-    setStatus("Clipboard access was unavailable. Select the text to copy it.");
-  }
-});
-
 window.addEventListener("pagehide", () => {
   clearSchedule();
   clearTimeout(readinessTimer);

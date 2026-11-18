@@ -14,9 +14,15 @@ those live in `research/`.
 The catalog adds 96 experimental directions: 24 decoder blocks × mean/final-token
 pooling × formality/detoxification. The five pre-existing runtime references remain
 separate entries, making 101 vectors total. Their files/checksums are unchanged.
-The website's compatibility defaults retain the five existing choices; newly
-available indices use the new mean-pooled formality direction. Independent feature/
-pooling selection remains a subsequent runtime/UI integration phase.
+Legacy API compatibility defaults retain the five existing choices; newly
+available indices use new mean-pooled formality. The lab UI now chooses exact
+vectors independently per feature, pooling and layer through v2 interventions.
+All four `.pt` files and the manifest are tracked in Git. A tester does not need
+the extraction datasets or notebooks. Check them offline with:
+
+```bash
+uv run --locked python -m website.api.check_setup
+```
 
 Catalog entries specify a pinned model revision, exact block-output boundary,
 vector checksum, pooling, raw norm, scaling, strengths, and behavioral status.

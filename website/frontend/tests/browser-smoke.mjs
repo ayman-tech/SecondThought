@@ -173,7 +173,7 @@ try {
   }
   await evaluate(`document.querySelector('#reset-layers').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-layer="11"]').getAttribute('aria-pressed')`),'true');
-  assert.equal(await evaluate(`document.querySelector('#alpha').value`),'0.5');
+  assert.equal(await evaluate(`document.querySelector('#mix-formality').value`),'0.5');
   await until(`getComputedStyle(document.querySelector('[data-layer="11"] .layer-fin')).backgroundColor === document.querySelector('[data-layer="11"]').style.getPropertyValue('--evidence-fill')`);
   for (const id of ['focused-feature','focused-pooling'])
     assert.equal(await evaluate(`document.getElementById(${JSON.stringify(id)}).disabled`), false);
@@ -214,9 +214,9 @@ try {
   assert.equal(await evaluate(`document.querySelectorAll('.active-layer-chip').length`),0);
   await evaluate(`document.querySelector('#reset-layers').click()`);
   await checkSliderRelease({ evaluate, cdp, until });
-  await evaluate(`document.querySelector('[data-sample]').click()`);
+  await evaluate(`document.querySelector('#draft').value='hey can u send the report by 3 PM?';document.querySelector('#draft').dispatchEvent(new Event('input'))`);
   await until(
-    `!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy') === 'false'`,
+    `!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,
   );
   const checkHighlights = async () => {
     const diff = await evaluate(
@@ -226,7 +226,7 @@ try {
   };
   await checkHighlights();
   await evaluate(`window.__singleRequests=[];window.__singleFetch=window.fetch;window.fetch=(url,options)=>{if(String(url).endsWith('/stream'))window.__singleRequests.push(window.__captureRun(JSON.parse(options.body)));return window.__singleFetch(url,options)};document.querySelector('[data-layer="4"]').click()`);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy') === 'false'`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   assert.deepEqual(await evaluate(`window.__singleRequests.at(-1).layer_strengths`),{4:.5});
   await evaluate(`document.querySelector('#reset-layers').click();window.fetch=window.__singleFetch`);
   await until(`document.querySelector('#run-source').textContent === 'Tab cache'`);
@@ -253,14 +253,14 @@ try {
     window.fetch=(url,options)=>{if(String(url).endsWith('/stream'))window.__catalogRequests.push(window.__captureRun(JSON.parse(options.body)));return window.__catalogFetch(url,options)};
     document.querySelector('#layer-enabled').click();
   `);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy') === 'false'`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   assert.deepEqual(await evaluate(`window.__catalogRequests.at(-1).layer_strengths`), {3:0.5,11:0.5});
   assert.ok(await evaluate(`document.querySelector('#run-alpha').textContent.includes('L3')`));
   // Exercise generation for all four families with both selected layers.
   for (const feature of ['detoxification','formality']) {
     for (const pooling of ['final_token','mean']) {
       await evaluate(`window.__chooseFamily('${feature}','${pooling}');document.querySelector('#layer-mode-multi').click();for(const index of [3,11]){document.querySelector('[data-layer=\"'+index+'\"]').click();if(!document.querySelector('#layer-enabled').checked)document.querySelector('#layer-enabled').click()}`);
-      await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy') === 'false'`);
+      await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
       // The last formality/mean run can be served from the earlier tab cache.
       const expected = await evaluate(`Object.fromEntries(JSON.parse(document.querySelector('#layer-vector-data').textContent).filter(v=>v.selectable && v.feature_id==='${feature}' && v.pooling==='${pooling}' && [3,11].includes(v.layer_index)).map(v=>[v.layer_index,v.id]))`);
       if (await evaluate(`document.querySelector('#run-source').textContent !== 'Tab cache'`)) {
@@ -279,29 +279,21 @@ try {
     `document.querySelector('#layer-mode-multi').click();window.requests=[];const originalFetch=window.fetch;window.fetch=(url,options)=>{if(url.endsWith('/stream'))window.requests.push(window.__captureRun(JSON.parse(options.body)));return originalFetch(url,options)};document.querySelector('[data-layer="4"]').click();document.querySelector('#layer-enabled').click()`,
   );
   await until(
-    `!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy') === 'false'`,
+    `!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,
   );
   const request = await evaluate(`window.requests.at(-1)`);
   assert.deepEqual(request.layer_strengths, { 4: 0.5, 11: 0.5 });
   await checkHighlights();
   await evaluate(
-    `document.querySelector('#alpha').value='0.7';document.querySelector('#alpha').dispatchEvent(new Event('input'))`,
+    `document.querySelector('#mix-formality').value='0.7';document.querySelector('#mix-formality').dispatchEvent(new Event('input'))`,
   );
   await until(
-    `!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy') === 'false'`,
+    `!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,
   );
   assert.deepEqual(await evaluate(`window.requests.at(-1).layer_strengths`), {
     4: 0.7,
     11: 0.5,
   });
-  await evaluate(`document.querySelector('#changes-toggle').click()`);
-  assert.equal(
-    await evaluate(`document.querySelectorAll('.word-new').length`),
-    0,
-  );
-  await evaluate(
-    `document.querySelector('#changes-toggle').click()`,
-  );
   await checkHighlights();
   await evaluate(`document.querySelector('[popovertarget="layer-guide"]').click()`);
   assert.equal(await evaluate(`document.querySelector('#layer-guide').matches(':popover-open')`), true);
@@ -340,16 +332,37 @@ try {
   for (const [width, height] of [[1280, 800], [1366, 768], [1440, 900], [1920, 1080]]) {
     await cdp('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
     await evaluate(`window.scrollTo({top:0,behavior:'instant'})`);
-    const bounds = await evaluate(`Object.fromEntries(['#draft','#output','#alpha','#layer-grid','.draft-card','.output-card'].map(selector=>[selector,document.querySelector(selector).getBoundingClientRect().toJSON()]))`);
+    const bounds = await evaluate(`Object.fromEntries(['#draft','#output','#mix-formality','#layer-grid','.draft-card','.output-card'].map(selector=>[selector,document.querySelector(selector).getBoundingClientRect().toJSON()]))`);
     for (const [selector, box] of Object.entries(bounds))
       assert.ok(box.top>=0 && box.bottom<=height+1 && box.left>=0 && box.right<=width+1,
         `${selector} fits ${width}×${height}: ${JSON.stringify(box)}`);
+    const alignment=await evaluate(`Object.fromEntries(['.experiment-settings','.draft-card','.output-card','.feature-mixer','.model-map'].map(s=>[s,document.querySelector(s).getBoundingClientRect().toJSON()]))`);
+    assert.ok(Math.abs(alignment['.experiment-settings'].bottom-alignment['.output-card'].bottom)<2,'Setup panel aligns with writing card bottoms');
+    assert.ok(Math.abs(alignment['.draft-card'].bottom-alignment['.output-card'].bottom)<2,'Input/output card bottoms align');
+    assert.ok(alignment['.feature-mixer'].right<=alignment['.model-map'].left,'Mixer sits left of model');
+    assert.equal(await evaluate(`document.querySelector('#alpha')`),null,'Duplicate long strength slider is removed');
+    const beforeOpen=await evaluate(`Object.fromEntries(['.model-section','.draft-card','.output-card','.experiment-settings'].map(s=>[s,document.querySelector(s).getBoundingClientRect().toJSON()]))`);
+    await evaluate(`document.querySelector('.advanced-settings').open=true`);
+    const afterOpen=await evaluate(`Object.fromEntries(['.model-section','.draft-card','.output-card','.experiment-settings'].map(s=>[s,document.querySelector(s).getBoundingClientRect().toJSON()]))`);
+    for(const selector of Object.keys(beforeOpen)) {
+      assert.ok(Math.abs(beforeOpen[selector].top-afterOpen[selector].top)<1,`${selector} never moves when instructions expand`);
+      assert.ok(Math.abs(beforeOpen[selector].height-afterOpen[selector].height)<1,`${selector} never stretches when instructions expand`);
+    }
+    assert.ok(await evaluate(`document.querySelector('#slider-panel').getBoundingClientRect().height<=50`),'Layer controls occupy one compact line');
+    if(height<=800)
+      assert.ok(await evaluate(`document.querySelector('.setup-panel-body').scrollHeight>document.querySelector('.setup-panel-body').clientHeight`),'Instructions scroll at the panel limit');
+    if(width===1366) {
+      const expanded=await cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+      await writeFile(join(directory,'instructions-expanded.png'),Buffer.from(expanded.data,'base64'));
+    }
+    await evaluate(`document.querySelector('.advanced-settings').open=false`);
     if (width === 1366 || width === 1920) {
       const screenshot = await cdp('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
       await writeFile(join(directory, `experiment-${width}.png`), Buffer.from(screenshot.data, 'base64'));
     }
   }
   await evaluate(`document.querySelector('#inspect-run').click();document.querySelector('.advanced-settings').open=true`);
+  assert.ok(await evaluate(`Math.abs(document.querySelector('.experiment-settings').getBoundingClientRect().bottom-document.querySelector('.output-card').getBoundingClientRect().bottom)<2`),'Expanded prompt settings scroll within the aligned setup panel');
   assert.equal(await evaluate(`document.querySelector('#inspect-panel-run').hidden`), false);
   assert.ok(await evaluate(`document.querySelector('#run-alpha').textContent.includes('L11')`));
   assert.equal(await evaluate(`window.requests.length`), requestsBeforeTabs, 'Inspector and prompt display must not trigger generation');
@@ -368,7 +381,7 @@ try {
     `document.querySelector('#draft').value='A new request';document.querySelector('#draft').dispatchEvent(new Event('input'));document.querySelector('#clear').click()`,
   );
   assert.equal(
-    await evaluate(`document.querySelector('#copy').disabled`),
+    await evaluate(`document.querySelector('#output').classList.contains('placeholder')`),
     true,
   );
   assert.equal(
@@ -377,17 +390,17 @@ try {
   );
   // Both checkboxes route independent feature banks through the v2 API.
   await evaluate(`document.querySelector('#reset-layers').click();document.querySelector('#draft').value='Please send the report before noon.';document.querySelector('#draft').dispatchEvent(new Event('input'));document.querySelector('#feature-detoxification').click()`);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   let combined=await evaluate(`window.requests.at(-1).interventions`);
   assert.deepEqual(combined.map(i=>i.vector_id).sort(),['qwen-detoxification-l11-mean-v1','qwen-formality-l11-mean-v1']);
   assert.equal(await evaluate(`document.querySelectorAll('.active-layer-chip').length`),2);
   await evaluate(`document.querySelector('#mix-detoxification').value='0.8';document.querySelector('#mix-detoxification').dispatchEvent(new Event('input'));document.querySelector('#mix-detoxification').dispatchEvent(new Event('change'))`);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   combined=await evaluate(`window.requests.at(-1).interventions`);
   assert.equal(combined.find(i=>i.vector_id.startsWith('qwen-formality')).strength,.5);
   assert.equal(combined.find(i=>i.vector_id.startsWith('qwen-detoxification')).strength,.8);
   await evaluate(`document.querySelector('#focused-feature').value='formality';document.querySelector('#focused-feature').dispatchEvent(new Event('change'));document.querySelector('[data-layer="7"]').click();document.querySelector('#focused-pooling').value='final_token';document.querySelector('#focused-pooling').dispatchEvent(new Event('change'));document.querySelector('#mix-formality').value='0.4';document.querySelector('#mix-formality').dispatchEvent(new Event('input'));document.querySelector('#mix-formality').dispatchEvent(new Event('change'))`);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   combined=await evaluate(`window.requests.at(-1).interventions`);
   assert.deepEqual(combined,[{vector_id:'qwen-detoxification-l11-mean-v1',strength:.8},{vector_id:'qwen-formality-l7-final_token-v1',strength:.4}]);
   assert.ok(await evaluate(`document.querySelector('#run-alpha').textContent.includes('Detoxification L11') && document.querySelector('#run-alpha').textContent.includes('Formality L7')`));
@@ -401,7 +414,7 @@ try {
   await cdp('Input.dispatchMouseEvent',{type:'mousePressed',x:wheelGeometry.point.left+wheelGeometry.point.width/2,y:wheelGeometry.point.top+wheelGeometry.point.height/2,button:'left',clickCount:1});
   await cdp('Input.dispatchMouseEvent',{type:'mouseMoved',x:wheelGeometry.wheel.left+wheelGeometry.wheel.width/2,y:wheelGeometry.wheel.top+wheelGeometry.wheel.height*(100-68*.6/2)/200,button:'left',buttons:1});
   await cdp('Input.dispatchMouseEvent',{type:'mouseReleased',x:wheelGeometry.wheel.left+wheelGeometry.wheel.width/2,y:wheelGeometry.wheel.top+wheelGeometry.wheel.height*(100-68*.6/2)/200,button:'left',clickCount:1});
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   combined=await evaluate(`window.requests.at(-1).interventions`);
   assert.equal(combined.find(i=>i.vector_id.startsWith('qwen-formality')).strength,.6);
   assert.equal(combined.find(i=>i.vector_id.startsWith('qwen-detoxification')).strength,.8);
@@ -410,21 +423,21 @@ try {
   const bothShot=await cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
   await writeFile(join(directory,'both-features.png'),Buffer.from(bothShot.data,'base64'));
   await evaluate(`document.querySelector('#feature-detoxification').click()`);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   assert.equal(await evaluate(`window.requests.at(-1).interventions.length`),1);
   await evaluate(`document.querySelector('#feature-detoxification').click()`);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   assert.equal(await evaluate(`document.querySelector('#run-source').textContent`),'Tab cache','Re-enabling restores exact combined settings from cache');
   // Task presets and Apply-only prompt/limit edits use the real API/model path.
   await evaluate(`document.querySelector('#clear-layers').click();document.querySelector('#experiment-prompt').value='summarize';document.querySelector('#experiment-prompt').dispatchEvent(new Event('change'));document.querySelector('#draft').value='The town library opens at nine each morning. It closes at six each evening. Membership is free for residents. '.repeat(50);document.querySelector('#draft').dispatchEvent(new Event('input'))`);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,100);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,100);
   const summaryRequest = await evaluate(`window.requests.at(-1)`);
   assert.equal(summaryRequest.task,'summarize');
   assert.ok(summaryRequest.system_prompt.startsWith('Summarize'));
   assert.equal(summaryRequest.max_input_tokens,2048);
   assert.equal(summaryRequest.max_new_tokens,256);
   assert.ok(summaryRequest.message.length>2000);
-  assert.equal(await evaluate(`document.querySelector('#changes-toggle').hidden`),true);
+  assert.equal(await evaluate(`document.querySelector('#changes-toggle')`),null);
   assert.equal(await evaluate(`document.querySelectorAll('#output .word-new').length`),0);
   assert.equal(await evaluate(`document.querySelector('#run-task').textContent`),'summarize');
   const beforePromptEdit = await evaluate(`window.requests.length`);
@@ -432,14 +445,14 @@ try {
   assert.equal(await evaluate(`window.requests.length`),beforePromptEdit,'Unapplied edits never generate');
   assert.equal(await evaluate(`document.querySelector('#run-task').textContent`),'summarize');
   await evaluate(`document.querySelector('#apply-prompt').click()`);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,100);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,100);
   const customRequest = await evaluate(`window.requests.at(-1)`);
   assert.equal(customRequest.task,'custom');
   assert.equal(customRequest.system_prompt,'Respond with one short sentence.');
   assert.equal(customRequest.max_input_tokens,4096); assert.equal(customRequest.max_new_tokens,64);
   assert.equal(await evaluate(`document.querySelector('#run-prompt').textContent`),customRequest.system_prompt);
   await evaluate(`document.querySelector('#clear').click();document.querySelector('#experiment-prompt').value='none';document.querySelector('#experiment-prompt').dispatchEvent(new Event('change'));document.querySelector('#draft').value='What is two plus two?';document.querySelector('#draft').dispatchEvent(new Event('input'))`);
-  await until(`!document.querySelector('#copy').disabled && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,100);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,100);
   assert.equal(await evaluate(`window.requests.at(-1).system_prompt`),null);
   assert.equal(await evaluate(`document.querySelector('#run-prompt').textContent`),'No system message');
   await evaluate(`document.querySelector('#clear').click();document.querySelector('#experiment-prompt').value='rewrite';document.querySelector('#experiment-prompt').dispatchEvent(new Event('change'))`);

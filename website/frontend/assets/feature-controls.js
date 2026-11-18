@@ -106,11 +106,6 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
     $('layer-name').textContent=`Layer ${String(state.focused).padStart(2,'0')}`;
     $('layer-kind').textContent=`${feature.label}${experiment.enabled.has(feature.id)?'':' · feature off'}`;
     $('focused-vector').textContent=current?`Focused vector: ${current.id} · ${current.scale}`:'No vector at this layer';
-    $('alpha').value=state.values[state.focused];$('alpha-value').value=signed(state.values[state.focused]);
-    $('alpha').disabled=!experiment.enabled.has(experiment.editing)||!state.available.has(state.focused);
-    $('alpha').min=current?.strength_min??-2;$('alpha').max=current?.strength_max??2;
-    $('alpha').setAttribute('aria-label',`${feature.label}, layer ${state.focused} strength`);
-    $('alpha').setAttribute('aria-valuetext',signed(state.values[state.focused]));
     $('layer-enabled').checked=state.selected.has(state.focused);
     $('layer-enabled').disabled=!state.available.has(state.focused);
     $('layer-mode-single').checked=state.mode==='single';$('layer-mode-multi').checked=state.mode==='multi';
@@ -145,11 +140,6 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
     });
   });
   $('layer-enabled').addEventListener('change',()=>change(()=>experiment.bank.setEnabled($('layer-enabled').checked)));
-  $('alpha').addEventListener('input',()=>change(()=>{experiment.bank.values[experiment.bank.focused]=Number($('alpha').value);}));
-  $('alpha').addEventListener('change',()=>{
-    const bank=experiment.bank;
-    if(experiment.enabled.has(experiment.editing)&&bank.available.has(bank.focused)&&bank.selected.has(bank.focused))onCommit();
-  });
   $('reset-layers').addEventListener('click',()=>change(()=>experiment.reset()));
   $('clear-layers').addEventListener('click',()=>change(()=>experiment.clear()));
   const wheel=$('mix-wheel');let drag=null;

@@ -13,6 +13,7 @@
 </div>
 
 <section class="experiment-settings" aria-labelledby="settings-title">
+<div class="setup-panel-body">
   <div class="settings-heading"><h2 id="settings-title">Experiment setup</h2></div>
   <div class="settings-grid">
     <div class="setup-field"><label for="experiment-model">Model <span>Fixed</span></label><select id="experiment-model" disabled aria-describedby="settings-note"><option value="Qwen/Qwen2.5-0.5B-Instruct">Qwen 2.5 · 0.5B Instruct</option></select><small>24 decoder blocks · indices 0–23</small></div>
@@ -31,13 +32,20 @@
       <button id="apply-prompt" type="button" disabled>Apply</button>
     </div>
   </details>
+</div>
 </section>
 
 <section class="model-section" aria-label="Interactive model layers">
 
 <script id="layer-vector-data" type="application/json">{{ layer_vectors | tojson }}</script>
 <script id="layer-evidence-data" type="application/json">{{ layer_evidence | tojson }}</script>
-<div class="model-visual"><div class="model-map">
+<div class="model-visual">
+<aside class="feature-mixer" aria-labelledby="mix-title" title="Each slider controls its feature at the displayed layer. Other enabled layers retain their strengths.">
+  <div class="mix-title"><h2 id="mix-title">Feature mix</h2><span>α</span></div>
+  <div class="mix-dial" title="Drag a coloured feature point or use its slider. Angles are schematic, not measured vector similarity."><svg id="mix-wheel" viewBox="0 0 200 200" role="img" aria-label="Schematic feature strengths; equivalent keyboard controls are in the sliders below"></svg></div>
+  <div id="mix-controls"></div>
+</aside>
+<div class="model-map">
 <div class="layer-evidence-toolbar">
 <fieldset class="layer-mode"><legend class="sr-only">Layer selection mode</legend><label><input id="layer-mode-single" type="radio" name="layer-mode" value="single" checked> Single layer</label><label><input id="layer-mode-multi" type="radio" name="layer-mode" value="multi"> Multi-layer</label></fieldset>
   <span class="evidence-heading"><strong id="layer-family-label"></strong></span>
@@ -56,19 +64,15 @@
 </div>
 
 </div>
-<aside class="feature-mixer" aria-labelledby="mix-title" title="Each slider controls its feature at the displayed layer. Other enabled layers retain their strengths.">
-  <div class="mix-title"><h2 id="mix-title">Feature mix</h2><span>α</span></div>
-  <div class="mix-dial" title="Drag a coloured feature point or use its slider. Angles are schematic, not measured vector similarity."><svg id="mix-wheel" viewBox="0 0 200 200" role="img" aria-label="Schematic feature strengths; equivalent keyboard controls are in the sliders below"></svg></div>
-  <div id="mix-controls"></div>
-</aside></div>
+</div>
 
 <div class="layer-inspector" id="slider-panel">
 <div class="layer-title"><strong id="layer-name">Layer 11</strong><span id="layer-kind">Formality vector</span>
 </div><label class="enable-control"><input id="layer-enabled" type="checkbox" checked> Enable layer</label>
-<div class="strength-control"><label for="alpha">Strength <span>α</span></label><span class="range-edge">−2</span><input id="alpha" type="range" min="-2" max="2" step="0.1" value="0.5"><span class="range-edge">+2</span><output id="alpha-value" for="alpha">+0.5</output>
-</div><button id="reset-layers" class="quiet-button">Reset</button>
-</div>
 <div class="active-layers"><strong id="active-layer-summary" role="status" aria-live="polite">1 layer steering</strong><div id="active-layer-list" aria-label="Enabled layers and strengths"></div><button id="clear-layers" class="text-button">Clear layers</button></div>
+<button id="reset-layers" class="quiet-button">Reset</button>
+</div>
+
 
 
 
@@ -97,9 +101,6 @@
 
 <div class="experiment-workspace">
 <section class="writing-section" aria-label="Rewrite experiment">
-<div class="section-caption"><span class="live-label"><i id="live-indicator" class="live-indicator"></i> Live rewriting</span>
-</div>
-
 <div class="writing-grid">
 <div class="writing-card draft-card">
 <div class="card-heading"><label for="draft">Input</label><button id="clear" class="text-button">Clear</button>
@@ -118,19 +119,14 @@
 </div>
 </div>
 
-<div class="writing-tools">
-<div class="samples"><span>Try:</span><button data-sample="hey can u send the report by 3 PM?">A quick request</button><button data-sample="This plan is ridiculous. We already wasted 3 days on it.">A difficult conversation</button>
-</div>
-<div class="output-actions"><button id="changes-toggle" aria-pressed="true"><span id="changes-check">✓</span> Highlight changes</button><button id="copy" disabled>Copy <span aria-hidden="true">⧉</span></button>
-</div>
-</div>
-
+</section>
+<div class="writing-footer">
 <div class="run-status" hidden><span id="status" role="status"></span>
 </div><p id="change-note" class="small-note"></p>
 
 <div id="error-box" class="error-box" hidden><p id="error-message"></p><button id="retry">Try again</button>
 </div>
-</section>
+</div>
 
 <aside class="response-inspector" aria-labelledby="response-inspector-title">
   <div class="settings-heading"><h2 id="response-inspector-title">Response inspector</h2><span class="inspector-symbol" aria-hidden="true">⌁</span></div>

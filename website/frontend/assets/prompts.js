@@ -14,7 +14,6 @@ export function mountPromptControls(onChange) {
     $('output-budget').value = applied.max_new_tokens;
     $('apply-prompt').disabled = true;
     $('prompt-state').textContent = applied.task === 'none' ? 'No system message' : 'Applied';
-    $('changes-toggle').hidden = applied.task !== 'rewrite';
     const placeholders = {rewrite:'What would you like to rephrase?', answer:'Ask a question…',
       summarize:'Paste the text to summarize…', continue:'Start a passage to continue…',
       custom:'Enter input for your instructions…', none:'Enter a task or question…'};

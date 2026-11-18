@@ -10,7 +10,7 @@ test('custom instructions and budgets apply atomically; no-system does not leak 
     focus() {}
   }
   const ids=Object.fromEntries(['task-presets','prompt-limits','experiment-prompt','system-prompt',
-    'input-budget','output-budget','apply-prompt','prompt-state','changes-toggle','draft',
+    'input-budget','output-budget','apply-prompt','prompt-state','draft',
     'prompt-settings'].map(id=>[id,new Element()]));
   ids['task-presets'].textContent=JSON.stringify({
     rewrite:{system_prompt:'Rewrite.',output_tokens:128},
@@ -45,9 +45,7 @@ test('custom instructions and budgets apply atomically; no-system does not leak 
     choose('summarize');
     assert.equal(controls.settings().system_prompt,'Summarize.');
     assert.equal(controls.settings().max_input_tokens,4096);
-    assert.equal(ids['changes-toggle'].hidden,true);
     choose('rewrite');
-    assert.equal(ids['changes-toggle'].hidden,false);
   } finally {
     if (previous === undefined) delete globalThis.document;
     else globalThis.document=previous;

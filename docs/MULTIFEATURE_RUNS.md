@@ -103,7 +103,7 @@ The production worker adapts existing v1 requests to the same canonical executor
 The frontend now sends v2 runs. Feature checkboxes enable independent banks;
 **Edit layers for** chooses the bank shown in the diagram. Each bank retains its
 own single/multi-layer mode, pooling, layer selections and strengths. The square
-mixer on the diagram's right exposes a slider and a draggable radial point for
+mixer on the diagram's left exposes a slider and a draggable radial point for
 each feature's displayed layer. Feature angles are schematic and do not imply
 measured vector similarity. Additional registered features generate controls
 from the same catalog data. The wheel's white marker is a visual summary, not an

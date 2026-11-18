@@ -31,7 +31,7 @@ export async function checkSliderRelease({ evaluate, cdp, until }) {
         { headers: { 'Content-Type': 'application/x-ndjson' } });
     };
     window.__releaseEdit = function(value, commit = true) {
-      const slider = document.querySelector('#alpha');
+      const slider = document.querySelector('#mix-formality');
       slider.value = value;
       slider.dispatchEvent(new Event('input'));
       if (commit) slider.dispatchEvent(new Event('change'));
@@ -60,7 +60,7 @@ export async function checkSliderRelease({ evaluate, cdp, until }) {
     document.querySelector('#draft').dispatchEvent(new Event('input'));
   `);
   const requestCount = () => evaluate(`window.__releaseQA.requests.length`);
-  const release = () => evaluate(`document.querySelector('#alpha').dispatchEvent(new Event('change'))`);
+  const release = () => evaluate(`document.querySelector('#mix-formality').dispatchEvent(new Event('change'))`);
   try {
     await evaluate(`window.__releaseTimer(450)`);
     assert.equal(await requestCount(), 1);
@@ -87,12 +87,12 @@ export async function checkSliderRelease({ evaluate, cdp, until }) {
     await release();
     assert.equal(await requestCount(), 4, "Release after maximum wait must not duplicate the job");
     await evaluate(`window.__releaseFinish(3, 'Current response')`);
-    await until(`!document.querySelector('#copy').disabled`);
+    await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
     await release();
     assert.equal(await requestCount(), 4, "Commit after completion must not regenerate");
 
     await evaluate(`window.__releaseEdit('1.4'); window.__releaseFinish(4, 'Another response')`);
-    await until(`!document.querySelector('#copy').disabled`);
+    await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
     await evaluate(`window.__releaseEdit('1.3')`);
     assert.equal(await requestCount(), 5, "Release restores the completed cached setting");
     assert.equal(await evaluate(`document.querySelector('#run-source').textContent`), "Tab cache");
@@ -118,20 +118,20 @@ export async function checkSliderRelease({ evaluate, cdp, until }) {
     // Exercise actual native input/change events as well as synthetic commits.
     await evaluate(`document.querySelector('#draft').value = 'Keyboard and pointer source';
       document.querySelector('#draft').dispatchEvent(new Event('input'));
-      window.__releaseTimer(450); document.querySelector('#alpha').focus();`);
+      window.__releaseTimer(450); document.querySelector('#mix-formality').focus();`);
     assert.equal(await requestCount(), 6);
     await cdp("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowRight", code: "ArrowRight" });
     await cdp("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowRight", code: "ArrowRight" });
     assert.equal(await requestCount(), 7, "Native keyboard commit dispatches immediately");
-    await evaluate(`document.querySelector('#alpha').scrollIntoView({behavior:'instant',block:'center'})`);
-    const bounds = await evaluate(`document.querySelector('#alpha').getBoundingClientRect().toJSON()`);
+    await evaluate(`document.querySelector('#mix-formality').scrollIntoView({behavior:'instant',block:'center'})`);
+    const bounds = await evaluate(`document.querySelector('#mix-formality').getBoundingClientRect().toJSON()`);
     const x = bounds.left + bounds.width * 0.8, y = bounds.top + bounds.height / 2;
     await cdp("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
     assert.equal(await requestCount(), 7, "Pointer drag waits while scheduling timers are held");
     await cdp("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
     assert.equal(await requestCount(), 8, "Native pointer release dispatches immediately");
     assert.equal(await evaluate(`window.__releaseQA.requests.at(-1).body.interventions.find(i=>i.vector_id.includes('-l11-')).strength`),
-      await evaluate(`Number(document.querySelector('#alpha').value)`));
+      await evaluate(`Number(document.querySelector('#mix-formality').value)`));
   } finally {
     // Finish obsolete test streams after invalidating them and leave the real
     // browser smoke test with a clean draft, default layers, and normal timers.

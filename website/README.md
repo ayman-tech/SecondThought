@@ -12,11 +12,15 @@ import Gradio, the extension API, or any fine-tuned T5 model.
 
 ## Run
 
+**New machine or PR reviewer?** Start with the [local setup and testing guide](../docs/LOCAL_TESTING.md),
+including the offline artifact preflight and a step-by-step test of both features.
+
 From the repository root:
 
 ```bash
-uv sync
-make website
+uv sync --python 3.12 --locked
+uv run --locked python -m website.api.check_setup
+uv run --locked python -m website.api.server
 ```
 
 No `make` (e.g. on Windows)? Run `uv run python -m website.api.server` instead.
@@ -119,7 +123,7 @@ The moving paths are illustrative, not real activation traces. Motion honors red
 selection, strengths and preview behavior without persistent tutorial text. Layer buttons support arrow keys,
 Home and End; the slider supports native keyboard adjustment. Reset restores
 layer 11 at +0.5 and clears other selections. The writing area retains animated
-original-to-rewrite word highlights, copy, live status, and expandable run details.
+automatic original-to-rewrite word highlights, generation status, and expandable run details.
 
 Greedy decoding remains fixed. With no selected available layers (or all zero
 strengths), the model follows the applied task instructions without vector hooks.
@@ -146,8 +150,8 @@ for the reference configuration and regression checks used before backend genera
 Each tab creates an ephemeral UUID and increasing revision numbers. The client
 accepts text only for its latest revision. Requested layer strengths and the strengths used for
 the displayed result are tracked separately. The previous completed result remains
-visible, explicitly labeled, until current text starts streaming. Copy is disabled
-for stale and incomplete streams.
+visible, explicitly labeled, until current text starts streaming. Partial text is
+labeled provisional until the response completes.
 
 The server admits one active generation and up to eight pending sessions. Each
 session has at most one pending job; newer revisions replace older ones. Requests
