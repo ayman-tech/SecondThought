@@ -234,6 +234,11 @@ its own mean/final-token pooling, layer mode, selected layers and strengths.
 changes the view. Colours show that bank's exact vector evidence, while feature
 dots and active chips show every enabled bank's interventions. The mixer can
 steer Formality and Detoxification together at the same or different layers.
+Each mixer row names the edited layer separately from the feature's active-layer
+count and peak absolute strength. A disabled edited layer can still have other
+layers active. Click the row's summary to inspect all retained strengths or clear
+only that feature. Disabled feature sliders show a dash rather than a saved
+strength that could be mistaken for an applied value.
 Disabling a feature retains its settings; Clear layers clears all banks. Reset
 selects only new Formality/mean vectors, layer 11 at +0.5. Legacy compatibility
 vectors remain available to older API clients; they are not the lab UI defaults.
@@ -295,6 +300,12 @@ participate in client cache keys and completed run details. The website worker
 allows 90 seconds per generation; client requests time out after 110 seconds.
 Per-request output budgets never mutate the shared model's generation defaults.
 The extension and Gradio retain their existing defaults.
+
+Completed runs and config expose actual runtime device/dtype; Run details displays
+them. The loader uses float32 on MPS/CPU and float16 on CUDA. To investigate
+repetition, compare Clear layers against the same input, task, prompt and budgets,
+then add interventions individually. Precision remains a separate variable; a
+loop under combined steering does not by itself establish a dtype regression.
 
 Stream events are `queued`, `started`, `delta`, then one of `completed`,
 `cancelled`, or `error`. Every event carries `revision`, `request_id`, `alpha`, and

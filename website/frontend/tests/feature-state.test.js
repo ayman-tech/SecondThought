@@ -47,3 +47,19 @@ test('new catalog features and mixed same-layer directions need no hardcoded fea
   state.enableFeature('empathy',false);state.selectFeature('empathy');state.bank.focus(7);
   assert.equal(state.interventions().length,2,'Inspecting a disabled feature never activates it');
 });
+
+test('disabled edited layer cannot hide other active layers or their peak strength',()=>{
+  const state=new FeatureExperiment(vectors);
+  state.bank.setMode('multi');state.bank.values[11]=1.7;
+  state.bank.focus(12);state.bank.setEnabled(true);state.bank.values[12]=-1.7;
+  state.bank.focus(13);state.bank.setEnabled(true);state.bank.values[13]=.5;
+  let summary=state.featureSummary('formality');
+  assert.equal(summary.peak,1.7);assert.equal(summary.active.length,3);
+  state.bank.focus(10);
+  summary=state.featureSummary('formality');
+  assert.equal(summary.editingSelected,false);assert.equal(summary.active.length,3);
+  assert.equal(summary.peak,1.7);
+  state.enableFeature('formality',false);
+  summary=state.featureSummary('formality');
+  assert.equal(summary.active.length,0);assert.equal(summary.saved.length,3);
+});

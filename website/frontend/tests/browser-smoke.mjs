@@ -408,6 +408,17 @@ try {
   assert.equal(await evaluate(`document.querySelector('#focused-pooling').value`),'mean');
   assert.equal(await evaluate(`document.querySelector('#layer-name').textContent`),'Layer 11');
   assert.equal(await evaluate(`document.querySelector('#mix-formality').value`),'0.4');
+  // An unselected edited layer must not imply the feature is disabled.
+  await evaluate(`document.querySelector('#layer-mode-multi').click();document.querySelector('[data-layer="9"]').click();document.querySelector('#layer-enabled').click();document.querySelector('[data-layer="10"]').click()`);
+  assert.equal(await evaluate(`document.querySelector('#mix-detoxification').disabled`),true);
+  assert.ok(await evaluate(`document.querySelector('#mix-status-detoxification').textContent.includes('2 other layers still active')`));
+  assert.ok(await evaluate(`document.querySelector('#mix-detoxification').previousElementSibling.textContent.includes('other layers')`));
+  await evaluate(`document.querySelector('#mix-status-detoxification').click()`);
+  assert.equal(await evaluate(`document.querySelector('#mix-layers-detoxification').matches(':popover-open')`),true);
+  assert.ok(await evaluate(`document.querySelector('#mix-layers-detoxification').textContent.includes('L9') && document.querySelector('#mix-layers-detoxification').textContent.includes('L11')`));
+  await evaluate(`document.querySelector('#mix-layers-detoxification').hidePopover();document.querySelector('[aria-label="Disable Detoxification layer 9"]').click();document.querySelector('[data-layer="11"]').click()`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
+  assert.ok(await evaluate(`document.querySelector('#run-runtime').textContent.includes('torch.float')`),'Actual generation dtype is visible');
   // Drag a wheel feature point; the other feature must retain its strength.
   await evaluate(`document.querySelector('.feature-mixer').scrollIntoView({block:'center',behavior:'instant'})`);
   const wheelGeometry=await evaluate(`({point:document.querySelector('[data-mix-feature="formality"]').getBoundingClientRect().toJSON(),wheel:document.querySelector('#mix-wheel').getBoundingClientRect().toJSON()})`);

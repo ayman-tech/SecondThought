@@ -79,6 +79,14 @@ class GenerationManager:
     def start(self):
         self.worker = asyncio.create_task(self._run())
 
+    def runtime_info(self):
+        model=getattr(self.service,'model',None)
+        device=getattr(self.service,'device',None)
+        dtype=getattr(model,'dtype',None)
+        return dict(device=str(device) if device is not None else None,
+                    dtype=str(dtype) if dtype is not None else None,
+                    model_revision=getattr(self.service,'model_revision',None))
+
     def resolve(self, request):
         catalog = getattr(self.service,'catalog',None)
         run = canonical_request(request,catalog)
@@ -170,7 +178,8 @@ class GenerationManager:
                              finish_reason=result.finish_reason,
                              latency_ms=round((monotonic() - started) * 1000, 1),
                              model_id=job.run.model_id if isinstance(job.request,RunRequest) else self.service.model_id,
-                             model_repository=self.service.model_id, steering_version=self.version)
+                             model_repository=self.service.model_id, steering_version=self.version,
+                             runtime=self.runtime_info())
             except GenerationCancelled:
                 job.emit("cancelled")
             except ValueError as exc:

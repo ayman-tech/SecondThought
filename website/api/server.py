@@ -203,6 +203,7 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
             max_new_tokens=MAX_OUTPUT_TOKENS,
             default_input_tokens=DEFAULT_INPUT_TOKENS, default_output_tokens=DEFAULT_OUTPUT_TOKENS,
             task_presets=TASKS, request_timeout_ms=110000,
+            runtime=app.state.manager.runtime_info() if app.state.manager else None,
             layers=layer_manifest(),
             features=[f.model_dump() for f in get_catalog().spec.features],
         )

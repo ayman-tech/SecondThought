@@ -37,9 +37,20 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
     edit.addEventListener('click',()=>change(()=>experiment.selectFeature(feature.id)));
     const target=document.createElement('span');target.className='mix-target';
     const output=document.createElement('output');
+    const status=document.createElement('button');status.type='button';status.className='mix-status';
+    status.id=`mix-status-${feature.id}`;
+    const detail=document.createElement('div');detail.className='mix-layer-popover';detail.popover='auto';
+    detail.id=`mix-layers-${feature.id}`;detail.setAttribute('aria-label',`${feature.label} layer configuration`);
+    status.setAttribute('popovertarget',detail.id);
+    const detailHeading=document.createElement('strong');detailHeading.textContent=feature.label;
+    const list=document.createElement('div');list.className='mix-layer-list';
+    const clear=document.createElement('button');clear.type='button';clear.textContent='Clear this feature';
+    clear.addEventListener('click',()=>change(()=>experiment.banks.get(feature.id).selected.clear()));
+    const close=document.createElement('button');close.type='button';close.textContent='Close';
+    close.addEventListener('click',()=>detail.hidePopover());detail.append(detailHeading,list,clear,close);
     const slider=document.createElement('input');slider.type='range';slider.min=-2;slider.max=2;slider.step=.1;
     slider.id=`mix-${feature.id}`;slider.setAttribute('aria-label',`${feature.label} strength`);
-    heading.append(edit,target,output);row.append(heading,slider);$('mix-controls').append(row);
+    heading.append(edit,target,output);row.append(heading,status,slider,detail);$('mix-controls').append(row);
     slider.addEventListener('input',()=>change(()=>{
       const bank=experiment.banks.get(feature.id);bank.values[bank.focused]=Number(slider.value);
     }));
@@ -47,7 +58,7 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
       const bank=experiment.banks.get(feature.id);
       if (experiment.enabled.has(feature.id) && bank.selected.has(bank.focused) && bank.available.has(bank.focused)) onCommit();
     });
-    sliders.set(feature.id,{slider,output,target,edit,row});
+    sliders.set(feature.id,{slider,output,target,edit,row,status,list,clear});
   }
   function renderWheel() {
     const wheel=$('mix-wheel');const nodes=[];let x=100,y=100;
@@ -78,9 +89,19 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
       controls.slider.value=bank.values[bank.focused];
       controls.slider.disabled=!experiment.enabled.has(feature.id) || !bank.selected.has(bank.focused) || !bank.available.has(bank.focused);
       const vector=bank.vectorChoices[bank.focused];
+      const summary=experiment.featureSummary(feature.id);
       controls.slider.min=vector?.strength_min??-2;controls.slider.max=vector?.strength_max??2;
-      controls.output.textContent=signed(bank.values[bank.focused]);
-      controls.target.textContent=`L${bank.focused}${!bank.selected.has(bank.focused)?' · off':''}`;
+      controls.output.textContent=controls.slider.disabled?'—':signed(bank.values[bank.focused]);
+      controls.target.textContent=!summary.enabled?'Feature off':`Editing L${bank.focused}${summary.editingSelected?'':' · disabled'}`;
+      controls.status.textContent=!summary.enabled?`Off · ${summary.saved.length} saved layer${summary.saved.length===1?'':'s'}`:
+        !summary.editingSelected&&summary.active.length?`${summary.active.length} other layer${summary.active.length===1?'':'s'} still active`:
+        summary.active.length?`${summary.active.length} active layer${summary.active.length===1?'':'s'} · peak |α| ${summary.peak.toFixed(1)}`:'No nonzero steering';
+      controls.status.title='Show every layer and retained strength for this feature';
+      const detailRows=summary.saved.map(entry=>{
+        const line=document.createElement('div');line.textContent=`L${entry.layer}  ${signed(entry.strength)}${summary.enabled?'':' · saved, feature off'}${entry.strength===0?' · zero shift':''}`;return line;
+      });
+      if(!detailRows.length){const empty=document.createElement('p');empty.textContent='No layers enabled.';detailRows.push(empty);}
+      controls.list.replaceChildren(...detailRows);controls.clear.disabled=summary.saved.length===0;
       controls.edit.setAttribute('aria-pressed',String(experiment.editing===feature.id));
       controls.row.classList.toggle('inactive',!experiment.enabled.has(feature.id));
     }

@@ -49,5 +49,13 @@ export class FeatureExperiment {
       }));
     });
   }
+  featureSummary(id) {
+    const bank=this.banks.get(id);
+    const saved=Object.entries(bank.strengths()).map(([layer,strength])=>({layer:Number(layer),strength}));
+    const enabled=this.enabled.has(id);
+    const active=enabled?saved.filter(entry=>entry.strength!==0):[];
+    return {enabled,focused:bank.focused,editingSelected:bank.selected.has(bank.focused)&&bank.available.has(bank.focused),
+      saved,active,peak:Math.max(0,...active.map(entry=>Math.abs(entry.strength)))};
+  }
   clear() { for (const bank of this.banks.values()) bank.selected.clear(); }
 }

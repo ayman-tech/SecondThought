@@ -201,7 +201,7 @@ function clearInspection() {
     "run-tokens",
     "run-finish",
     "run-source",
-    "run-task", "run-prompt", "run-budgets",
+    "run-task", "run-prompt", "run-budgets", "run-runtime",
     "change-source-count",
     "change-output-count",
     "change-added-count",
@@ -212,6 +212,7 @@ function clearInspection() {
 }
 
 function updateInspection(event, snapshot, fromCache) {
+  $("run-runtime").textContent = event.runtime ? `${event.runtime.device ?? 'unknown device'} · ${event.runtime.dtype ?? 'unknown dtype'}` : '—';
   $("run-task").textContent = snapshot.task;
   $("run-prompt").textContent = snapshot.system_prompt ?? 'No system message';
   $("run-budgets").textContent = `${snapshot.max_input_tokens} / ${snapshot.max_new_tokens}`;

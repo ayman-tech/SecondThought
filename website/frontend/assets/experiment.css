@@ -203,7 +203,12 @@
 .mix-knob { cursor:grab; }
 .mix-knob:active { cursor:grabbing; }
 .mix-control+.mix-control { margin-top:6px; }
-#mix-controls { max-height:110px; overflow-y:auto; scrollbar-width:thin; }
+#mix-controls { max-height:130px; overflow-y:auto; scrollbar-width:thin; }
+.mix-status { display:block; width:100%; padding:1px 0!important; border:0; text-align:left; color:var(--feature-colour); font:9px/1.4 "DM Sans",sans-serif; white-space:nowrap; }
+.mix-status:hover { text-decoration:underline; }
+.mix-layer-popover { border:1px solid var(--line); border-radius:10px; padding:16px; width:280px; max-width:calc(100vw - 32px); color:var(--ink); background:white; }
+.mix-layer-list { max-height:240px; overflow:auto; margin:12px 0; font:12px/1.9 ui-monospace,monospace; }
+.mix-layer-popover>button { font-size:11px; padding:5px 8px; margin-right:6px; }
 .mix-heading { display:flex; align-items:center; gap:5px; font-size:10px; }
 .mix-edit { padding:0!important; border:0; color:var(--feature-colour); font-size:10px; border-radius:0; }
 .mix-edit[aria-pressed=true] { font-weight:650; }
