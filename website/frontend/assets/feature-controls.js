@@ -1,13 +1,14 @@
 import { FeatureExperiment } from './feature-state.js';
+import { MIX,featureAngle,featurePoint,pointStrength } from './mix-geometry.js';
 
 const colours=['#7954df','#208c89','#ce7c3b','#c75b97','#4c83c2'];
 export function mountFeatureLayers(onChange,onCommit=()=>{}) {
   const $=id=>document.getElementById(id);
   const experiment=new FeatureExperiment(JSON.parse($('layer-vector-data').textContent));
+  document.querySelector('.model-visual').style.setProperty('--extra-features',Math.max(0,experiment.features.length-2));
   const buttons=[...document.querySelectorAll('[data-layer]')];
   const signed=n=>`${n>=0?'+':'−'}${Math.abs(n).toFixed(1)}`;
   const colour=id=>colours[experiment.features.findIndex(f=>f.id===id)%colours.length];
-  const angleAt=i=>experiment.features.length===2 ? (i===0?-Math.PI/2:0) : -Math.PI/2+2*Math.PI*i/experiment.features.length;
   const checks=new Map(), sliders=new Map();
   const ns='http://www.w3.org/2000/svg';
   const svg=(tag,attributes)=>{
@@ -61,24 +62,54 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
     sliders.set(feature.id,{slider,output,target,edit,row,status,list,clear});
   }
   function renderWheel() {
-    const wheel=$('mix-wheel');const nodes=[];let x=100,y=100;
+    const wheel=$('mix-wheel'),nodes=[],count=experiment.features.length;
+    const focused=document.activeElement?.dataset.mixFeature;
+    const points=fraction=>experiment.features.map((_,i)=>featurePoint(i,count,-2+4*fraction))
+      .map(p=>`${p.x},${p.y}`).join(' ');
+    const defs=svg('defs',{}),gradient=svg('linearGradient',{id:'mix-fill',x1:'0%',y1:'0%',x2:'100%',y2:'100%'});
+    for(const [offset,fill] of [['0%','#7954df'],['55%','#ce7c3b'],['100%','#208c89']])
+      gradient.append(svg('stop',{offset,'stop-color':fill,'stop-opacity':'.22'}));
+    defs.append(gradient);nodes.push(defs);
+    for(const fraction of [.25,.5,.75,1])
+      nodes.push(svg('polygon',{points:points(fraction),fill:fraction===1?'#f7f8fc':'none',
+        stroke:fraction===.5?'#bcb0cf':'#dfe5ef','stroke-width':fraction===.5?1.4:1,
+        'stroke-dasharray':fraction===1?'3 3':'none',class:'mix-web-ring'}));
+    // Move the outer background behind the inner grid lines.
+    nodes.splice(1,0,nodes.pop());
+    const positions=experiment.features.map((feature,i)=>{
+      const bank=experiment.banks.get(feature.id),vector=bank.vectorChoices[bank.focused];
+      const active=experiment.enabled.has(feature.id)&&bank.selected.has(bank.focused)&&bank.available.has(bank.focused);
+      return featurePoint(i,count,active?bank.values[bank.focused]:0,vector?.strength_min??-2,vector?.strength_max??2);
+    });
+    nodes.push(svg('polygon',{points:positions.map(p=>`${p.x},${p.y}`).join(' '),fill:'url(#mix-fill)',
+      stroke:'#9870e9','stroke-width':2,'stroke-linejoin':'round',class:'mix-web-shape'}));
     for (const [i,feature] of experiment.features.entries()) {
-      const angle=angleAt(i);
-      const dx=Math.cos(angle),dy=Math.sin(angle), bank=experiment.banks.get(feature.id);
-      const active=experiment.enabled.has(feature.id);
-      const strength=active && bank.selected.has(bank.focused) ? bank.values[bank.focused] : 0;
-      nodes.push(svg('line',{x1:100-dx*68,y1:100-dy*68,x2:100+dx*68,y2:100+dy*68,
-        stroke:colour(feature.id),'stroke-opacity':active ? 0.35 : 0.1,'stroke-width':1,'stroke-dasharray':'3 4'}));
-      nodes.push(svg('circle',{cx:100+dx*68*strength/2,cy:100+dy*68*strength/2,r:active?5:3,
-        fill:colour(feature.id),opacity:active?1:.2,'data-mix-feature':feature.id,class:'mix-knob'}));
-      const label=svg('text',{x:100+dx*85,y:104+dy*85,fill:colour(feature.id),'text-anchor':'middle','font-size':16});
-      label.textContent=feature.label[0];nodes.push(label);
-      x+=dx*strength/2*48/Math.max(1,experiment.enabled.size);
-      y+=dy*strength/2*48/Math.max(1,experiment.enabled.size);
+      const bank=experiment.banks.get(feature.id),summary=experiment.featureSummary(feature.id);
+      const active=summary.enabled&&summary.editingSelected&&bank.available.has(bank.focused);
+      const vector=bank.vectorChoices[bank.focused],point=positions[i],end=featurePoint(i,count,2);
+      nodes.push(svg('line',{x1:MIX.x,y1:MIX.y,x2:end.x,y2:end.y,stroke:'#c9d2e2','stroke-width':1}));
+      const knob=svg('circle',{cx:point.x,cy:point.y,r:6,fill:active?colour(feature.id):'#fff',
+        stroke:active?'#fff':colour(feature.id),'stroke-width':2,'data-mix-feature':feature.id,
+        class:'mix-knob',tabindex:active?0:-1,role:'slider','aria-label':`${feature.label} layer ${bank.focused} strength`,
+        'aria-valuemin':vector?.strength_min??-2,'aria-valuemax':vector?.strength_max??2,
+        'aria-valuenow':active?bank.values[bank.focused]:0,'aria-disabled':String(!active)});
+      const title=svg('title',{});title.textContent=`${feature.label}: ${active?signed(bank.values[bank.focused]):'off'} at layer ${bank.focused}. ${summary.active.length} active layers.`;
+      knob.append(title);nodes.push(knob);
+      const top=i===0,left=Math.cos(featureAngle(i,count))<0;
+      const x=top?160:left?8:312,y=top?12:224,anchor=top?'middle':left?'start':'end';
+      const label=svg('text',{x,y,fill:colour(feature.id),'text-anchor':anchor,class:'mix-axis-label'});
+      label.textContent=feature.label;nodes.push(label);
+      const width=84,badgeX=top?x-width/2:left?x:x-width;
+      nodes.push(svg('rect',{x:badgeX,y:y+6,width,height:20,rx:5,fill:colour(feature.id),'fill-opacity':'.08',stroke:colour(feature.id),'stroke-opacity':'.2'}));
+      const value=svg('text',{x:badgeX+width/2,y:y+20,fill:colour(feature.id),'text-anchor':'middle',class:'mix-axis-value'});
+      value.textContent=active?`${signed(bank.values[bank.focused])} α`:'0.0 (Off)';nodes.push(value);
+      const status=svg('text',{x,y:y+38,fill:'#8c8198','text-anchor':anchor,class:'mix-axis-status'});
+      status.textContent=summary.enabled?`L${bank.focused} · ${summary.active.length} active`:`${summary.saved.length} saved layer${summary.saved.length===1?'':'s'}`;
+      nodes.push(status);
     }
-    nodes.push(svg('line',{x1:100,y1:100,x2:x,y2:y,stroke:'#8a7b9b','stroke-width':1}));
-    nodes.push(svg('circle',{cx:x,cy:y,r:7,fill:'white',stroke:'#77678f','stroke-width':1.5,'pointer-events':'none'}));
+    nodes.push(svg('circle',{cx:MIX.x,cy:MIX.y,r:2,fill:'#a9a1b7','pointer-events':'none'}));
     wheel.replaceChildren(...nodes);
+    if(focused) wheel.querySelector(`[data-mix-feature="${CSS.escape(focused)}"]`)?.focus({preventScroll:true});
   }
   function render() {
     const state=experiment.bank;
@@ -169,11 +200,10 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
     const bank=experiment.banks.get(drag.feature);
     if(!experiment.enabled.has(drag.feature)||bank.focused!==drag.layer||!bank.selected.has(drag.layer)){drag=null;return;}
     const vector=bank.vectorChoices[drag.layer];
-    const box=wheel.getBoundingClientRect(),angle=angleAt(experiment.features.findIndex(f=>f.id===drag.feature));
-    const x=(event.clientX-box.left)/box.width*200-100,y=(event.clientY-box.top)/box.height*200-100;
-    const step=vector.strength_step||.1;
-    const value=Math.max(vector.strength_min,Math.min(vector.strength_max,
-      Math.round(((x*Math.cos(angle)+y*Math.sin(angle))/68*2)/step)*step));
+    const point=wheel.createSVGPoint();point.x=event.clientX;point.y=event.clientY;
+    const local=point.matrixTransform(wheel.getScreenCTM().inverse());
+    const value=pointStrength(local.x,local.y,experiment.features.findIndex(f=>f.id===drag.feature),experiment.features.length,
+      vector.strength_min,vector.strength_max,vector.strength_step||.1);
     change(()=>{bank.values[bank.focused]=Number(value.toFixed(6));});
   }
   wheel.addEventListener('pointerdown',event=>{
@@ -187,5 +217,16 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
     moveKnob(event);drag=null;wheel.releasePointerCapture(event.pointerId);onCommit();
   });
   wheel.addEventListener('pointercancel',()=>{drag=null;});
+  wheel.addEventListener('keydown',event=>{
+    const feature=event.target.dataset.mixFeature,bank=experiment.banks.get(feature);
+    if(!bank||!experiment.enabled.has(feature)||!bank.selected.has(bank.focused)||!bank.available.has(bank.focused))return;
+    const vector=bank.vectorChoices[bank.focused],step=vector.strength_step||.1;
+    const next={ArrowUp:bank.values[bank.focused]+step,ArrowRight:bank.values[bank.focused]+step,
+      ArrowDown:bank.values[bank.focused]-step,ArrowLeft:bank.values[bank.focused]-step,
+      Home:vector.strength_min,End:vector.strength_max}[event.key];
+    if(next===undefined)return;
+    event.preventDefault();change(()=>{bank.values[bank.focused]=Number(Math.max(vector.strength_min,Math.min(vector.strength_max,next)).toFixed(6));});
+  });
+  wheel.addEventListener('keyup',event=>{if(event.target.dataset.mixFeature&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End'].includes(event.key))onCommit();});
   render();return experiment;
 }

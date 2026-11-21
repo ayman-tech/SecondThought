@@ -116,6 +116,7 @@ export async function checkSliderRelease({ evaluate, cdp, until }) {
     assert.equal(await evaluate(`window.__releaseQA.timers.size`), 0);
 
     // Exercise actual native input/change events as well as synthetic commits.
+    await evaluate(`document.querySelector('#mix-precise-controls').showPopover()`);
     await evaluate(`document.querySelector('#draft').value = 'Keyboard and pointer source';
       document.querySelector('#draft').dispatchEvent(new Event('input'));
       window.__releaseTimer(450); document.querySelector('#mix-formality').focus();`);
@@ -132,11 +133,18 @@ export async function checkSliderRelease({ evaluate, cdp, until }) {
     assert.equal(await requestCount(), 8, "Native pointer release dispatches immediately");
     assert.equal(await evaluate(`window.__releaseQA.requests.at(-1).body.interventions.find(i=>i.vector_id.includes('-l11-')).strength`),
       await evaluate(`Number(document.querySelector('#mix-formality').value)`));
+    await evaluate(`document.querySelector('#mix-precise-controls').hidePopover();
+      document.querySelector('[data-mix-feature="formality"]').focus()`);
+    await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Home',code:'Home'});
+    await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Home',code:'Home'});
+    assert.equal(await requestCount(),9,'Spider-web keyboard release dispatches immediately');
+    assert.equal(await evaluate(`window.__releaseQA.requests.at(-1).body.interventions[0].strength`),-2);
   } finally {
     // Finish obsolete test streams after invalidating them and leave the real
     // browser smoke test with a clean draft, default layers, and normal timers.
     await evaluate(`
       document.querySelector('#clear').click(); document.querySelector('#reset-layers').click();
+      if(document.querySelector('#mix-precise-controls').matches(':popover-open'))document.querySelector('#mix-precise-controls').hidePopover();
       window.__releaseQA.requests.forEach((_, index) => window.__releaseFinish(index, 'Late fixture response'));
       window.fetch = window.__releaseQA.fetch;
       window.setTimeout = window.__releaseQA.setTimeout;

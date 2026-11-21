@@ -34,6 +34,12 @@ BASE_REWRITE_PROMPT = (
     "Return only the rewritten sentence."
 )
 
+# Used only when the caller explicitly requests assistant-prefill completion.
+CONTINUATION_USER_INSTRUCTION = (
+    "Continue the passage begun in your response. "
+    "Add new text in the same voice and point of view."
+)
+
 
 @dataclass(frozen=True)
 class SteeringVariant:
@@ -249,10 +255,11 @@ class SteeredQwenRewriter:
                 stack.callback(handle.remove)
             yield
 
-    def _encode_prompt(self, message: str, system_prompt: str | None = BASE_REWRITE_PROMPT):
+    def _encode_prompt(self, message: str, system_prompt: str | None = BASE_REWRITE_PROMPT,
+                       *, user_instruction: str | None = None):
         messages = [
             {"role": "system", "content": system_prompt or ''},
-            {"role": "user", "content": message},
+            {"role": "user", "content": message if user_instruction is None else user_instruction},
         ]
         prompt = self.tokenizer.apply_chat_template(
             messages,
@@ -268,6 +275,12 @@ class SteeredQwenRewriter:
             if not empty_system or not prompt.startswith(empty_system):
                 raise ValueError('This chat template cannot omit the system instruction')
             prompt = prompt[len(empty_system):]
+        if user_instruction is not None:
+            # The chat template ends at the start of the assistant turn. Seed
+            # that turn with the passage, without an end-of-turn token, so the
+            # generated suffix is the continuation. Prompt slicing excludes
+            # the entire supplied passage from returned/streamed text.
+            prompt += message
         return self.tokenizer(prompt, return_tensors="pt").to(self.device)
 
     def _generate(
@@ -326,6 +339,7 @@ class SteeredQwenRewriter:
         layer_strengths: dict[int, float] | None = None,
         layer_vector_ids: dict[int, str] | None = None,
         system_prompt: str | None = BASE_REWRITE_PROMPT,
+        user_instruction: str | None = None,
         max_new_tokens: int | None = None,
         interventions=None,
     ) -> GenerationResult:
@@ -346,8 +360,12 @@ class SteeredQwenRewriter:
         with self._generation_lock:
             if cancelled.is_set():
                 raise GenerationCancelled()
-            inputs = (self._encode_prompt(message) if system_prompt == BASE_REWRITE_PROMPT
-                      else self._encode_prompt(message, system_prompt=system_prompt))
+            if user_instruction is not None:
+                inputs = self._encode_prompt(message, system_prompt=system_prompt,
+                                             user_instruction=user_instruction)
+            else:
+                inputs = (self._encode_prompt(message) if system_prompt == BASE_REWRITE_PROMPT
+                          else self._encode_prompt(message, system_prompt=system_prompt))
             output_budget = self.max_new_tokens if max_new_tokens is None else max_new_tokens
             if isinstance(output_budget, bool) or not isinstance(output_budget, int) or output_budget <= 0:
                 raise ValueError('Output token budget must be a positive integer')

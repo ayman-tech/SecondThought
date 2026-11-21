@@ -308,7 +308,7 @@ def test_detox_vector_choice_reaches_worker_and_stream_events():
         assert service.vector_ids == {11: vector.id}
 
 
-@pytest.mark.parametrize('task,prompt', [('summarize',None),('custom','Respond in two short sentences.'),('none',None)])
+@pytest.mark.parametrize('task,prompt', [('summarize',None),('continue',None),('rewrite_continue',None),('custom','Respond in two short sentences.'),('none',None)])
 def test_task_prompt_and_larger_budgets_reach_worker_and_completed_metadata(task,prompt):
     from website.api.prompts import TASKS
     class Capture(FakeService):
@@ -326,6 +326,10 @@ def test_task_prompt_and_larger_budgets_reach_worker_and_completed_metadata(task
         assert service.applied['system_prompt'] == expected
         assert service.applied['max_input_tokens'] == 4096
         assert service.applied['max_new_tokens'] == 512
+        if task == 'continue':
+            assert service.applied['user_instruction'] == TASKS['continue']['user_instruction']
+        else:
+            assert 'user_instruction' not in service.applied
         result = response.json()
         assert result['task'] == task and result['system_prompt'] == expected
         assert result['max_new_tokens'] == 512

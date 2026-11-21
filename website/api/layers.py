@@ -1,8 +1,9 @@
 """Compatibility projection of the checked catalog for the current layer UI."""
 from contextlib import ExitStack, contextmanager
+from time import monotonic
 
 from secondthought.steering_rewriter import (
-    SteeredQwenRewriter, make_steering_hook,
+    SteeredQwenRewriter, make_steering_hook, GenerationResult, GenerationCancelled,
 )
 from secondthought.lab.catalog import get_catalog
 from secondthought.lab.interventions import Intervention, compile_interventions, steering_context
@@ -41,7 +42,39 @@ class ExploreRewriter(SteeredQwenRewriter):
             raise ValueError('The selected model is not loaded in this worker')
         if plan != resolve_plan(self.catalog,plan.model_id,plan.interventions):
             raise ValueError('The resolved plan no longer matches this worker catalog')
-        return self.stream_rewrite(message,0,0,interventions=plan.interventions,**kwargs)
+        continuation = kwargs.pop('continuation', None)
+        if continuation is None:
+            return self.stream_rewrite(message,0,0,interventions=plan.interventions,**kwargs)
+        # One scheduled job and one intervention plan, with a shared token and
+        # time budget. Every stage uses the normal locked, cleanup-safe runtime.
+        started = monotonic()
+        budget = kwargs['max_new_tokens']
+        rewritten = self.stream_rewrite(message,0,0,interventions=plan.interventions,
+            **(kwargs | dict(max_new_tokens=max(1,budget//2))))
+        if rewritten.finish_reason != 'stop':
+            return rewritten  # Never append to a rewrite cut off mid-sentence.
+        if kwargs['cancelled'].is_set():
+            raise GenerationCancelled()
+        remaining_time = kwargs['timeout_seconds'] - (monotonic()-started)
+        if remaining_time <= 0:
+            raise TimeoutError('Rewrite and continuation exceeded the generation deadline')
+        suffix_started = False
+        separator = continuation['separator']
+        def on_suffix(text):
+            nonlocal suffix_started
+            if not text:
+                return
+            if not suffix_started:
+                kwargs['on_text'](separator)
+                suffix_started = True
+            kwargs['on_text'](text)
+        suffix = self.stream_rewrite(rewritten.text+separator,0,0,interventions=plan.interventions,
+            **(kwargs | dict(system_prompt=continuation['continuation_system_prompt'],
+                user_instruction=continuation['user_instruction'],
+                max_new_tokens=budget-rewritten.generated_tokens,
+                timeout_seconds=remaining_time,on_text=on_suffix)))
+        return GenerationResult(rewritten.text+separator+suffix.text,
+            rewritten.generated_tokens+suffix.generated_tokens,suffix.finish_reason)
 
     @contextmanager
     def _intervention_context(self, interventions):

@@ -35,3 +35,5 @@ data/GYAFC_Corpus.zip
 
 GYAFC_Corpus/
 __MACOSX/
+data/iterater/
+research/steering_experimentation/artifacts/fluency_generation_smoke.json

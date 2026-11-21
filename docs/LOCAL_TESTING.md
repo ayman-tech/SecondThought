@@ -46,7 +46,7 @@ dependencies. It does not download Qwen weights during this step.
 uv run --locked python -m website.api.check_setup
 ```
 
-Expected: **4 verified artifacts and 101/101 available vectors**, with exit code
+Expected: **5 verified artifacts and 149/149 available vectors**, with exit code
 zero. This checks checksums, tensor shapes and catalog compatibility without
 loading or downloading the language model. For a machine-readable report, add
 `--json`.
@@ -59,9 +59,10 @@ artifacts/qwen2_5_0_5b_gyafc_formality_directions.pt
 artifacts/qwen2_5_0_5b_paradetox_directions.pt
 artifacts/qwen2_5_0_5b_formality_all_layers_v1.pt
 artifacts/qwen2_5_0_5b_detoxification_all_layers_v1.pt
+artifacts/qwen2_5_0_5b_fluency_all_layers_v1.pt
 ```
 
-You do **not** need the GYAFC corpus, ParaDetox CSV, extraction notebooks, T5
+You do **not** need the GYAFC corpus, ParaDetox CSV, IteraTeR corpus, extraction notebooks, T5
 weights or the extension service to run the Steering Lab. Do not regenerate
 directions to repair a missing artifact; restore the files from the same branch
 as the catalog manifest.
@@ -93,15 +94,38 @@ which is a different application on port 8000.
 
 ## 5. Try the controls
 
+To check continuation, select **Continue** and enter `I pushed the door open and`.
+The response should contain newly generated text after those words, rather than
+a rewrite of the input. Start with all features off, then enable steering for a
+controlled comparison. The Continue preset uses the passage as the start of the
+assistant response; Run details records this format. Generated continuations
+can introduce new content and are not guaranteed to preserve a particular plot.
+
+For a rewritten passage followed by new text, choose **Rewrite & continue**.
+The response contains the rewrite, a paragraph break, and its continuation.
+Both stages use the selected features and share the output budget. Start with
+features off to establish a baseline. A token-limited first stage is returned
+as partial text; increase the output budget if needed.
+
+In the spider-web mixer, drag a feature point or focus it and use arrow keys.
+The centre is −2, the middle ring is 0, and the edge is +2. **Layer controls**
+opens the precise sliders and saved-layer details. Feature checkboxes still
+enable/disable steering, and each feature keeps its own layer settings.
+
 1. Enter: `hey can you send me the report before noon?` A response should stream
    automatically. The initial setting is Formality, mean pooling, layer 11/+0.5.
 2. In Single layer mode, click layer 7. The Formality chip should change to L7,
    replacing its previous layer.
 3. Check **Detoxification**, leaving Formality checked. There should now be two
-   feature chips and two enabled sliders in the left-hand **Feature mix** block.
+   feature chips and two active points in the left-hand **Feature mix** block.
+   Open **Layer controls** for the precise sliders.
+   **Fluency** is also available: enable it to combine all three features, or
+   disable the others to inspect fluency alone. Its layer selection, pooling and
+   strength remain independent. Test both pooling options and several layers;
+   the colours measure held-out pair ordering, not generated response quality.
 4. Choose **Edit layers for → Detoxification**, then click layer 11. Formality
-   should retain L7. Change either mixer slider; the other strength should stay
-   unchanged. Coloured points on the wheel are draggable; slider release should
+   should retain L7. Change either point or precise slider; the other strength should stay
+   unchanged. Coloured points on the spider-web axes are draggable; release should
    submit the final value immediately.
 5. Change pooling for the edited feature. Switch the editing selector back and
    confirm the other feature retained its pooling and layers.
@@ -168,7 +192,7 @@ node website/frontend/tests/browser-smoke.mjs
 ```
 
 The script prints the temporary screenshot directory and checks real generation,
-both feature controls, native wheel dragging, scheduling, cache behaviour,
+feature controls, native spider-web dragging, scheduling, cache behaviour,
 prompt settings and responsive layouts. `WEBSITE_URL` overrides its server URL.
 
 ## Troubleshooting
@@ -176,7 +200,7 @@ prompt settings and responsive layouts. `WEBSITE_URL` overrides its server URL.
 | Symptom | Check |
 | --- | --- |
 | `uv` not found | Install uv and reopen the terminal; confirm `uv --version` succeeds. |
-| Catalog/preflight error | Confirm the PR branch, repository root and all four `.pt` files. Restore matching files; do not mix artifacts from different branches. |
+| Catalog/preflight error | Confirm the PR branch, repository root and all five `.pt` files. Restore matching files; do not mix artifacts from different branches. |
 | First startup fails downloading Qwen | Check the server traceback, network/proxy and free disk space. A fresh machine needs network access for the pinned public model. |
 | CPU inference is slow | Start with short inputs and a 64/128-token output limit. Raise budgets gradually. |
 | Input exceeds token budget | Increase Input budget up to 4,096 or shorten input/instructions. The budget includes chat formatting and instructions; text is not silently truncated. |

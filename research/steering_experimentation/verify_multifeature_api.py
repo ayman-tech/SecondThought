@@ -35,6 +35,12 @@ def main():
         ('independent_layers',[
         dict(vector_id=vector('formality',7),strength=.25),
         dict(vector_id=vector('detoxification',11,'final_token'),strength=.25)]),
+        ('fluency_mean', [dict(vector_id=vector('fluency',7),strength=.5)]),
+        ('fluency_final_token', [dict(vector_id=vector('fluency',11,'final_token'),strength=.5)]),
+        ('three_features_shared', [dict(vector_id=vector(feature,7),strength=.25)
+                                  for feature in ('formality','detoxification','fluency')]),
+        ('three_features_independent', [dict(vector_id=vector(feature,layer,pooling),strength=.25)
+            for feature,layer,pooling in [('formality',7,'mean'),('detoxification',11,'final_token'),('fluency',15,'mean')]]),
         ('baseline_after',[])]
     for revision,(name,interventions) in enumerate(cases,1):
         body=dict(session_id=session,revision=revision,model_id=model,

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { FeatureExperiment } from '../assets/feature-state.js';
 import { experimentCacheKey } from '../assets/lifecycle.js';
 
-const vectors=['formality','detoxification','empathy'].flatMap(feature_id=>
+const vectors=['formality','detoxification','fluency'].flatMap(feature_id=>
   ['mean','final_token'].flatMap(pooling=>Array.from({length:24},(_,layer_index)=>({
     id:`${feature_id}-${layer_index}-${pooling}`,feature_id,feature_label:feature_id,pooling,layer_index,
     available:true,selectable:true,
@@ -36,7 +36,7 @@ test('features retain independent layers, mode, pooling, and strengths',()=>{
 
 test('new catalog features and mixed same-layer directions need no hardcoded feature routing',()=>{
   const state=new FeatureExperiment(vectors);
-  state.enableFeature('detoxification',true);state.enableFeature('empathy',true);
+  state.enableFeature('detoxification',true);state.enableFeature('fluency',true);
   assert.equal(state.interventions().length,3);
   assert.equal(state.entries().every(i=>i.layer===11),true);
   const settings={task:'rewrite',system_prompt:'Rewrite.',max_input_tokens:2048,max_new_tokens:128};
@@ -44,7 +44,7 @@ test('new catalog features and mixed same-layer directions need no hardcoded fea
   assert.equal(key(state.interventions()),key([...state.interventions()].reverse()));
   const before=key(state.interventions());
   state.bank.values[11]=-.8;assert.notEqual(before,key(state.interventions()));
-  state.enableFeature('empathy',false);state.selectFeature('empathy');state.bank.focus(7);
+  state.enableFeature('fluency',false);state.selectFeature('fluency');state.bank.focus(7);
   assert.equal(state.interventions().length,2,'Inspecting a disabled feature never activates it');
 });
 

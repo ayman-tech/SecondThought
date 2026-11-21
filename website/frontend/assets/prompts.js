@@ -16,6 +16,7 @@ export function mountPromptControls(onChange) {
     $('prompt-state').textContent = applied.task === 'none' ? 'No system message' : 'Applied';
     const placeholders = {rewrite:'What would you like to rephrase?', answer:'Ask a question…',
       summarize:'Paste the text to summarize…', continue:'Start a passage to continue…',
+      rewrite_continue:'Write a passage to rephrase and extend…',
       custom:'Enter input for your instructions…', none:'Enter a task or question…'};
     $('draft').placeholder = placeholders[applied.task];
   }

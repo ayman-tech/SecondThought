@@ -6,6 +6,7 @@ from secondthought.lab.catalog import get_catalog
 from secondthought.lab.interventions import Intervention
 from secondthought.lab.plans import resolve_plan
 from .schemas import RunRequest, RewriteRequest
+from .prompts import prompt_format
 
 DEFAULT_MODEL = 'qwen2.5-0.5b-instruct'
 
@@ -31,6 +32,7 @@ def resolve_run(request: RunRequest, catalog=None):
         raise ValueError('Catalog version changed; reload the catalog before retrying')
     plan = resolve_plan(catalog,request.model_id,request.interventions)
     configuration = dict(plan=plan.public(),task=request.task,system_prompt=request.system_prompt,
+        prompt_format=prompt_format(request.task),
         generation=request.generation.model_dump(),
         input_sha256=hashlib.sha256(request.input.encode()).hexdigest(),
         decoding='greedy')

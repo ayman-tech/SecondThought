@@ -215,6 +215,11 @@ function updateInspection(event, snapshot, fromCache) {
   $("run-runtime").textContent = event.runtime ? `${event.runtime.device ?? 'unknown device'} · ${event.runtime.dtype ?? 'unknown dtype'}` : '—';
   $("run-task").textContent = snapshot.task;
   $("run-prompt").textContent = snapshot.system_prompt ?? 'No system message';
+  const format=event.applied?.prompt_format;
+  if(format?.mode==='assistant_prefill')
+    $("run-prompt").textContent+=`\n\nUser instruction: ${format.user_instruction}\nThe input passage prefills the assistant response; output contains only new text.`;
+  if(format?.mode==='rewrite_then_continue')
+    $("run-prompt").textContent+=`\n\nContinuation instruction: ${format.continuation_system_prompt}\nUser instruction: ${format.user_instruction}\nBoth stages use the selected vectors and share the output budget.`;
   $("run-budgets").textContent = `${snapshot.max_input_tokens} / ${snapshot.max_new_tokens}`;
   $("change-added-row").hidden = snapshot.task !== 'rewrite';
   $("run-alpha").textContent = describe(snapshot.interventions);

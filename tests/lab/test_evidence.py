@@ -39,14 +39,15 @@ def test_missing_legacy_score_is_not_borrowed_from_new_vector_at_same_layer():
 def test_each_new_colour_profile_is_one_comparable_measured_cohort():
     catalog=get_catalog()
     profiles=layer_evidence_profiles(catalog,'qwen2.5-0.5b-instruct')
-    assert len(profiles)==5
+    assert len(profiles)==7
     for profile in profiles[1:]:
         rows=profile['layers']
         assert profile['comparison_scope']=='single_cohort'
         assert len(rows)==24 and all(row['measured'] for row in rows)
         assert len({row['cohort_id'] for row in rows})==1
         assert len({(row['feature_id'],row['pooling']) for row in rows})==1
-        assert all(row['pairs']==2000 for row in rows)
+        expected_pairs = 84 if rows[0]['feature_id'] == 'fluency' else 2000
+        assert all(row['pairs']==expected_pairs for row in rows)
 
 
 def test_unavailable_vector_cannot_get_a_colour_from_its_saved_measurement():
@@ -59,7 +60,7 @@ def test_unavailable_vector_cannot_get_a_colour_from_its_saved_measurement():
     assert vector_evidence(original,vector_id)['measured']
 
 
-def test_all_96_colour_scores_belong_to_the_exact_candidate_and_tensor():
+def test_all_colour_scores_belong_to_the_exact_candidate_and_tensor():
     catalog = get_catalog()
     seen = set()
     for profile in layer_evidence_profiles(catalog,'qwen2.5-0.5b-instruct')[1:]:
@@ -77,5 +78,5 @@ def test_all_96_colour_scores_belong_to_the_exact_candidate_and_tensor():
                 expected = expected / expected.norm()
             assert catalog.vector(vector.id).equal(expected)
             seen.add((vector.feature_id,vector.pooling,vector.layer_index))
-    assert seen == {(f,p,i) for f in ('formality','detoxification')
+    assert seen == {(f,p,i) for f in ('formality','detoxification','fluency')
                     for p in ('mean','final_token') for i in range(24)}

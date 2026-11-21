@@ -1,9 +1,11 @@
 # Qwen all-layer catalog: extraction, promotion, and verification
 
 This release covers `Qwen/Qwen2.5-0.5B-Instruct` at pinned revision
-`7ae557604adf67be50417f59c2c2f167def9a775`. It contains **96 new directions**:
-24 decoder block outputs × two extraction pooling methods × two features.
+`7ae557604adf67be50417f59c2c2f167def9a775`. It contains **144 directions**:
+24 decoder block outputs × two extraction pooling methods × three features.
 Five unchanged legacy entries preserve the existing website defaults.
+Fluency adds 48 vectors using the existing mean-difference algorithm. See its
+[preparation and reproduction guide](../../docs/FLUENCY_EXTRACTION.md).
 
 ## Extraction profile
 
@@ -25,6 +27,10 @@ Five unchanged legacy entries preserve the existing website defaults.
 - ParaDetox: reuse the notebook's existing `paradetox_direction_pairs.csv`
   extraction/held-out split unchanged (8,000/2,000). Assert unique, disjoint sources
   and nonempty, non-copy pairs before loading the model.
+- Fluency: filtered IteraTeR-HUMAN official train/development pairs, with document
+  and sentence isolation. 542 extraction / 84 held-out pairs; batch size 8 and
+  maximum 256 tokens, with no truncation in the recorded run. Runtime scale is
+  unit-L2; the preparation guide documents the remaining dataset limitations.
 
 Each feature artifact stores the 48 raw vectors, candidate measurements, dataset
 file and split hashes, pinned model/tokenizer revisions, activation boundary,
@@ -33,7 +39,8 @@ sentences or model weights are copied into the artifacts or public frontend.
 
 ## What the measurements establish
 
-Each direction is evaluated on 2,000 held-out pairs using projection ordering:
+Formality/detoxification directions use 2,000 held-out pairs; fluency uses 84.
+All use projection ordering:
 the proportion whose target-minus-source activation difference projects positively
 onto the learned direction. This measures held-out feature separation, not
 generation quality, semantic preservation, or a recommended alpha range.
@@ -42,6 +49,7 @@ generation quality, semantic preservation, or a recommended alpha range.
 | --- | --- | --- |
 | Formality | 48 | 0.4990–0.9595 |
 | Detoxification | 48 | 0.8600–0.9965 |
+| Fluency | 48 | 0.5833–0.8095 |
 
 The weakest formality entry is near chance. It remains explicitly experimental
 for a lab, not labeled an effective or optimal intervention. Scales differ across
@@ -49,13 +57,15 @@ layers and features; the existing -2 to +2 interaction range is an operator limi
 not a calibrated guarantee. No shuffled-control study or full rewrite-quality
 benchmark is claimed for this extraction release.
 
-`artifacts/lab_v1/generation_smoke.json` records real MPS/float32 execution of all
+The original `artifacts/lab_v1/generation_smoke.json` records real MPS/float32 execution of all
 101 catalog entries at strength +0.5 using short generation probes. For each entry,
 an observer checks that the exact expected shift was added at the declared block
 and that all hooks were removed. The report also confirms that the original
 layer-11 default produces identical text through the compatibility and original
 mixed-steering contexts on the same loaded model. Short probe samples are retained
 for inspection; they are not evidence that each direction improves rewriting.
+The current verifier also covers fluency (149 entries total); rerun it to obtain
+a report for the current catalog version.
 
 ## Reproduce offline
 
@@ -65,6 +75,10 @@ licensed GYAFC corpus available locally:
 ```bash
 uv run python -m research.steering_experimentation.extract_lab_vectors \
   --gyafc /path/to/GYAFC_Corpus --device mps --batch-size 16
+
+uv run python -m research.steering_experimentation.prepare_fluency_pairs --download
+uv run python -m research.steering_experimentation.extract_lab_vectors \
+  --feature fluency --device mps --batch-size 8 --max-length 256
 
 uv run python -m research.steering_experimentation.promote_lab_catalog
 
@@ -95,18 +109,18 @@ exposing every index 0–23. Invalid catalog vectors are unavailable, not synthe
 The catalog digest participates in the runtime steering/cache version.
 
 The catalog also exposes `layer_evidence_profiles` for the website's layer
-heatmap: exact compatibility defaults plus four separate feature/pooling
+heatmap: exact compatibility defaults plus six separate feature/pooling
 cohorts from this release. Colours use held-out pair ordering with Wilson 95%
 intervals and sample counts. Missing legacy scores are left unmeasured, never
 filled from a newer extraction. These measurements describe activation feature
-separation, not causal rewrite quality or semantic preservation. The UI uses only the four new-extraction cohorts and joins colours to the exact
+separation, not causal rewrite quality or semantic preservation. The UI uses only the six new-extraction cohorts and joins colours to the exact
 vector IDs sent to generation; there is no separate colour-view selector.
 
 Older v1 API clients retain compatibility defaults: legacy directions at 0, 4,
 11, 21 and 22, and new mean-pooled formality at other indices. The lab UI now
 keeps an independent layer/pooling/strength bank for each enabled feature and
 sends a v2 intervention list, preserving multiple features at a shared layer. Reset uses Formality/mean and layer 11 at
-+0.5. All 96 feature/layer/pooling choices have saved held-out scores. The full
++0.5. All 144 feature/layer/pooling choices have saved held-out scores. The full
 matrix is available through the catalog and `compile_interventions`/
 `steering_context`. Exact vector choices are validated, echoed in run events and
 included in cache keys. Task presets, custom instructions and bounded input/output budgets are live

@@ -29,7 +29,7 @@ def main():
             note='Model weights are not loaded or downloaded by this check. First server launch needs internet unless the pinned model is already cached.')
     except (OSError,ValueError) as exc:
         report=dict(ok=False,error=str(exc),
-            next_step='Run from the repository checkout and restore the catalog and all four artifacts from the PR branch.')
+            next_step='Run from the repository checkout and restore the catalog and its matching artifacts from this branch.')
     if args.json:
         print(json.dumps(report,indent=2))
     elif not report['ok']:

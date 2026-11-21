@@ -146,10 +146,18 @@ try {
     true,
   );
   assert.equal(await evaluate(`document.querySelector('#layer-colour-profile')`), null);
-  for (const id of ['focused-feature','focused-pooling'])
-    assert.deepEqual(await evaluate(`[...document.querySelector('#${id}').options].map(o=>o.disabled)`),[false,false]);
-  // Exhaustively verify all 96 colour/vector mappings against the shipped catalog.
-  for (const feature of ['formality','detoxification']) {
+  assert.equal(await evaluate(`document.querySelectorAll('#feature-selection input').length`),3);
+  assert.equal(await evaluate(`document.querySelectorAll('#mix-wheel .mix-web-ring').length`),4);
+  assert.equal(await evaluate(`new Set([...document.querySelectorAll('#mix-wheel .mix-axis-label')]
+    .map(label=>label.textContent)).size`),3,'Feature axes have distinct full labels');
+  await evaluate(`document.querySelector('#mix-precise-controls').showPopover()`);
+  assert.equal(await evaluate(`(() => {const controls=document.querySelector('#mix-controls');
+    return controls.scrollHeight<=controls.clientHeight+1;})()`),true,'All three feature sliders fit without clipping');
+  await evaluate(`document.querySelector('#mix-precise-controls').hidePopover()`);
+  for (const [id,count] of [['focused-feature',3],['focused-pooling',2]])
+    assert.deepEqual(await evaluate(`[...document.querySelector('#${id}').options].map(o=>o.disabled)`),Array(count).fill(false));
+  // Verify all 144 colour/vector mappings against the shipped catalog.
+  for (const feature of ['formality','detoxification','fluency']) {
     for (const pooling of ['mean','final_token']) {
       await evaluate(`window.__chooseFamily('${feature}','${pooling}')`);
       const mapping = await evaluate(`(() => {
@@ -413,18 +421,20 @@ try {
   assert.equal(await evaluate(`document.querySelector('#mix-detoxification').disabled`),true);
   assert.ok(await evaluate(`document.querySelector('#mix-status-detoxification').textContent.includes('2 other layers still active')`));
   assert.ok(await evaluate(`document.querySelector('#mix-detoxification').previousElementSibling.textContent.includes('other layers')`));
-  await evaluate(`document.querySelector('#mix-status-detoxification').click()`);
+  await evaluate(`document.querySelector('#mix-precise-controls').showPopover();document.querySelector('#mix-status-detoxification').click()`);
   assert.equal(await evaluate(`document.querySelector('#mix-layers-detoxification').matches(':popover-open')`),true);
   assert.ok(await evaluate(`document.querySelector('#mix-layers-detoxification').textContent.includes('L9') && document.querySelector('#mix-layers-detoxification').textContent.includes('L11')`));
-  await evaluate(`document.querySelector('#mix-layers-detoxification').hidePopover();document.querySelector('[aria-label="Disable Detoxification layer 9"]').click();document.querySelector('[data-layer="11"]').click()`);
+  await evaluate(`document.querySelector('#mix-layers-detoxification').hidePopover();document.querySelector('#mix-precise-controls').hidePopover();document.querySelector('[aria-label="Disable Detoxification layer 9"]').click();document.querySelector('[data-layer="11"]').click()`);
   await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   assert.ok(await evaluate(`document.querySelector('#run-runtime').textContent.includes('torch.float')`),'Actual generation dtype is visible');
   // Drag a wheel feature point; the other feature must retain its strength.
   await evaluate(`document.querySelector('.feature-mixer').scrollIntoView({block:'center',behavior:'instant'})`);
-  const wheelGeometry=await evaluate(`({point:document.querySelector('[data-mix-feature="formality"]').getBoundingClientRect().toJSON(),wheel:document.querySelector('#mix-wheel').getBoundingClientRect().toJSON()})`);
+  const wheelGeometry=await evaluate(`(() => {const wheel=document.querySelector('#mix-wheel'),p=wheel.createSVGPoint();
+    p.x=160;p.y=145-88*(.6+2)/4;const target=p.matrixTransform(wheel.getScreenCTM());
+    return {point:document.querySelector('[data-mix-feature="formality"]').getBoundingClientRect().toJSON(),target:{x:target.x,y:target.y}};})()`);
   await cdp('Input.dispatchMouseEvent',{type:'mousePressed',x:wheelGeometry.point.left+wheelGeometry.point.width/2,y:wheelGeometry.point.top+wheelGeometry.point.height/2,button:'left',clickCount:1});
-  await cdp('Input.dispatchMouseEvent',{type:'mouseMoved',x:wheelGeometry.wheel.left+wheelGeometry.wheel.width/2,y:wheelGeometry.wheel.top+wheelGeometry.wheel.height*(100-68*.6/2)/200,button:'left',buttons:1});
-  await cdp('Input.dispatchMouseEvent',{type:'mouseReleased',x:wheelGeometry.wheel.left+wheelGeometry.wheel.width/2,y:wheelGeometry.wheel.top+wheelGeometry.wheel.height*(100-68*.6/2)/200,button:'left',clickCount:1});
+  await cdp('Input.dispatchMouseEvent',{type:'mouseMoved',x:wheelGeometry.target.x,y:wheelGeometry.target.y,button:'left',buttons:1});
+  await cdp('Input.dispatchMouseEvent',{type:'mouseReleased',x:wheelGeometry.target.x,y:wheelGeometry.target.y,button:'left',clickCount:1});
   await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
   combined=await evaluate(`window.requests.at(-1).interventions`);
   assert.equal(combined.find(i=>i.vector_id.startsWith('qwen-formality')).strength,.6);
@@ -466,6 +476,13 @@ try {
   await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,100);
   assert.equal(await evaluate(`window.requests.at(-1).system_prompt`),null);
   assert.equal(await evaluate(`document.querySelector('#run-prompt').textContent`),'No system message');
+  await evaluate(`document.querySelector('#clear').click();document.querySelector('#experiment-prompt').value='rewrite_continue';document.querySelector('#experiment-prompt').dispatchEvent(new Event('change'));
+    document.querySelector('#draft').value="hell i'm not gonna do this work unless I get a reward. you can always choose to fire me but these are my conditions at the moment.";document.querySelector('#draft').dispatchEvent(new Event('input'))`);
+  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,100);
+  assert.equal(await evaluate(`window.requests.at(-1).task`),'rewrite_continue');
+  assert.equal(await evaluate(`document.querySelector('#run-task').textContent`),'rewrite_continue');
+  assert.ok(await evaluate(`document.querySelector('#output').textContent.includes('\\n\\n')`),'Combined output contains rewrite and continuation');
+  assert.ok(await evaluate(`document.querySelector('#run-prompt').textContent.includes('Both stages')`),'Run details disclose both phases');
   await evaluate(`document.querySelector('#clear').click();document.querySelector('#experiment-prompt').value='rewrite';document.querySelector('#experiment-prompt').dispatchEvent(new Event('change'))`);
   for (const path of ["/community", "/evaluation"]) {
     await cdp("Page.navigate", { url: base + path });

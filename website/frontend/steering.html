@@ -40,10 +40,11 @@
 <script id="layer-vector-data" type="application/json">{{ layer_vectors | tojson }}</script>
 <script id="layer-evidence-data" type="application/json">{{ layer_evidence | tojson }}</script>
 <div class="model-visual">
-<aside class="feature-mixer" aria-labelledby="mix-title" title="Each slider controls its feature at the displayed layer. Other enabled layers retain their strengths.">
-  <div class="mix-title"><h2 id="mix-title">Feature mix</h2><span>α</span></div>
-  <div class="mix-dial" title="Drag a coloured feature point or use its slider. Angles are schematic, not measured vector similarity."><svg id="mix-wheel" viewBox="0 0 200 200" role="img" aria-label="Schematic feature strengths; equivalent keyboard controls are in the sliders below"></svg></div>
-  <div id="mix-controls"></div>
+<aside class="feature-mixer" aria-labelledby="mix-title">
+  <div class="mix-title"><h2 id="mix-title">Feature mix</h2><button class="mix-precision-toggle" popovertarget="mix-precise-controls">Layer controls ↗</button></div>
+  <div class="mix-dial" title="Drag each point along its axis, or focus it and use arrow keys. Each point edits the displayed layer only. This diagram shows controls, not measured vector similarity."><svg id="mix-wheel" viewBox="0 0 320 290" role="group" aria-label="Feature strengths: drag a point or use arrow keys. Centre minus two, middle zero, edge plus two."></svg></div>
+  <div class="mix-scale"><span>Centre −2</span><span>Middle 0</span><span>Edge +2</span></div>
+  <div id="mix-precise-controls" class="mix-precision-popover" popover="auto" aria-label="Precise feature and layer controls"><div id="mix-controls"></div></div>
 </aside>
 <div class="model-map">
 <div class="layer-evidence-toolbar">
@@ -94,7 +95,7 @@
   <p>Each feature keeps its own layers, mode, pooling and strengths. Choose Edit layers for to change the feature shown in the layer diagram. The enabled-layer chips show each retained strength. Click × to disable a layer, or Clear layers for a prompt-only baseline. Returning to Single layer keeps the focused enabled layer, or the first enabled layer. Reset restores Single layer mode.</p>
   <p><strong>Layer colours:</strong> darker teal means higher held-out pair ordering for the feature and pooling you chose. The number is the percentage of held-out pairs whose target-minus-source activations project positively onto that exact direction. A 50% reference is shown; colours are not adjusted against shuffled controls.</p>
   <p>Compare within the same feature, pooling and extraction cohort. Hover or focus a layer for its score and Wilson 95% interval. Overlapping intervals do not establish a reliable ranking. Grey means no recorded measurement for that exact vector, not ineffective steering.</p>
-  <p>Colours always describe the exact new-extraction vectors chosen by feature and pooling. Only enabled layers enter generation. Reset selects Formality with mean pooling and layer 11 at +0.5. Older vectors remain available to legacy API clients; this lab uses the four new-extraction families. Pair ordering does not measure formalization, detoxification or meaning preservation in the generated rewrite.</p>
+  <p>Colours describe the selected feature and pooling vectors. Reset selects Formality, mean pooling, layer 11 at +0.5. Fluency uses human-annotated document revisions; its effects on other tasks remain experimental. Pair ordering measures activation separation, not response quality or meaning preservation.</p>
 </aside>
 
 </section>

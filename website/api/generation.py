@@ -15,9 +15,10 @@ from secondthought.lab.plans import InterventionPlan
 
 from .schemas import RewriteRequest, RunRequest
 from .runs import canonical_request, resolve_run, DEFAULT_MODEL
+from .prompts import prompt_format
 
 logger = logging.getLogger(__name__)
-VERSION = "lab-interventions-v6"
+VERSION = "lab-interventions-v8"
 
 
 class AdmissionError(Exception):
@@ -161,13 +162,19 @@ class GenerationManager:
                 options = dict(on_text=on_text,cancelled=job.cancelled,
                     system_prompt=job.run.system_prompt,**job.run.generation.model_dump(),
                     timeout_seconds=self.timeout_seconds)
+                rendering = prompt_format(job.run.task)
+                if rendering['mode'] == 'assistant_prefill':
+                    options['user_instruction'] = rendering['user_instruction']
+                if rendering['mode'] == 'rewrite_then_continue':
+                    options['continuation'] = rendering
+                message = job.run.input
                 if callable(getattr(self.service,'stream_run',None)):
-                    result = await asyncio.to_thread(self.service.stream_run,job.plan,job.run.input,**options)
+                    result = await asyncio.to_thread(self.service.stream_run,job.plan,message,**options)
                 else:
                     # Compatibility for injected v1-only services. Production
                     # ExploreRewriter executes v1 and v2 through stream_run.
                     result = await asyncio.to_thread(
-                        self.service.stream_rewrite,job.request.message,job.request.alpha,0,**options,
+                        self.service.stream_rewrite,message,job.request.alpha,0,**options,
                         **({'layer_strengths':dict(job.request.layer_strengths)} if job.request.layer_strengths is not None else {}),
                         **({'layer_vector_ids':dict(job.request.layer_vector_ids)} if job.request.layer_vector_ids else {}))
                 if job.cancelled.is_set():

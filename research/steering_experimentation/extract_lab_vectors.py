@@ -1,4 +1,4 @@
-"""Extract both Qwen lab features at every decoder output, with held-out reports.
+"""Extract Qwen lab features at every decoder output, with held-out reports.
 
 Uses local datasets and a pinned cached model snapshot. Writes research artifacts
 only; promotion into the runtime catalog is a separate validated operation.
@@ -23,6 +23,7 @@ from huggingface_hub import snapshot_download
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from secondthought.lab.extraction import POOLINGS, SITE, capture_representations
+from research.steering_experimentation.feature_recipes import FEATURES
 
 MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
 REVISION = "7ae557604adf67be50417f59c2c2f167def9a775"
@@ -94,9 +95,29 @@ def load_detox(path):
         orientation="neutral_minus_toxic")
 
 
-def validate_split(extraction, heldout):
-    if (len(extraction), len(heldout)) != (8000, 2000):
-        raise ValueError("Expected 8,000 extraction and 2,000 held-out pairs")
+def load_fluency(path):
+    metadata = json.loads(path.with_suffix('.metadata.json').read_text())
+    if metadata.get('pairs_sha256') != digest(path.read_bytes()):
+        raise ValueError('Prepared fluency pairs checksum mismatch')
+    groups = {'extraction': [], 'heldout': []}
+    for line in path.read_text().splitlines():
+        row = json.loads(line)
+        groups[row['split']].append(Pair(row['source'], row['target'], row['group'], row['row_id']))
+    extraction, heldout = groups['extraction'], groups['heldout']
+    if {p.group for p in extraction} & {p.group for p in heldout}:
+        raise ValueError('Fluency documents must be disjoint')
+    extraction_texts = {normalized(t) for p in extraction for t in (p.source, p.target)}
+    heldout_texts = {normalized(t) for p in heldout for t in (p.source, p.target)}
+    if extraction_texts & heldout_texts:
+        raise ValueError('Fluency source/target sentences must not cross splits')
+    return extraction, heldout, metadata
+
+
+def validate_split(extraction, heldout, expected=None):
+    if len(extraction) < 2 or len(heldout) < 2:
+        raise ValueError('Need at least two extraction and held-out pairs')
+    if expected is not None and (len(extraction), len(heldout)) != expected:
+        raise ValueError(f'Expected {expected} extraction/held-out pairs')
     left, right = {normalized(p.source) for p in extraction}, {normalized(p.source) for p in heldout}
     if len(left) != len(extraction) or len(right) != len(heldout) or not left.isdisjoint(right):
         raise ValueError("Extraction and held-out sources must be unique and disjoint")
@@ -183,27 +204,33 @@ def extract(model, tokenizer, feature, extraction, heldout, metadata, args, devi
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--gyafc', type=Path, required=True)
+    parser.add_argument('--gyafc', type=Path)
+    parser.add_argument('--fluency-pairs', type=Path, default=ROOT/'data/iterater/fluency_pairs.jsonl')
     parser.add_argument('--paradetox', type=Path, default=ROOT/'research/steering_experimentation/artifacts/paradetox_direction_pairs.csv')
     parser.add_argument('--output', type=Path, default=ROOT/'research/steering_experimentation/artifacts/lab_v1')
     parser.add_argument('--device', choices=['mps','cpu','cuda'], default='mps')
     parser.add_argument('--batch-size', type=int, default=16)
     parser.add_argument('--max-length', type=int, default=128)
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--feature', choices=['formality','detoxification','both'], default='both')
+    parser.add_argument('--feature', choices=[*FEATURES, 'both', 'all'], default='both',
+                        help='both preserves the original formality/detoxification workflow')
     args = parser.parse_args()
     if args.batch_size < 1 or args.max_length < 1:
         parser.error('Batch size and max length must be positive')
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
     splits = {}
-    if args.feature in ('formality','both'):
+    if args.feature in ('formality','both','all'):
+        if args.gyafc is None:
+            parser.error('--gyafc is required when extracting formality')
         splits['formality'] = load_formality(args.gyafc, args.seed)
-    if args.feature in ('detoxification','both'):
+    if args.feature in ('detoxification','both','all'):
         splits['detoxification'] = load_detox(args.paradetox)
+    if args.feature in ('fluency', 'all'):
+        splits['fluency'] = load_fluency(args.fluency_pairs)
     for feature, (extraction, heldout, _) in splits.items():
-        validate_split(extraction, heldout)
-        print(f'{feature}: validated 8000/2000 unique, disjoint source pairs', flush=True)
+        validate_split(extraction, heldout, None if feature == 'fluency' else (8000, 2000))
+        print(f'{feature}: validated {len(extraction)}/{len(heldout)} unique, disjoint source pairs', flush=True)
     snapshot = snapshot_download(MODEL, revision=REVISION, local_files_only=True)
     tokenizer = AutoTokenizer.from_pretrained(snapshot)
     tokenizer.padding_side = 'right'

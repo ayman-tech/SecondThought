@@ -65,6 +65,44 @@ def test_inspection_and_execution_share_exact_resolved_configuration():
         assert client.post('/api/v2/lab/runs',json=body).status_code==409
 
 
+@pytest.mark.parametrize('pooling', ['mean', 'final_token'])
+def test_fluency_resolves_and_executes_with_existing_features(pooling):
+    runtime = Runtime()
+    with TestClient(create_app(runtime)) as client:
+        ready(client)
+        interventions = [dict(vector_id=f'qwen-{feature}-l7-{pooling}-v1', strength=.25)
+                         for feature in ('formality','detoxification','fluency')]
+        body = request(interventions=interventions)
+        resolved = client.post('/api/v2/lab/runs/resolve', json=body)
+        assert resolved.status_code == 200
+        response = client.post('/api/v2/lab/runs/stream', json=body)
+        completed = json.loads(response.text.splitlines()[-1])
+        assert completed['event'] == 'completed'
+        assert completed['applied'] == resolved.json()['resolved']
+        assert {entry.feature_id for entry in runtime.calls[0][0].interventions} == {
+            'formality','detoxification','fluency'}
+
+
+def test_continuation_format_reaches_worker_and_is_part_of_resolved_identity():
+    from website.api.prompts import TASKS
+    runtime = Runtime()
+    with TestClient(create_app(runtime)) as client:
+        ready(client)
+        body = request(task='continue', input='I pushed the door open and', interventions=[])
+        resolved = client.post('/api/v2/lab/runs/resolve', json=body).json()['resolved']
+        assert resolved['prompt_format'] == dict(mode='assistant_prefill', version=1,
+            user_instruction=TASKS['continue']['user_instruction'])
+        response = client.post('/api/v2/lab/runs/stream', json=body)
+        completed = json.loads(response.text.splitlines()[-1])
+        assert completed['applied'] == resolved
+        assert runtime.calls[0][1] == body['input']
+        assert runtime.calls[0][2]['user_instruction'] == TASKS['continue']['user_instruction']
+        custom = client.post('/api/v2/lab/runs/resolve', json=request(task='custom',
+            system_prompt=TASKS['continue']['system_prompt'], input=body['input'], interventions=[])).json()['resolved']
+        assert custom['prompt_format']['mode'] == 'user_message'
+        assert custom['experiment_id'] != resolved['experiment_id']
+
+
 @pytest.mark.parametrize('changes',[
     dict(model_id='missing-model'),dict(interventions=[dict(vector_id='missing',strength=.5)]),
     dict(interventions=[dict(vector_id='qwen-formality-l7-mean-v1',strength=3)]),

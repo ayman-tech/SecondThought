@@ -15,7 +15,7 @@ from .prompts import (TASKS, MAX_CHARACTERS, MAX_SYSTEM_CHARACTERS,
 class PromptInstructions(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
-    task: Literal['rewrite','answer','summarize','continue','custom','none'] = 'rewrite'
+    task: Literal['rewrite','answer','summarize','continue','rewrite_continue','custom','none'] = 'rewrite'
     system_prompt: str | None = Field(default=TASKS['rewrite']['system_prompt'], max_length=MAX_SYSTEM_CHARACTERS)
 
     @model_validator(mode='after')

@@ -13,7 +13,7 @@ import Gradio, the extension API, or any fine-tuned T5 model.
 ## Run
 
 **New machine or PR reviewer?** Start with the [local setup and testing guide](../docs/LOCAL_TESTING.md),
-including the offline artifact preflight and a step-by-step test of both features.
+including the offline artifact preflight and tests of the three steering features.
 
 From the repository root:
 
@@ -79,7 +79,7 @@ and is no longer loaded.
 Explore also loads `assets/experiment.css` for its setup controls and response
 inspector. On desktop the setup is a left rail, the layer diagram and live draft/
 output occupy the center, and observations span the full width beneath both blocks. Smaller screens
-reflow the panels. Feature × pooling chooses one of four checked vector families.
+reflow the panels. Feature × pooling chooses one of six checked vector families.
 The model is fixed; task presets and custom system instructions are live. Open
 **Instructions & limits** to edit the exact system prompt and token budgets,
 then press **Apply**. Typing in the editor does not change a running experiment
@@ -97,8 +97,36 @@ The website now loads its compatibility map from the checked catalog under
 `artifacts/catalog/`. All 24 decoder indices are available. The entries below
 remain the unchanged defaults at their existing layers; every other index uses
 the new experimental mean-pooled formality vector. The complete catalog contains
-96 new formality/detoxification × layer × pooling directions plus five references.
+144 formality/detoxification/fluency × layer × pooling directions plus five references.
 See [extraction and validation details](../research/steering_experimentation/ALL_LAYER_CATALOG.md).
+Fluency preparation, provenance, limitations and reproduction commands are in
+the [fluency extraction guide](../docs/FLUENCY_EXTRACTION.md).
+
+Continue uses assistant-prefill completion: the supplied passage starts an open
+assistant turn, and only tokens generated after that passage are returned and
+streamed. A fixed user instruction asks the model to extend that passage. The
+passage and instructions both count toward the input budget. Resolved/completed
+run metadata records `prompt_format` and its instruction; Run details displays
+it alongside the system instruction. Other tasks, including Custom, retain
+normal user-message input. Restart the server and reload the page after changing
+task presets; the serving version invalidates older cached results.
+
+**Rewrite & continue** runs two stages in one scheduled job: rewrite the original
+input, then generate a new paragraph from the rewritten text. Both stages apply
+the same selected intervention plan. The rewrite can use at most half the output
+budget; the continuation receives the remaining generated-token budget. A rewrite
+that hits its limit is returned as a partial result without appending to it.
+Cancellation and the generation deadline apply to the whole job. Run details
+and resolved metadata include both instructions and the rendering strategy.
+New continuation text can introduce ideas; it is not a meaning-preserving rewrite.
+
+The feature mixer is a three-axis spider-web control. Drag coloured points along
+their axes, or focus a point and use arrow keys (Home/End select the bounds).
+The centre means −2, the middle ring means 0, and the outer ring means +2. Disabled
+features display `Off` and do not enter generation. Each point edits only that
+feature's focused layer; other selected layers retain their strengths. **Layer
+controls** opens precise sliders and the complete saved-layer lists. The web is
+a schematic of the settings, not measured geometry between activation vectors.
 
 | Layer (zero-based) | Direction | Artifact candidate | Scale |
 | --- | --- | --- | --- |
@@ -204,9 +232,9 @@ The [multi-feature run contract](../docs/MULTIFEATURE_RUNS.md) supports differen
 layers per feature, multiple features at one layer, independent strengths and
 exact artifact selection. Production v1 requests adapt to the same execution
 engine. The frontend now uses v2: enable features with the checkboxes, choose
-**Edit layers for** to configure independent layers/pooling, and use the square
-**Feature mix** controls beside the model. Each slider or draggable coloured
-point controls its feature at the displayed layer. The schematic wheel is not a
+**Edit layers for** to configure independent layers/pooling, and use the
+**Feature mix** spider web beside the model. Each draggable point, or precise
+slider under **Layer controls**, edits its feature at the displayed layer. The web is not a
 measurement of feature angles or activation similarity.
 
 V1 rewrite/stream request:

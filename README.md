@@ -17,8 +17,8 @@ uv run --locked python -m website.api.server
 ```
 
 Open **http://127.0.0.1:8001/explore** for the interactive 24-layer steering lab.
-Enable Formality and Detoxification together with the feature checkboxes. Each
-feature keeps its own layers, pooling and strengths; the square mixer controls
+Enable Formality, Detoxification and Fluency independently or together. Each
+feature keeps its own layers, pooling and strengths; the spider-web mixer controls
 their displayed layers. Single-layer mode replaces the edited feature's layer;
 multi-layer mode allows explicit additions. Community introduces the extension.
 Typing or changing active strengths starts a real Qwen rewrite automatically, with streaming
@@ -26,6 +26,12 @@ text, cancellation of superseded work, and no Generate button. The extension API
 continues to use port 8000. See [website/README.md](website/README.md) for API
 contracts, limits, and verification. Gradio remains an optional interface to the
 same steering core while the website is developed.
+
+Fluency adds 48 vectors (all 24 layers, mean and last-token pooling) extracted
+from filtered human-annotated IteraTeR revisions. See the
+[reproduction guide](docs/FLUENCY_EXTRACTION.md) for preparation, extraction,
+provenance and validation. Layer colours measure held-out activation separation;
+they do not establish response quality or meaning preservation.
 
 Use Python 3.12 (the project supports Python 3.12–3.13). Install the application, local inference, notebook, and development dependencies:
 

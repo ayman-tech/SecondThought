@@ -1,5 +1,10 @@
 # Model-agnostic activation steering
 
+For the website's pinned Qwen catalog pipeline, use `extract_lab_vectors.py`
+and `promote_lab_catalog.py`. Fluency now uses that same all-layer pipeline;
+see [dataset preparation and reproduction](../../docs/FLUENCY_EXTRACTION.md).
+The general research runner below produces separate experimental artifacts.
+
 `run_experiment.py` learns a target-minus-source direction from any paired-text
 dataset, ranks every decoder layer with mean and final-token pooling on a disjoint
 holdout, saves a reusable artifact, and generates/analyzes outputs with the final

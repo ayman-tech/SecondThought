@@ -183,3 +183,27 @@ def test_actual_qwen_template_preserves_custom_prompt_and_omits_system_when_requ
     assert rendered.startswith('<|im_start|>user\n')
     assert '<|im_start|>system' not in rendered
     assert 'You are Qwen' not in rendered
+
+
+def test_continuation_prefill_is_in_open_assistant_turn_and_counts_toward_prompt_budget():
+    from pathlib import Path
+    from transformers import AutoTokenizer
+    from secondthought.steering_rewriter import CONTINUATION_USER_INSTRUCTION
+    snapshot = Path.home()/'.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct/snapshots/7ae557604adf67be50417f59c2c2f167def9a775'
+    if not (snapshot/'tokenizer_config.json').exists():
+        pytest.skip('Requires the optional cached Qwen tokenizer')
+    tokenizer = AutoTokenizer.from_pretrained(snapshot, local_files_only=True)
+    service = SteeredQwenRewriter.__new__(SteeredQwenRewriter)
+    service.tokenizer, service.device = tokenizer, 'cpu'
+    source = 'I pushed the door open and'
+    encoded = service._encode_prompt(source, system_prompt='Continue the passage.',
+                                     user_instruction=CONTINUATION_USER_INSTRUCTION)
+    rendered = tokenizer.decode(encoded['input_ids'][0])
+    assert rendered.endswith('<|im_start|>assistant\n' + source)
+    assert source not in rendered.split('<|im_start|>assistant\n')[0]
+    assert CONTINUATION_USER_INSTRUCTION in rendered
+    # All prefilled source tokens are input tokens, excluded by generation's
+    # normal input-length slicing from both returned and streamed responses.
+    short = service._encode_prompt('I', system_prompt='Continue the passage.',
+                                   user_instruction=CONTINUATION_USER_INSTRUCTION)
+    assert encoded['input_ids'].shape[1] > short['input_ids'].shape[1]
