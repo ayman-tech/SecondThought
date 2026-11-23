@@ -79,15 +79,15 @@ def test_lab_assets_and_relative_imports_share_a_versioned_prefix():
         assert client.get('/assets/layers.js').headers['cache-control'] == 'no-cache'
 
 
-@pytest.mark.parametrize("path", ["/explore", "/community", "/evaluation"])
+@pytest.mark.parametrize("path", ["/", "/explore", "/community", "/evaluation"])
 def test_pages_have_separate_content_and_navigation(path):
     with TestClient(create_app(FakeService())) as client:
-        response = client.get(path)
+        response = client.get(path, follow_redirects=False)
         assert response.status_code == 200
         html = response.text
         assert f'href="{path}" class="nav-active" aria-current="page"' in html
         assert ('/steering.js"' in html) == (path == "/explore")
-        for target in ("/explore", "/community", "/evaluation"):
+        for target in ("/", "/explore", "/community", "/evaluation"):
             assert f'href="{target}"' in html
         assert "{%" not in html and "{{" not in html
         if path == "/evaluation":
@@ -107,7 +107,7 @@ def test_multilayer_contract_and_legacy_redirects():
     service = Capture()
     with TestClient(create_app(service)) as client:
         wait_ready(client)
-        for path, target in [("/", "/explore"), ("/steering", "/explore"), ("/extension", "/community"), ("/about", "/community")]:
+        for path, target in [("/steering", "/explore"), ("/extension", "/community"), ("/about", "/community")]:
             assert client.get(path, follow_redirects=False).headers["location"] == target
         manifest = client.get("/api/v1/steering/config").json()["layers"]
         assert len(manifest) == 24

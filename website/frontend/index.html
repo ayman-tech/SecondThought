@@ -1,26 +1,79 @@
 {% extends "base.html" %}
+{% block styles %}<link rel="stylesheet" href="{{ frontend_assets }}/home.css">{% endblock %}
 {% block content %}
-    <section id="overview" class="hero grid-paper">
-      <div class="hero-inner">
-        <p class="eyebrow"><span class="status-dot"></span> SECONDTHOUGHT <span class="eyebrow-separator">/</span> WORDS, WITH INTENTION</p>
-        <h1>Same thought.<br><span>A little more considered.</span></h1>
-        <p class="hero-description">Explore a more formal way to say what you mean. Start with your own words, move the slider, and see how a language model rewrites them.</p>
-        <div class="hero-actions">
-          <a class="button primary" href="/steering">Try formality steering <span aria-hidden="true">↗</span></a>
-          <a class="text-link" href="#how-it-works">What moves behind the slider? <span aria-hidden="true">↓</span></a>
-        </div>
-        <p class="hero-footnote">An experimental writing tool. Review the result before you use it.</p>
-      </div>
-      <div class="spec-strip" aria-label="Current implementation">
-        <div><span class="spec-label">THE MODEL</span><strong>Qwen2.5 · 0.5B Instruct</strong></div>
-        <div><span class="spec-label">THE CONTROL</span><strong class="amber">Formality · α −2 to +2</strong></div>
-        <div><span class="spec-label">THE INTERVENTION</span><strong class="cyan">Decoder layer 11</strong></div>
-        <div><span class="spec-label">THE METHOD</span><strong>Activation steering</strong></div>
-      </div>
-    </section>
+<div class="landing">
+  <section class="landing-hero" aria-labelledby="landing-title">
+    <h1 id="landing-title">Better words.<br><span>On your terms.</span></h1>
+    <p>A private writing assistant for your browser. Custom language models for organizations.</p>
+    <div class="landing-actions">
+      <a class="landing-button landing-primary" href="#browser-extension">For Community <span aria-hidden="true">↓</span></a>
+      <a class="landing-button landing-outline" href="#custom-models">For Businesses <span aria-hidden="true">↓</span></a>
+    </div>
+  </section>
 
-    <section id="how-it-works" class="explanation section-wrap">
-      <p class="eyebrow">BEHIND THE WORDING</p><h2>A different intervention.<br>The same need for a careful read.</h2>
-      <div class="explanation-grid"><article><span class="step-number">01 / A FIXED TASK</span><h3>Start with a rewrite.</h3><p>Qwen receives the same neutral instruction at every setting: rewrite the sentence while preserving its meaning. Moving the slider does not change that instruction.</p></article><article><span class="step-number">02 / AN INTERNAL SHIFT</span><h3>Add a learned direction.</h3><p>A vector extracted from paired informal and formal GYAFC sentences is added to the output of decoder layer 11 during generation. Alpha controls its sign and size; the model weights stay unchanged.</p></article><article><span class="step-number">03 / YOUR JUDGMENT</span><h3>Choose what still means you.</h3><p>More intervention does not always mean a better rewrite. Read the actual result, especially at stronger settings. The tool explores wording; it does not verify that every fact or intention survived.</p></article></div>
-    </section>
+  <section class="landing-products" aria-label="SecondThought products">
+    <article class="landing-product landing-extension" id="browser-extension" aria-labelledby="extension-title">
+      <div class="landing-product-copy">
+        <p class="landing-audience">Free Chrome extension</p>
+        <h2 id="extension-title">A second thought, right in your browser.</h2>
+        <p>Make a draft more professional or soften harsh language right where you write. It works offline after setup, and your drafts stay on your device.</p>
+        <ul class="landing-extension-benefits">
+          <li><strong>Catch rough wording as you type.</strong> Get a nudge for harsh or casual language, run an optional tone check, or turn nudges off for a site.</li>
+          <li><strong>Change only what needs work.</strong> Rewrite flagged lines or selected text, see exactly what changed, then copy, replace, or undo.</li>
+          <li><strong>Keep key details intact.</strong> The extension keeps the original wording if a rewrite changes a recognized number, date, or amount.</li>
+        </ul>
+        <div class="landing-product-actions">
+          <a class="landing-button landing-primary" href="/community">Download for Chrome <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+
+      <div class="landing-extension-preview">
+        <dl class="landing-example" aria-label="Example rewrite">
+          <div><dt>Draft</dt><dd>This plan is a mess. Fix it by Friday.</dd></div>
+          <div><dt>Rewrite</dt><dd>This plan needs revision. Please update it by Friday.</dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="landing-product landing-business" id="custom-models" aria-labelledby="business-title">
+      <div class="landing-product-copy">
+        <p class="landing-audience">Custom models for Business</p>
+        <h2 id="business-title">A text model built for your organization.</h2>
+        <p>Get a custom text model tailored to your team’s writing standards. We use activation steering to tune its written responses for your workflows, from more empathetic support replies to clearer internal updates.</p>
+        <p>Use the Steering Lab to try combinations of seven features, choose which layers to steer, and adjust strength (α) for each direction. Compare responses on your own examples to see what fits.</p>
+        <div class="landing-product-actions">
+          <a class="landing-button landing-outline" href="/explore">Try model steering <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+
+      <div class="landing-model-preview">
+        <div class="landing-visual" aria-hidden="true">
+          <div class="landing-fins">
+            {% for layer in layers %}
+            <span{% if layer.index in [3, 11, 17, 22] %} class="accent-fin"{% endif %}></span>
+            {% endfor %}
+          </div>
+          <svg viewBox="0 0 1200 200" preserveAspectRatio="none" focusable="false">
+            <path d="M0 106 C115 22 156 155 250 117 S378 142 465 101 S588 67 680 115 S817 84 900 115 S1043 32 1110 87 S1172 116 1200 111"/>
+            <path d="M0 132 C102 135 104 59 198 98 S298 136 361 106 S454 147 537 122 S620 43 708 87 S809 151 897 122 S955 99 1027 116 S1126 66 1200 71"/>
+          </svg>
+        </div>
+        <ul class="landing-features" aria-label="Steering features">
+          {% for feature in steering_features %}
+          <li>{{ feature }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <footer class="landing-footer">
+    <a class="brand" href="/">SecondThought<span class="brand-period">.</span></a>
+    <nav aria-label="Footer navigation">
+      <a href="/explore">Explore</a>
+      <a href="/community">Community</a>
+      <a href="/evaluation">Evaluation</a>
+    </nav>
+  </footer>
+</div>
 {% endblock %}

@@ -141,7 +141,7 @@ try {
     await evaluate(`document.querySelectorAll('[data-layer]').length`),
     24,
   );
-  assert.equal(await evaluate(`document.querySelectorAll('nav a').length`), 3);
+  assert.equal(await evaluate(`document.querySelectorAll('.site-header nav a').length`), 4);
   assert.equal(
     await evaluate(`document.documentElement.scrollWidth <= innerWidth`),
     true,
