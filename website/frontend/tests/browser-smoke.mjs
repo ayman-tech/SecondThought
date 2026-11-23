@@ -213,7 +213,7 @@ try {
   await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Home', code: 'Home' });
   await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Home', code: 'Home' });
   assert.equal(await evaluate(`document.querySelector('#inspect-metrics').getAttribute('aria-selected')`), 'true');
-  assert.deepEqual(await evaluate(`[...document.querySelectorAll('.quality-metrics dd')].map(x=>x.textContent)`), ['—', '—', '—', '—']);
+  assert.equal(await evaluate(`document.querySelectorAll('.quality-metrics dd.metric-value').length`), 4);
   // Single mode replaces selection; multi mode requires an explicit enable.
   assert.equal(await evaluate(`document.querySelector('#layer-mode-single').checked`),true);
   await evaluate(`document.querySelector('[data-layer="4"]').click();document.querySelector('[data-layer="3"]').click()`);

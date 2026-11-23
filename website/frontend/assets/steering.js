@@ -160,6 +160,7 @@ function inputChanged(kind = "text") {
   // except text edits, where old-context generation is no longer useful.
   if (kind === "text") cancelActive();
   keepPrevious();
+  markScoresStale();
   setStatus(
     ready
       ? "Waiting for a short pause in your input…"
@@ -191,7 +192,87 @@ function finish(event, snapshot, fromCache = false) {
     ? `Cached · originally ${(event.latency_ms / 1000).toFixed(2)}s`
     : `${(event.latency_ms / 1000).toFixed(2)}s generation`;
   updateInspection(event, snapshot, fromCache);
+  void scoreResponse(event, snapshot, revisions.value);
   setStatus("");
+}
+
+// Response inspector scores. Fired for every completed response (typing and
+// slider changes both start a new run); a newer revision discards older scores.
+const SIMILARITY_CUTOFF = 0.9, TOXIC_CUTOFF = 0.5; // same cut-offs as the Evaluation page
+const scoreIds = ["formality", "toxicity", "similarity", "values"];
+const pair = (score) => `${score.input.toFixed(2)} → ${score.response.toFixed(2)}`;
+function setScores(values, state, note = null) {
+  for (const id of scoreIds) {
+    const [value, detail, title] = values[id] ?? [];
+    if (value !== undefined) $(`score-${id}`).textContent = value;
+    if (detail !== undefined) $(`score-${id}-detail`).textContent = detail;
+    if (value !== undefined) $(`score-${id}`).title = title ?? "";
+  }
+  $("quality-metrics").dataset.state = state;
+  if (note !== null) $("score-status").textContent = note;
+}
+function resetScores(note = "Waiting for a response") {
+  setScores({
+    formality: ["—", "Input → response, higher is more formal"],
+    toxicity: ["—", "Input → response, lower is better"],
+    similarity: ["—", "Meaning kept, rewrite task only"],
+    values: ["—", "Numbers, dates, amounts, links, IDs"],
+  }, "empty", note);
+}
+function markScoresStale() {
+  if ($("quality-metrics").dataset.state === "scored") setScores({}, "stale", "Updating with your input…");
+}
+function showScores(scores, snapshot, finishReason) {
+  const f = scores.formality, t = scores.toxicity, v = scores.values;
+  const lowest = f.lowest < f.response - 0.05 ? `Least formal sentence ${f.lowest.toFixed(2)}` : "Higher is more formal";
+  const similarity = scores.similarity === null
+    ? ["n/a", `Rewrite task only (this is ${snapshot.task})`]
+    : [scores.similarity.toFixed(2), scores.similarity >= SIMILARITY_CUTOFF ? "Same meaning (0.90 or more)" : "Meaning may have drifted (below 0.90)"];
+  let values = ["n/a", `Rewrite task only (this is ${snapshot.task})`];
+  if (v) {
+    const changes = [v.missing.length && `Lost: ${v.missing.join(", ")}`, v.added.length && `Added: ${v.added.join(", ")}`].filter(Boolean);
+    values = v.count === 0 && !v.added.length
+      ? ["None", "No numbers, dates or IDs in the input"]
+      : [`${v.kept} of ${v.count} kept`, changes.join(" · ") || "Every value kept exactly"];
+  }
+  setScores({
+    formality: [pair(f), lowest, f.lowest_sentence],
+    toxicity: [pair(t), t.response >= TOXIC_CUTOFF ? `Still toxic (${TOXIC_CUTOFF} or more)` : "Lower is better"],
+    similarity,
+    values,
+  }, "scored", finishReason === "length" ? "Scored · partial response" : "Scored");
+}
+async function scoreResponse(event, snapshot, revision) {
+  if (event.scores) return showScores(event.scores, snapshot, event.finish_reason);
+  if (!event.rewritten_text?.trim()) return resetScores("Nothing to score");
+  setScores({}, $("quality-metrics").dataset.state === "empty" ? "empty" : "stale", "Scoring…");
+  for (let attempt = 0; attempt < 30; attempt++) {
+    let response, body;
+    try {
+      response = await fetch("/api/v2/lab/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: snapshot.message, response: event.rewritten_text, task: snapshot.task }),
+      });
+      body = await response.json().catch(() => ({}));
+    } catch {
+      if (revisions.accepts(revision)) resetScores("Couldn't reach the scorer");
+      return;
+    }
+    if (!revisions.accepts(revision)) return; // a newer response is on its way
+    if (response.ok) {
+      event.scores = body; // cached responses keep their scores
+      return showScores(body, snapshot, event.finish_reason);
+    }
+    if (response.status === 503 && body.detail === "Scoring is loading") {
+      setScores({}, "stale", "Loading scoring models…");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (!revisions.accepts(revision)) return;
+      continue;
+    }
+    return resetScores(response.status === 503 ? "Scoring unavailable" : "Couldn't score this response");
+  }
+  if (revisions.accepts(revision)) resetScores("Scoring models still loading");
 }
 
 function clearInspection() {
@@ -209,6 +290,7 @@ function clearInspection() {
     $(id).textContent = "—";
   $("change-summary").textContent =
     "Complete a rewrite to inspect its wording.";
+  resetScores();
 }
 
 function updateInspection(event, snapshot, fromCache) {

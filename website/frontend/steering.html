@@ -136,9 +136,14 @@
   <div class="settings-heading"><h2 id="response-inspector-title">Response inspector</h2><span class="inspector-symbol" aria-hidden="true">⌁</span></div>
   <div class="inspection-tabs" role="tablist" aria-label="Response observations"><button type="button" id="inspect-metrics" role="tab" aria-selected="true" aria-controls="inspect-panel-metrics" tabindex="0">Metrics</button><button type="button" id="inspect-curves" role="tab" aria-selected="false" aria-controls="inspect-panel-curves" tabindex="-1">Curves</button><button type="button" id="inspect-run" role="tab" aria-selected="false" aria-controls="inspect-panel-run" tabindex="-1">Run details</button></div>
   <div class="inspection-panel" id="inspect-panel-metrics" role="tabpanel" aria-labelledby="inspect-metrics" tabindex="0">
-    <div class="inspector-section-heading"><h3>This response</h3><span class="setup-badge">Scoring not connected</span></div>
-    <dl class="quality-metrics"><div><dt>Formality</dt><dd>—</dd></div><div><dt>Toxicity</dt><dd>—</dd></div><div><dt>Similarity</dt><dd>—</dd></div><div><dt>Value preservation</dt><dd>—</dd></div></dl>
-    <p class="inspector-note">Measurements will describe the completed response and may arrive after the text. No live scores are calculated yet.</p>
+    <div class="inspector-section-heading"><h3>This response</h3><span class="setup-badge" id="score-status" aria-live="polite">Waiting for a response</span></div>
+    <dl class="quality-metrics" id="quality-metrics">
+      <div><dt>Formality</dt><dd class="metric-value" id="score-formality">—</dd><dd class="metric-detail" id="score-formality-detail">Input → response, higher is more formal</dd></div>
+      <div><dt>Toxicity</dt><dd class="metric-value" id="score-toxicity">—</dd><dd class="metric-detail" id="score-toxicity-detail">Input → response, lower is better</dd></div>
+      <div><dt>Similarity</dt><dd class="metric-value" id="score-similarity">—</dd><dd class="metric-detail" id="score-similarity-detail">Meaning kept, rewrite task only</dd></div>
+      <div><dt>Value preservation</dt><dd class="metric-value" id="score-values">—</dd><dd class="metric-detail" id="score-values-detail">Numbers, dates, amounts, links, IDs</dd></div>
+    </dl>
+    <p class="inspector-note" id="score-note">Scores describe each completed response, using the same models as the Evaluation page: RoBERTa formality ranker, Detoxify, all-mpnet-base-v2 and the facts check. They update whenever the response changes.</p>
     <div class="inspector-footnote"><strong>Review the meaning.</strong><p>Check names, numbers, deadlines, and who is doing what. Text changes are not a guarantee of preserved meaning.</p></div>
   </div>
   <div class="inspection-panel" id="inspect-panel-curves" role="tabpanel" aria-labelledby="inspect-curves" tabindex="0" hidden>

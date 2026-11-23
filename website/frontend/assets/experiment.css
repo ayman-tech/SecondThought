@@ -266,3 +266,8 @@
   .page-steering .layer-inspector { flex-wrap:wrap; }
   .layer-inspector .active-layers { flex-basis:100%; order:3; }
 }
+/* Response inspector scores (steering.js scoreResponse): empty, stale while a newer response loads, scored */
+.quality-metrics .metric-detail { font:400 10.5px/1.45 "DM Sans",sans-serif; color:#93859e; margin:3px 0 0; }
+.quality-metrics .metric-value { font-size:19px; white-space:nowrap; font-variant-numeric:tabular-nums; transition:color .2s; }
+.quality-metrics[data-state="scored"] .metric-value { color:var(--ink); }
+.quality-metrics[data-state="stale"] .metric-value { color:#b0a0c2; }

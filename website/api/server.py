@@ -21,7 +21,7 @@ import uvicorn
 
 from secondthought.steering_rewriter import BASE_REWRITE_PROMPT
 from .generation import AdmissionError, GenerationManager, VERSION
-from .schemas import CancelRequest, RewriteRequest, RunRequest
+from .schemas import CancelRequest, RewriteRequest, RunRequest, ScoreRequest
 from secondthought.lab.plans import MAX_INTERVENTIONS
 from .runs import resolve_run
 from .prompts import (TASKS, LIMITS, MAX_CHARACTERS, DEFAULT_INPUT_TOKENS, MAX_INPUT_TOKENS,
@@ -98,7 +98,16 @@ def extension_zip() -> bytes:
     return buffer.getvalue()
 
 
-def create_app(service=None, *, service_factory=None) -> FastAPI:
+def load_scorer():
+    """The response inspector's scorer, warmed up so the first real score isn't slow."""
+    from .scoring import ResponseScorer
+    scorer = ResponseScorer()
+    scorer.score("Warm up the models.", "Warm up the models.", "rewrite")
+    return scorer
+
+
+def create_app(service=None, *, service_factory=None, scorer_factory=None) -> FastAPI:
+    """scorer_factory loads the inspector scores; without one, scoring is reported as disabled."""
     @asynccontextmanager
     async def lifespan(app):
         app.state.status = "loading"
@@ -120,7 +129,25 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
                 logger.exception("Website model initialization failed")
                 app.state.status = "unavailable"
 
-        boot = asyncio.create_task(initialize())
+        async def initialize_scoring():
+            try:
+                app.state.scorer = await asyncio.to_thread(scorer_factory)
+                app.state.scoring = "ready"
+            except Exception:
+                logger.exception("Response scoring unavailable; install it with: uv sync --extra evaluation")
+                app.state.scoring = "unavailable"
+
+        async def initialize_all():
+            # One at a time: transformers' model loading uses process-wide state
+            # (empty "meta" weights), so loading two models in parallel threads
+            # can leave one of them with no weights.
+            await initialize()
+            if scorer_factory:
+                await initialize_scoring()
+
+        app.state.scorer = None
+        app.state.scoring = "loading" if scorer_factory else "disabled"
+        boot = asyncio.create_task(initialize_all())
         try:
             yield
         finally:
@@ -131,6 +158,8 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
     app = FastAPI(title="SecondThought steering API", lifespan=lifespan)
     app.state.status = "loading"
     app.state.manager = None
+    app.state.scorer = None
+    app.state.scoring = "loading" if scorer_factory else "disabled"
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request, exc):
@@ -194,7 +223,7 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
     @app.get("/api/v1/steering/config")
     async def config():
         return dict(
-            status=app.state.status, model_id="Qwen/Qwen2.5-0.5B-Instruct",
+            status=app.state.status, scoring=app.state.scoring, model_id="Qwen/Qwen2.5-0.5B-Instruct",
             steering_version=(app.state.manager.version if app.state.manager else f'{VERSION}:{get_catalog().version}'),
             catalog_version=get_catalog().version, objective="formality", layer=11,
             catalog_model_id=DEFAULT_MODEL,
@@ -267,6 +296,16 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
     async def stream(body: RewriteRequest,request: Request):
         return stream_response(body,request)
 
+    @app.post('/api/v2/lab/score')
+    async def score(body: ScoreRequest):
+        if app.state.scorer is None:
+            raise HTTPException(503, f"Scoring is {app.state.scoring}")
+        try:
+            scores = await asyncio.to_thread(app.state.scorer.score, body.input, body.response, body.task)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        return {"status": "scored", **scores}
+
     @app.post('/api/v2/lab/runs/cancel')
     @app.post("/api/v1/steering/cancel")
     async def cancel(body: CancelRequest):
@@ -332,7 +371,7 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
     return app
 
 
-app = create_app()
+app = create_app(scorer_factory=load_scorer)
 
 
 def main():
