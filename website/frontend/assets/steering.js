@@ -120,15 +120,19 @@ function renderText(text, before = null) {
   elements.output.classList.remove("placeholder");
 }
 function keepPrevious() {
+  const label = completed
+    ? "Previous result · updating for your latest input"
+    : "Preparing your response";
+  // Already showing it: don't rebuild the response on every keystroke.
+  if (elements["output-context"].textContent === label) return;
   if (completed) {
-    renderText(completed.text);
-    elements["output-context"].textContent =
-      "Previous result · updating for your latest input";
+    // Keep the changed-word highlights, so the response doesn't flash plain while you type.
+    renderText(completed.text, completed.task === "rewrite" ? completed.source : null);
   } else {
     elements.output.textContent = "Generating a response…";
     elements.output.classList.add("placeholder");
-    elements["output-context"].textContent = "Preparing your response";
   }
+  elements["output-context"].textContent = label;
 }
 function refreshControls() {
   elements["character-count"].textContent =
@@ -277,7 +281,9 @@ function drawTrend() {
   }
   const width = Math.max(figure.clientWidth, 320), height = 240;
   const m = { top: 14, right: 118, bottom: 36, left: 38 };
-  const t0 = trend[0].t, t1 = Math.max(trend.at(-1).t, t0 + 10);
+  // The time axis grows in round steps, so older points don't slide sideways on every new one.
+  const span = trend.at(-1).t - trend[0].t;
+  const t0 = trend[0].t, t1 = t0 + ([10, 30, 60, 120, 300, 600, 1200].find((step) => span <= step * 0.9) ?? Math.ceil(span / 600) * 600);
   const x = (t) => m.left + ((t - t0) / (t1 - t0)) * (width - m.left - m.right);
   const y = (v) => m.top + (1 - v) * (height - m.top - m.bottom);
   const chart = svg("svg", { viewBox: `0 0 ${width} ${height}`, width, height });
@@ -296,7 +302,8 @@ function drawTrend() {
     const points = trend.map((p) => `${x(p.t).toFixed(1)},${y(p[series]).toFixed(1)}`).join(" ");
     chart.append(svg("polyline", { class: `trend-line ${series}`, points }));
     trend.forEach((p, i) => {
-      const dot = svg("circle", { class: `trend-dot ${series}`, cx: x(p.t), cy: y(p[series]), r: i === trend.length - 1 ? 5.5 : 4 });
+      const newest = i === trend.length - 1;
+      const dot = svg("circle", { class: `trend-dot ${series}${newest ? " newest" : ""}`, cx: x(p.t), cy: y(p[series]), r: newest ? 5.5 : 4 });
       dot.append(svg("title", {}, `${clock(p.t)} · formality ${p.formality.toFixed(2)} · toxicity ${p.toxicity.toFixed(2)}\n${p.text}`));
       chart.append(dot);
     });
