@@ -103,6 +103,21 @@ def test_continuation_format_reaches_worker_and_is_part_of_resolved_identity():
         assert custom['experiment_id'] != resolved['experiment_id']
 
 
+@pytest.mark.parametrize('pooling',['mean','final_token'])
+def test_all_seven_features_resolve_and_stream_with_independent_layers(pooling):
+    runtime=Runtime()
+    features=('formality','detoxification','fluency','simplification','conciseness','empathy','politeness')
+    with TestClient(create_app(runtime)) as client:
+        ready(client)
+        body=request(interventions=[dict(vector_id=f'qwen-{f}-l{i}-{pooling}-v1',strength=.1)
+                                    for i,f in enumerate(features)])
+        expected=client.post('/api/v2/lab/runs/resolve',json=body).json()['resolved']
+        events=client.post('/api/v2/lab/runs/stream',json=body).text.splitlines()
+        final=json.loads(events[-1]);assert final['event']=='completed'
+        assert final['applied']==expected
+        assert {i.feature_id for i in runtime.calls[0][0].interventions}==set(features)
+
+
 @pytest.mark.parametrize('changes',[
     dict(model_id='missing-model'),dict(interventions=[dict(vector_id='missing',strength=.5)]),
     dict(interventions=[dict(vector_id='qwen-formality-l7-mean-v1',strength=3)]),

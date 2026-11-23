@@ -6,6 +6,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkSliderRelease } from "./slider-release-checks.mjs";
+import { checkEveryVectorRoute } from './vector-routing-checks.mjs';
 
 const base = process.env.WEBSITE_URL || "http://127.0.0.1:8001";
 const chromePath =
@@ -146,20 +147,27 @@ try {
     true,
   );
   assert.equal(await evaluate(`document.querySelector('#layer-colour-profile')`), null);
-  assert.equal(await evaluate(`document.querySelectorAll('#feature-selection input').length`),3);
+  assert.equal(await evaluate(`document.querySelectorAll('#feature-selection input').length`),7);
   assert.equal(await evaluate(`document.querySelectorAll('#mix-wheel .mix-web-ring').length`),4);
   assert.equal(await evaluate(`new Set([...document.querySelectorAll('#mix-wheel .mix-axis-label')]
-    .map(label=>label.textContent)).size`),3,'Feature axes have distinct full labels');
+    .map(label=>label.textContent)).size`),7,'Feature axes have distinct full labels');
+  assert.equal(await evaluate(`new Set([...document.querySelectorAll('.feature-check span')].map(label=>label.style.getPropertyValue('--feature-colour'))).size`),7);
   await evaluate(`document.querySelector('#mix-precise-controls').showPopover()`);
-  assert.equal(await evaluate(`(() => {const controls=document.querySelector('#mix-controls');
-    return controls.scrollHeight<=controls.clientHeight+1;})()`),true,'All three feature sliders fit without clipping');
+  assert.equal(await evaluate(`document.querySelectorAll('#mix-controls input[type=range]').length`),7,'Every feature has a precise slider');
   await evaluate(`document.querySelector('#mix-precise-controls').hidePopover()`);
-  for (const [id,count] of [['focused-feature',3],['focused-pooling',2]])
+  for (const [id,count] of [['focused-feature',7],['focused-pooling',2]])
     assert.deepEqual(await evaluate(`[...document.querySelector('#${id}').options].map(o=>o.disabled)`),Array(count).fill(false));
-  // Verify all 144 colour/vector mappings against the shipped catalog.
-  for (const feature of ['formality','detoxification','fluency']) {
+  // Verify every feature/layer/pooling mapping against the shipped catalog.
+  for (const feature of ['formality','detoxification','fluency','simplification','conciseness','empathy','politeness']) {
     for (const pooling of ['mean','final_token']) {
       await evaluate(`window.__chooseFamily('${feature}','${pooling}')`);
+      await until(`[...document.querySelectorAll('[data-layer]')].every(button=>{
+        const expected=document.createElement('span');expected.style.backgroundColor=button.style.getPropertyValue('--evidence-fill');
+        return getComputedStyle(button.querySelector('.layer-fin')).backgroundColor===expected.style.backgroundColor;
+      })`);
+      assert.equal(await evaluate(`document.querySelector('#feature-data-name').textContent`),feature[0].toUpperCase()+feature.slice(1));
+      if(['empathy','politeness'].includes(feature))
+        assert.ok(await evaluate(`document.querySelector('#feature-data-pairs').textContent.includes('derived:')`),'Derived pairs are identified in the UI');
       const mapping = await evaluate(`(() => {
         const vectors=JSON.parse(document.querySelector('#layer-vector-data').textContent);
         const evidence=JSON.parse(document.querySelector('#layer-evidence-data').textContent).flatMap(p=>p.layers);
@@ -179,6 +187,8 @@ try {
       }
     }
   }
+  const routingAudit=await checkEveryVectorRoute({evaluate,until});
+  await writeFile(join(directory,'vector-routing.json'),JSON.stringify(routingAudit,null,2));
   await evaluate(`document.querySelector('#reset-layers').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-layer="11"]').getAttribute('aria-pressed')`),'true');
   assert.equal(await evaluate(`document.querySelector('#mix-formality').value`),'0.5');
@@ -430,7 +440,7 @@ try {
   // Drag a wheel feature point; the other feature must retain its strength.
   await evaluate(`document.querySelector('.feature-mixer').scrollIntoView({block:'center',behavior:'instant'})`);
   const wheelGeometry=await evaluate(`(() => {const wheel=document.querySelector('#mix-wheel'),p=wheel.createSVGPoint();
-    p.x=160;p.y=145-88*(.6+2)/4;const target=p.matrixTransform(wheel.getScreenCTM());
+    p.x=250;p.y=240-130*(.6+2)/4;const target=p.matrixTransform(wheel.getScreenCTM());
     return {point:document.querySelector('[data-mix-feature="formality"]').getBoundingClientRect().toJSON(),target:{x:target.x,y:target.y}};})()`);
   await cdp('Input.dispatchMouseEvent',{type:'mousePressed',x:wheelGeometry.point.left+wheelGeometry.point.width/2,y:wheelGeometry.point.top+wheelGeometry.point.height/2,button:'left',clickCount:1});
   await cdp('Input.dispatchMouseEvent',{type:'mouseMoved',x:wheelGeometry.target.x,y:wheelGeometry.target.y,button:'left',buttons:1});

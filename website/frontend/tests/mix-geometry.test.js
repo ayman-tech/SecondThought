@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MIX,featurePoint,pointStrength,strengthRadius } from '../assets/mix-geometry.js';
 
-test('signed spider-web axes round-trip strengths for all three features',()=>{
-  for(let axis=0;axis<3;axis++) for(const strength of [-2,-1.4,-.2,0,.5,2]) {
-    const point=featurePoint(axis,3,strength);
-    assert.equal(pointStrength(point.x,point.y,axis,3),strength);
+test('signed spider-web axes round-trip strengths for three and seven features',()=>{
+  for(const count of [3,7]) for(let axis=0;axis<count;axis++) for(const strength of [-2,-1.4,-.2,0,.5,2]) {
+    const point=featurePoint(axis,count,strength);
+    assert.equal(pointStrength(point.x,point.y,axis,count),strength);
   }
   assert.equal(strengthRadius(-2),0);
   assert.equal(strengthRadius(0),MIX.radius/2);

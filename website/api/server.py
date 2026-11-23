@@ -289,6 +289,9 @@ def create_app(service=None, *, service_factory=None) -> FastAPI:
                     task_presets=TASKS,
                     prompt_limits=LIMITS,
                     layer_evidence=layer_evidence_profiles(get_catalog(),DEFAULT_MODEL) if page == 'steering' else [],
+                    feature_sources={a['id']:{key:a.get('provenance',{}).get(key) for key in
+                        ('dataset','pair_construction','limitations','extraction_pairs','heldout_pairs','attribution')}
+                        for a in get_catalog().public()['artifacts']} if page == 'steering' else {},
                     layer_vectors=[dict(v, feature_label=get_catalog().features[v['feature_id']].label,
                         selectable=get_catalog().artifacts[v['artifact_id']].format == 'all_layers_v1')
                         for v in get_catalog().public()['vectors'] if v['model_id'] == DEFAULT_MODEL]

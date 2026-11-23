@@ -9,6 +9,7 @@ import hashlib
 import io
 import json
 import math
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -131,7 +132,9 @@ class Catalog:
         return result
 
     @classmethod
-    def load(cls, manifest=DEFAULT_MANIFEST, artifact_root=ARTIFACT_ROOT):
+    def load(cls, manifest=None, artifact_root=None):
+        manifest=manifest or os.getenv('SECONDTHOUGHT_LAB_CATALOG') or DEFAULT_MANIFEST
+        artifact_root=artifact_root or os.getenv('SECONDTHOUGHT_LAB_ARTIFACT_ROOT') or ARTIFACT_ROOT
         return cls(CatalogSpec.model_validate_json(Path(manifest).read_text()), Path(artifact_root))
 
     def _load_artifact(self, artifact, model):

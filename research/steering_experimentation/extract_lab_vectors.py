@@ -12,6 +12,7 @@ import json
 import math
 import platform
 import random
+import re
 import time
 from collections import Counter
 from dataclasses import dataclass
@@ -95,22 +96,28 @@ def load_detox(path):
         orientation="neutral_minus_toxic")
 
 
-def load_fluency(path):
+def load_prepared_pairs(path, feature=None):
     metadata = json.loads(path.with_suffix('.metadata.json').read_text())
+    if feature is not None and metadata.get('feature') != feature:
+        raise ValueError('Prepared pairs belong to a different feature')
     if metadata.get('pairs_sha256') != digest(path.read_bytes()):
-        raise ValueError('Prepared fluency pairs checksum mismatch')
+        raise ValueError('Prepared pairs checksum mismatch')
     groups = {'extraction': [], 'heldout': []}
     for line in path.read_text().splitlines():
         row = json.loads(line)
         groups[row['split']].append(Pair(row['source'], row['target'], row['group'], row['row_id']))
     extraction, heldout = groups['extraction'], groups['heldout']
     if {p.group for p in extraction} & {p.group for p in heldout}:
-        raise ValueError('Fluency documents must be disjoint')
+        raise ValueError('Prepared pair groups must be disjoint')
     extraction_texts = {normalized(t) for p in extraction for t in (p.source, p.target)}
     heldout_texts = {normalized(t) for p in heldout for t in (p.source, p.target)}
     if extraction_texts & heldout_texts:
-        raise ValueError('Fluency source/target sentences must not cross splits')
+        raise ValueError('Prepared source/target sentences must not cross splits')
     return extraction, heldout, metadata
+
+
+def load_fluency(path):
+    return load_prepared_pairs(path)
 
 
 def validate_split(extraction, heldout, expected=None):
@@ -186,6 +193,7 @@ def extract(model, tokenizer, feature, extraction, heldout, metadata, args, devi
             extraction_groups=dict(Counter(p.group for p in extraction)),
             heldout_groups=dict(Counter(p.group for p in heldout)), input_format="raw text, no chat template",
             max_length=args.max_length, padding_side="right", pooling_precision="float32",
+            extraction_batch_size=args.batch_size, estimator="paired_mean_difference",
             accumulation_precision="float64 across batch sums", model_precision="float32", device=str(device),
             torch_version=str(torch.__version__), transformers_version=transformers.__version__,
             python_version=platform.python_version(), extraction_truncation=dict(truncated),
@@ -193,7 +201,9 @@ def extract(model, tokenizer, feature, extraction, heldout, metadata, args, devi
             capture_code_sha256=digest((ROOT/'src/secondthought/lab/extraction.py').read_bytes()),
             elapsed_seconds=round(time.monotonic()-started, 2)))
     args.output.mkdir(parents=True, exist_ok=True)
-    path = args.output / f"qwen2_5_0_5b_{feature}_all_layers_v1.pt"
+    version=getattr(args,'artifact_version','v1')
+    path = args.output / f"qwen2_5_0_5b_{feature}_all_layers_{version}.pt"
+    if path.exists():raise ValueError('Artifact already exists; use a new output directory or artifact version')
     temporary = path.with_suffix('.pt.tmp')
     torch.save(artifact, temporary)
     temporary.replace(path)
@@ -206,6 +216,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--gyafc', type=Path)
     parser.add_argument('--fluency-pairs', type=Path, default=ROOT/'data/iterater/fluency_pairs.jsonl')
+    parser.add_argument('--pairs-dir', type=Path, default=ROOT/'data/lab_features')
+    parser.add_argument('--prepared-pairs',type=Path,help='Explicit prepared dataset, including synthetic features')
+    parser.add_argument('--feature-id',help='Feature ID for an explicit prepared dataset')
+    parser.add_argument('--artifact-version',default='v1')
+    parser.add_argument('--features', nargs='+', choices=list(FEATURES))
     parser.add_argument('--paradetox', type=Path, default=ROOT/'research/steering_experimentation/artifacts/paradetox_direction_pairs.csv')
     parser.add_argument('--output', type=Path, default=ROOT/'research/steering_experimentation/artifacts/lab_v1')
     parser.add_argument('--device', choices=['mps','cpu','cuda'], default='mps')
@@ -217,19 +232,33 @@ def main():
     args = parser.parse_args()
     if args.batch_size < 1 or args.max_length < 1:
         parser.error('Batch size and max length must be positive')
+    if not re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,63}',args.artifact_version):parser.error('Invalid artifact version')
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
     splits = {}
-    if args.feature in ('formality','both','all'):
+    selected = args.features or (list(FEATURES) if args.feature=='all' else
+        ['formality','detoxification'] if args.feature=='both' else [args.feature])
+    if args.prepared_pairs:
+        if args.features:parser.error('Use --feature-id with --prepared-pairs, not --features')
+        metadata=json.loads(args.prepared_pairs.with_suffix('.metadata.json').read_text())
+        feature=args.feature_id or metadata.get('feature','')
+        if not re.fullmatch(r'[a-z][a-z0-9_]{1,63}',feature):parser.error('Invalid prepared feature ID')
+        splits[feature]=load_prepared_pairs(args.prepared_pairs,feature)
+        selected=[]
+    elif args.feature_id:parser.error('--feature-id requires --prepared-pairs')
+    if 'formality' in selected:
         if args.gyafc is None:
             parser.error('--gyafc is required when extracting formality')
         splits['formality'] = load_formality(args.gyafc, args.seed)
-    if args.feature in ('detoxification','both','all'):
+    if 'detoxification' in selected:
         splits['detoxification'] = load_detox(args.paradetox)
-    if args.feature in ('fluency', 'all'):
+    if 'fluency' in selected:
         splits['fluency'] = load_fluency(args.fluency_pairs)
+    for feature in selected:
+        if feature not in ('formality','detoxification','fluency'):
+            splits[feature] = load_prepared_pairs(args.pairs_dir/(feature+'_pairs.jsonl'),feature)
     for feature, (extraction, heldout, _) in splits.items():
-        validate_split(extraction, heldout, None if feature == 'fluency' else (8000, 2000))
+        validate_split(extraction, heldout, (8000, 2000) if feature in ('formality','detoxification') and not args.prepared_pairs else None)
         print(f'{feature}: validated {len(extraction)}/{len(heldout)} unique, disjoint source pairs', flush=True)
     snapshot = snapshot_download(MODEL, revision=REVISION, local_files_only=True)
     tokenizer = AutoTokenizer.from_pretrained(snapshot)
@@ -240,6 +269,8 @@ def main():
     model.requires_grad_(False)
     print(f'Loaded pinned {MODEL}@{REVISION}, {len(model.model.layers)} layers on {device}', flush=True)
     for feature, (extraction, heldout, metadata) in splits.items():
+        target=args.output/f'qwen2_5_0_5b_{feature}_all_layers_{args.artifact_version}.pt'
+        if target.exists():raise ValueError('Artifact already exists; use a new output directory or version')
         extract(model, tokenizer, feature, extraction, heldout, metadata, args, device)
 
 

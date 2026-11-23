@@ -109,6 +109,8 @@ export async function checkSliderRelease({ evaluate, cdp, until }) {
       document.querySelector('#draft').dispatchEvent(new Event('input'));`);
     await release();
     assert.equal(await requestCount(), 5, "Unselected-layer release cannot flush pending typing");
+    await evaluate(`document.querySelector('[data-mix-feature="formality"]').dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowRight',bubbles:true}))`);
+    assert.equal(await requestCount(),5,'Disabled spider-axis release cannot flush pending typing');
     assert.equal(await evaluate(`[...window.__releaseQA.timers.values()].some(t => t.delay === 450)`), true);
     await evaluate(`document.querySelector('#clear').click();
       document.querySelector('[data-layer="11"]').click(); window.__releaseEdit('0.6');`);

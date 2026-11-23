@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { FeatureExperiment } from '../assets/feature-state.js';
 import { experimentCacheKey } from '../assets/lifecycle.js';
 
-const vectors=['formality','detoxification','fluency'].flatMap(feature_id=>
+const vectors=['formality','detoxification','fluency','simplification','conciseness','empathy','politeness'].flatMap(feature_id=>
   ['mean','final_token'].flatMap(pooling=>Array.from({length:24},(_,layer_index)=>({
     id:`${feature_id}-${layer_index}-${pooling}`,feature_id,feature_label:feature_id,pooling,layer_index,
     available:true,selectable:true,
@@ -62,4 +62,20 @@ test('disabled edited layer cannot hide other active layers or their peak streng
   state.enableFeature('formality',false);
   summary=state.featureSummary('formality');
   assert.equal(summary.active.length,0);assert.equal(summary.saved.length,3);
+});
+
+test('seven catalog features retain independent pooling, layers and strengths',()=>{
+  const state=new FeatureExperiment(vectors);
+  state.features.forEach((feature,index)=>{
+    state.enableFeature(feature.id,true);
+    state.bank.focus(index);
+    state.bank.values[index]=index/10;
+    state.bank.useVectorSet(feature.id,index%2?'final_token':'mean');
+  });
+  assert.equal(state.interventions().length,7);
+  state.features.forEach((feature,index)=>{
+    const entry=state.interventions().find(i=>i.vector_id.startsWith(feature.id+'-'));
+    assert.equal(entry.strength,index/10);
+    assert.equal(entry.vector_id,`${feature.id}-${index}-${index%2?'final_token':'mean'}`);
+  });
 });

@@ -79,7 +79,7 @@ and is no longer loaded.
 Explore also loads `assets/experiment.css` for its setup controls and response
 inspector. On desktop the setup is a left rail, the layer diagram and live draft/
 output occupy the center, and observations span the full width beneath both blocks. Smaller screens
-reflow the panels. Feature × pooling chooses one of six checked vector families.
+reflow the panels. Feature × pooling chooses one of fourteen checked vector families.
 The model is fixed; task presets and custom system instructions are live. Open
 **Instructions & limits** to edit the exact system prompt and token budgets,
 then press **Apply**. Typing in the editor does not change a running experiment
@@ -97,7 +97,8 @@ The website now loads its compatibility map from the checked catalog under
 `artifacts/catalog/`. All 24 decoder indices are available. The entries below
 remain the unchanged defaults at their existing layers; every other index uses
 the new experimental mean-pooled formality vector. The complete catalog contains
-144 formality/detoxification/fluency × layer × pooling directions plus five references.
+336 feature × layer × pooling directions plus five references, covering Formality,
+Detoxification, Fluency, Simplification, Conciseness, Empathy and Politeness.
 See [extraction and validation details](../research/steering_experimentation/ALL_LAYER_CATALOG.md).
 Fluency preparation, provenance, limitations and reproduction commands are in
 the [fluency extraction guide](../docs/FLUENCY_EXTRACTION.md).
@@ -120,13 +121,19 @@ Cancellation and the generation deadline apply to the whole job. Run details
 and resolved metadata include both instructions and the rendering strategy.
 New continuation text can introduce ideas; it is not a meaning-preserving rewrite.
 
-The feature mixer is a three-axis spider-web control. Drag coloured points along
+The feature mixer is a seven-axis spider-web control. Drag coloured points along
 their axes, or focus a point and use arrow keys (Home/End select the bounds).
 The centre means −2, the middle ring means 0, and the outer ring means +2. Disabled
 features display `Off` and do not enter generation. Each point edits only that
 feature's focused layer; other selected layers retain their strengths. **Layer
 controls** opens precise sliders and the complete saved-layer lists. The web is
 a schematic of the settings, not measured geometry between activation vectors.
+
+See the [feature pipeline guide](../docs/FEATURE_EXTRACTION.md) for sources,
+preparation, extraction and validation of the four latest features. **Dataset &
+direction** shows provenance for the exact selected artifact. Empathy and
+politeness use derived span/marker contrasts; no broad behavioral reliability
+claim follows from their held-out ordering scores.
 
 | Layer (zero-based) | Direction | Artifact candidate | Scale |
 | --- | --- | --- | --- |

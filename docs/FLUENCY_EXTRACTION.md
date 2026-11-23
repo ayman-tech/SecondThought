@@ -70,7 +70,8 @@ Promotion reuses existing formality/detoxification artifacts when absent from
 staging. It retains their vector IDs, values, scales and legacy defaults. It
 refuses to overwrite an existing artifact with different bytes; intentional
 releases with changed extraction need new artifact versions. The catalog now
-contains five artifacts and 149 vectors (48 per feature plus five legacy entries).
+originally contained five artifacts and 149 vectors. The current seven-feature
+catalog contains nine artifacts and 341 vectors; see [the expanded pipeline](FEATURE_EXTRACTION.md).
 The hook verification executes all catalog vectors; it is not a quality benchmark.
 
 ## Website verification

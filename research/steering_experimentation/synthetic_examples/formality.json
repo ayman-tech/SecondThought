@@ -1,0 +1,13 @@
+{
+  "id": "formality",
+  "version": "synthetic-v1",
+  "label": "Formality",
+  "low": "Informal, conversational wording with everyday vocabulary and natural contractions; still grammatical and respectful.",
+  "high": "Formal, professional wording with complete sentences and precise vocabulary; preserve the same stance and level of certainty.",
+  "preserve": ["facts", "speaker", "stance", "certainty", "names", "numbers", "deadlines", "requested actions"],
+  "nuisance_controls": ["similar length", "same topic", "same point of view", "same politeness", "same emotional intensity"],
+  "min_words": 6,
+  "max_words": 80,
+  "max_word_ratio": 1.35,
+  "scale": "raw"
+}

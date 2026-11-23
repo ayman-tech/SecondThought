@@ -1,14 +1,16 @@
 import { FeatureExperiment } from './feature-state.js';
-import { MIX,featureAngle,featurePoint,pointStrength } from './mix-geometry.js';
+import { mixFrame,featureAngle,featurePoint,pointStrength } from './mix-geometry.js';
 
-const colours=['#7954df','#208c89','#ce7c3b','#c75b97','#4c83c2'];
+const colours=['#7954df','#208c89','#ce7c3b','#b7508b','#3f76bd','#887032','#527b50'];
 export function mountFeatureLayers(onChange,onCommit=()=>{}) {
   const $=id=>document.getElementById(id);
   const experiment=new FeatureExperiment(JSON.parse($('layer-vector-data').textContent));
-  document.querySelector('.model-visual').style.setProperty('--extra-features',Math.max(0,experiment.features.length-2));
+  const sources=JSON.parse($('feature-source-data').textContent);
+  document.querySelector('.model-visual').style.setProperty('--extra-features',Math.min(2,Math.max(0,experiment.features.length-2)));
   const buttons=[...document.querySelectorAll('[data-layer]')];
   const signed=n=>`${n>=0?'+':'−'}${Math.abs(n).toFixed(1)}`;
-  const colour=id=>colours[experiment.features.findIndex(f=>f.id===id)%colours.length];
+  const colour=id=>{const index=experiment.features.findIndex(f=>f.id===id);
+    return colours[index]||`hsl(${(index*137.508)%360} 55% 42%)`;};
   const checks=new Map(), sliders=new Map();
   const ns='http://www.w3.org/2000/svg';
   const svg=(tag,attributes)=>{
@@ -63,6 +65,8 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
   }
   function renderWheel() {
     const wheel=$('mix-wheel'),nodes=[],count=experiment.features.length;
+    const frame=mixFrame(count);
+    wheel.setAttribute('viewBox',`0 0 ${frame.width} ${frame.height}`);
     const focused=document.activeElement?.dataset.mixFeature;
     const points=fraction=>experiment.features.map((_,i)=>featurePoint(i,count,-2+4*fraction))
       .map(p=>`${p.x},${p.y}`).join(' ');
@@ -87,7 +91,7 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
       const bank=experiment.banks.get(feature.id),summary=experiment.featureSummary(feature.id);
       const active=summary.enabled&&summary.editingSelected&&bank.available.has(bank.focused);
       const vector=bank.vectorChoices[bank.focused],point=positions[i],end=featurePoint(i,count,2);
-      nodes.push(svg('line',{x1:MIX.x,y1:MIX.y,x2:end.x,y2:end.y,stroke:'#c9d2e2','stroke-width':1}));
+      nodes.push(svg('line',{x1:frame.x,y1:frame.y,x2:end.x,y2:end.y,stroke:'#c9d2e2','stroke-width':1,'pointer-events':'none'}));
       const knob=svg('circle',{cx:point.x,cy:point.y,r:6,fill:active?colour(feature.id):'#fff',
         stroke:active?'#fff':colour(feature.id),'stroke-width':2,'data-mix-feature':feature.id,
         class:'mix-knob',tabindex:active?0:-1,role:'slider','aria-label':`${feature.label} layer ${bank.focused} strength`,
@@ -96,10 +100,18 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
       const title=svg('title',{});title.textContent=`${feature.label}: ${active?signed(bank.values[bank.focused]):'off'} at layer ${bank.focused}. ${summary.active.length} active layers.`;
       knob.append(title);nodes.push(knob);
       const top=i===0,left=Math.cos(featureAngle(i,count))<0;
-      const x=top?160:left?8:312,y=top?12:224,anchor=top?'middle':left?'start':'end';
+      let x=top?160:left?8:312,y=top?12:224,anchor=top?'middle':left?'start':'end';
+      if(count>3) {
+        const angle=featureAngle(i,count),dx=Math.cos(angle);
+        x=frame.x+dx*180;y=frame.y+Math.sin(angle)*180-22;
+        anchor=Math.abs(dx)<.2?'middle':dx<0?'end':'start';
+        const width=feature.label.length*9.6;
+        if(anchor==='end')x=Math.max(width+8,x);
+        if(anchor==='start')x=Math.min(frame.width-width-8,x);
+      }
       const label=svg('text',{x,y,fill:colour(feature.id),'text-anchor':anchor,class:'mix-axis-label'});
       label.textContent=feature.label;nodes.push(label);
-      const width=84,badgeX=top?x-width/2:left?x:x-width;
+      const width=count>3?108:84,badgeX=anchor==='middle'?x-width/2:anchor==='start'?x:x-width;
       nodes.push(svg('rect',{x:badgeX,y:y+6,width,height:20,rx:5,fill:colour(feature.id),'fill-opacity':'.08',stroke:colour(feature.id),'stroke-opacity':'.2'}));
       const value=svg('text',{x:badgeX+width/2,y:y+20,fill:colour(feature.id),'text-anchor':'middle',class:'mix-axis-value'});
       value.textContent=active?`${signed(bank.values[bank.focused])} α`:'0.0 (Off)';nodes.push(value);
@@ -107,7 +119,7 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
       status.textContent=summary.enabled?`L${bank.focused} · ${summary.active.length} active`:`${summary.saved.length} saved layer${summary.saved.length===1?'':'s'}`;
       nodes.push(status);
     }
-    nodes.push(svg('circle',{cx:MIX.x,cy:MIX.y,r:2,fill:'#a9a1b7','pointer-events':'none'}));
+    nodes.push(svg('circle',{cx:frame.x,cy:frame.y,r:2,fill:'#a9a1b7','pointer-events':'none'}));
     wheel.replaceChildren(...nodes);
     if(focused) wheel.querySelector(`[data-mix-feature="${CSS.escape(focused)}"]`)?.focus({preventScroll:true});
   }
@@ -122,6 +134,7 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
       const vector=bank.vectorChoices[bank.focused];
       const summary=experiment.featureSummary(feature.id);
       controls.slider.min=vector?.strength_min??-2;controls.slider.max=vector?.strength_max??2;
+      controls.slider.step=vector?.strength_step??.1;
       controls.output.textContent=controls.slider.disabled?'—':signed(bank.values[bank.focused]);
       controls.target.textContent=!summary.enabled?'Feature off':`Editing L${bank.focused}${summary.editingSelected?'':' · disabled'}`;
       controls.status.textContent=!summary.enabled?`Off · ${summary.saved.length} saved layer${summary.saved.length===1?'':'s'}`:
@@ -155,6 +168,11 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
     });
     const current=state.vectorChoices[state.focused];
     const feature=experiment.features.find(f=>f.id===experiment.editing);
+    const source=sources[current?.artifact_id]||{};
+    $('feature-data-name').textContent=feature.label;
+    $('feature-data-dataset').textContent=source.dataset||'Dataset provenance unavailable';
+    $('feature-data-pairs').textContent=`${source.pair_construction||'Target-minus-source revision pairs'}. Extraction: ${source.extraction_pairs??'unknown'}; held-out: ${source.heldout_pairs??'unknown'}.`;
+    $('feature-data-limits').textContent=source.limitations||'Experimental direction. Meaning preservation and task transfer are not established.';
     $('layer-name').textContent=`Layer ${String(state.focused).padStart(2,'0')}`;
     $('layer-kind').textContent=`${feature.label}${experiment.enabled.has(feature.id)?'':' · feature off'}`;
     $('focused-vector').textContent=current?`Focused vector: ${current.id} · ${current.scale}`:'No vector at this layer';
@@ -227,6 +245,10 @@ export function mountFeatureLayers(onChange,onCommit=()=>{}) {
     if(next===undefined)return;
     event.preventDefault();change(()=>{bank.values[bank.focused]=Number(Math.max(vector.strength_min,Math.min(vector.strength_max,next)).toFixed(6));});
   });
-  wheel.addEventListener('keyup',event=>{if(event.target.dataset.mixFeature&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End'].includes(event.key))onCommit();});
+  wheel.addEventListener('keyup',event=>{
+    const feature=event.target.dataset.mixFeature,bank=experiment.banks.get(feature);
+    if(bank&&experiment.enabled.has(feature)&&bank.selected.has(bank.focused)&&bank.available.has(bank.focused)&&
+      ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End'].includes(event.key))onCommit();
+  });
   render();return experiment;
 }

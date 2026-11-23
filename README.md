@@ -17,7 +17,8 @@ uv run --locked python -m website.api.server
 ```
 
 Open **http://127.0.0.1:8001/explore** for the interactive 24-layer steering lab.
-Enable Formality, Detoxification and Fluency independently or together. Each
+Enable Formality, Detoxification, Fluency, Simplification, Conciseness, Empathy
+and Politeness independently or together. Each
 feature keeps its own layers, pooling and strengths; the spider-web mixer controls
 their displayed layers. Single-layer mode replaces the edited feature's layer;
 multi-layer mode allows explicit additions. Community introduces the extension.
@@ -32,6 +33,11 @@ from filtered human-annotated IteraTeR revisions. See the
 [reproduction guide](docs/FLUENCY_EXTRACTION.md) for preparation, extraction,
 provenance and validation. Layer colours measure held-out activation separation;
 they do not establish response quality or meaning preservation.
+
+The [feature pipeline guide](docs/FEATURE_EXTRACTION.md) documents the four newer
+datasets, preparation, all-layer extraction and validation. Empathy and politeness
+use explicitly derived span/marker contrasts. Source details and limitations are
+available in the lab under **Dataset & direction**.
 
 Use Python 3.12 (the project supports Python 3.12–3.13). Install the application, local inference, notebook, and development dependencies:
 

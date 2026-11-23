@@ -27,6 +27,7 @@ def main():
     source = 'its really hard when u want to know what happened'
     inputs = service._encode_prompt(source)
     results = []
+    composition_results = []
     service.max_new_tokens = 8
     with torch.inference_mode():
         for position, spec in enumerate(catalog.spec.vectors):
@@ -60,6 +61,39 @@ def main():
                 pooling=spec.pooling,hook_calls=observations['calls'],exact_hook_delta=True,sample=text))
             if position%12==0:
                 print(f'Checked {position+1}/{len(catalog.spec.vectors)} vectors',flush=True)
+        # Exercise signed composition through the same layer hooks. The UI
+        # audit separately proves which IDs/strengths actual controls submit.
+        features=list(catalog.features)
+        for independent in (False,True):
+            for sign in (-1,1):
+                entries=[Intervention(vector_id=f'qwen-{feature}-l{2*i if independent else 7}-mean-v1',strength=sign*.1)
+                         for i,feature in enumerate(features)]
+                compiled=compile_interventions(catalog,DEFAULT_MODEL,entries)
+                original={};observed={index:0 for index in compiled};handles=[]
+                def before(index):
+                    def capture(_module,_inputs,output):
+                        original[index]=output[0] if isinstance(output,tuple) else output
+                    return capture
+                def after(index):
+                    def check(_module,_inputs,output):
+                        residual=output[0] if isinstance(output,tuple) else output
+                        shift=compiled[index].to(residual.device,residual.dtype).view(1,1,-1)
+                        assert torch.equal(residual,original[index]+shift)
+                        observed[index]+=1
+                    return check
+                try:
+                    for index in compiled:handles.append(service.decoder_layers[index].register_forward_hook(before(index)))
+                    with steering_context(service.decoder_layers,compiled):
+                        for index in compiled:handles.append(service.decoder_layers[index].register_forward_hook(after(index)))
+                        service.model.generate(**inputs,max_new_tokens=8,do_sample=False,
+                            temperature=None,top_p=None,top_k=None,pad_token_id=service.tokenizer.pad_token_id,
+                            eos_token_id=service.tokenizer.eos_token_id)
+                finally:
+                    for handle in handles:handle.remove()
+                assert all(observed.values())
+                assert all(not layer._forward_hooks for layer in service.decoder_layers)
+                composition_results.append(dict(independent_layers=independent,strength=sign*.1,
+                    features=features,exact_hook_delta=True,hook_calls=observed))
     # Both compatibility and mixed contexts must preserve the original default.
     service.max_new_tokens = 64
     old = service._generate(inputs,0.5,0)
@@ -71,7 +105,7 @@ def main():
     args.output.write_text(json.dumps(dict(catalog_version=catalog.version,device=str(service.device),
         precision=str(service.model.dtype),model_revision=service.model_revision,
         verification='Exact added hook delta and cleanup during real generation; not a quality guarantee.',
-        default_reference_unchanged=True,reference_output=new,results=results),indent=2)+'\n')
+        default_reference_unchanged=True,reference_output=new,results=results,composition=composition_results),indent=2)+'\n')
     print(f'All {len(results)} catalog vectors executed correctly; default unchanged. Report: {args.output}',flush=True)
 
 

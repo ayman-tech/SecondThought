@@ -22,7 +22,10 @@
     <div class="setup-field"><label for="focused-pooling">Extraction pooling <span>Per feature</span></label><select id="focused-pooling" aria-describedby="settings-note"><option value="mean" selected>Mean pooling</option><option value="final_token">Last-token pooling</option></select></div>
     <div class="setup-field"><label for="experiment-prompt">Task</label><select id="experiment-prompt">{% for id,preset in task_presets.items() %}<option value="{{ id }}">{{ preset.label }}</option>{% endfor %}</select></div>
   </div>
-  <div class="settings-bottom" hidden><p id="settings-note">Feature × pooling chooses one of four vector families. Select layers and set their strengths to apply it. Model switching awaits backend integration.</p></div>
+  <button type="button" class="feature-data-trigger" popovertarget="feature-data-guide">Dataset &amp; direction ↗</button>
+  <div id="feature-data-guide" class="mix-layer-popover" popover="auto"><strong id="feature-data-name"></strong><p id="feature-data-dataset"></p><p id="feature-data-pairs"></p><p id="feature-data-limits"></p><small>Scores describe held-out activation separation, not generated response quality.</small></div>
+  <div class="settings-bottom" hidden><p id="settings-note">Each feature and pooling combination selects an artifact family. Select layers and set strengths to apply it. Model switching awaits backend integration.</p></div>
+  <script id="feature-source-data" type="application/json">{{ feature_sources | tojson }}</script>
   <script id="prompt-limits" type="application/json">{{ prompt_limits | tojson }}</script>
   <script id="task-presets" type="application/json">{{ task_presets | tojson }}</script>
   <details class="advanced-settings" id="prompt-settings"><summary>Instructions &amp; limits</summary>
@@ -150,4 +153,5 @@
   </div>
 </aside>
 </div>
+<p class="dataset-credit">Empathy data: University of Washington · <a href="https://arxiv.org/abs/2009.08441" target="_blank" rel="noopener">Sharma, Miner, Atkins &amp; Althoff (2020)</a>.</p>
 </section>{% endblock %}

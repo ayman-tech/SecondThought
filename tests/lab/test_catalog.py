@@ -153,7 +153,7 @@ def test_promoted_catalog_has_full_coverage_and_preserves_reference_vectors():
     from secondthought.lab.catalog import get_catalog, ARTIFACT_ROOT
     catalog = get_catalog()
     assert not catalog.issues
-    for feature in ('formality','detoxification','fluency'):
+    for feature in ('formality','detoxification','fluency','simplification','conciseness','empathy','politeness'):
         entries = [v for v in catalog.spec.vectors if v.feature_id == feature and v.behavioral_status == 'experimental']
         assert {(v.layer_index,v.pooling) for v in entries} == {(i,p) for i in range(24) for p in ('mean','final_token')}
     for index in (0,4,11,21,22):

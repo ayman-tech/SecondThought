@@ -39,14 +39,14 @@ def test_missing_legacy_score_is_not_borrowed_from_new_vector_at_same_layer():
 def test_each_new_colour_profile_is_one_comparable_measured_cohort():
     catalog=get_catalog()
     profiles=layer_evidence_profiles(catalog,'qwen2.5-0.5b-instruct')
-    assert len(profiles)==7
+    assert len(profiles)==15
     for profile in profiles[1:]:
         rows=profile['layers']
         assert profile['comparison_scope']=='single_cohort'
         assert len(rows)==24 and all(row['measured'] for row in rows)
         assert len({row['cohort_id'] for row in rows})==1
         assert len({(row['feature_id'],row['pooling']) for row in rows})==1
-        expected_pairs = 84 if rows[0]['feature_id'] == 'fluency' else 2000
+        expected_pairs = {'formality':2000,'detoxification':2000,'fluency':84,'empathy':105}.get(rows[0]['feature_id'],500)
         assert all(row['pairs']==expected_pairs for row in rows)
 
 
@@ -78,5 +78,5 @@ def test_all_colour_scores_belong_to_the_exact_candidate_and_tensor():
                 expected = expected / expected.norm()
             assert catalog.vector(vector.id).equal(expected)
             seen.add((vector.feature_id,vector.pooling,vector.layer_index))
-    assert seen == {(f,p,i) for f in ('formality','detoxification','fluency')
+    assert seen == {(f,p,i) for f in ('formality','detoxification','fluency','simplification','conciseness','empathy','politeness')
                     for p in ('mean','final_token') for i in range(24)}

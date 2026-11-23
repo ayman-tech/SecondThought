@@ -42,6 +42,18 @@ def main():
         ('three_features_independent', [dict(vector_id=vector(feature,layer,pooling),strength=.25)
             for feature,layer,pooling in [('formality',7,'mean'),('detoxification',11,'final_token'),('fluency',15,'mean')]]),
         ('baseline_after',[])]
+    features=[entry['id'] for entry in catalog['features']]
+    extra=[]
+    for feature in features:
+        if feature in ('formality','detoxification','fluency'):continue
+        for pooling in ('mean','final_token'):
+            extra.append((f'{feature}_{pooling}',[dict(vector_id=vector(feature,7,pooling),strength=.25)]))
+    extra.extend([
+        ('all_features_shared',[dict(vector_id=vector(feature,7),strength=.1) for feature in features]),
+        ('all_features_independent',[dict(vector_id=vector(feature,2*index,'final_token' if index%2 else 'mean'),strength=.1)
+                                     for index,feature in enumerate(features)]),
+    ])
+    cases[-1:-1]=extra
     for revision,(name,interventions) in enumerate(cases,1):
         body=dict(session_id=session,revision=revision,model_id=model,
             catalog_version=catalog['catalog_version'],input='Send me the damn report before noon.',

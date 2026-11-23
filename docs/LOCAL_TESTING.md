@@ -46,7 +46,7 @@ dependencies. It does not download Qwen weights during this step.
 uv run --locked python -m website.api.check_setup
 ```
 
-Expected: **5 verified artifacts and 149/149 available vectors**, with exit code
+Expected: **9 verified artifacts and 341/341 available vectors**, with exit code
 zero. This checks checksums, tensor shapes and catalog compatibility without
 loading or downloading the language model. For a machine-readable report, add
 `--json`.
@@ -60,6 +60,10 @@ artifacts/qwen2_5_0_5b_paradetox_directions.pt
 artifacts/qwen2_5_0_5b_formality_all_layers_v1.pt
 artifacts/qwen2_5_0_5b_detoxification_all_layers_v1.pt
 artifacts/qwen2_5_0_5b_fluency_all_layers_v1.pt
+artifacts/qwen2_5_0_5b_simplification_all_layers_v1.pt
+artifacts/qwen2_5_0_5b_conciseness_all_layers_v1.pt
+artifacts/qwen2_5_0_5b_empathy_all_layers_v1.pt
+artifacts/qwen2_5_0_5b_politeness_all_layers_v1.pt
 ```
 
 You do **not** need the GYAFC corpus, ParaDetox CSV, IteraTeR corpus, extraction notebooks, T5
@@ -123,6 +127,8 @@ enable/disable steering, and each feature keeps its own layer settings.
    disable the others to inspect fluency alone. Its layer selection, pooling and
    strength remain independent. Test both pooling options and several layers;
    the colours measure held-out pair ordering, not generated response quality.
+   Simplification, Conciseness, Empathy and Politeness are also available. Open
+   **Dataset & direction** to inspect the exact source and pairing limitations.
 4. Choose **Edit layers for → Detoxification**, then click layer 11. Formality
    should retain L7. Change either point or precise slider; the other strength should stay
    unchanged. Coloured points on the spider-web axes are draggable; release should
@@ -200,7 +206,7 @@ prompt settings and responsive layouts. `WEBSITE_URL` overrides its server URL.
 | Symptom | Check |
 | --- | --- |
 | `uv` not found | Install uv and reopen the terminal; confirm `uv --version` succeeds. |
-| Catalog/preflight error | Confirm the PR branch, repository root and all five `.pt` files. Restore matching files; do not mix artifacts from different branches. |
+| Catalog/preflight error | Confirm the PR branch, repository root and all nine `.pt` files. Restore matching files; do not mix artifacts from different branches. |
 | First startup fails downloading Qwen | Check the server traceback, network/proxy and free disk space. A fresh machine needs network access for the pinned public model. |
 | CPU inference is slow | Start with short inputs and a 64/128-token output limit. Raise budgets gradually. |
 | Input exceeds token budget | Increase Input budget up to 4,096 or shorten input/instructions. The budget includes chat formatting and instructions; text is not silently truncated. |

@@ -174,7 +174,7 @@
   .experiment-workspace { display:contents; }
   .experiment-workspace .writing-section { grid-column:2; grid-row:3; align-self:start; }
   .experiment-workspace .writing-grid { grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:0; }
-  .experiment-workspace .writing-card { height:clamp(250px,calc(100dvh - 505px),470px); min-height:250px; padding:15px 16px 12px; }
+  .experiment-workspace .writing-card { height:clamp(220px,calc(100dvh - 580px),470px); min-height:220px; padding:15px 16px 12px; }
   .experiment-workspace .draft-card textarea { min-height:0; resize:none; }
   .writing-footer { grid-column:2; grid-row:4; min-width:0; }
   .writing-footer .writing-tools { margin-top:0; }
@@ -193,7 +193,10 @@
 .feature-check { display:flex; align-items:center; gap:7px; font-size:12px; cursor:pointer; }
 .feature-check input { margin:0; accent-color:var(--purple); }
 .feature-check span::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--feature-colour); margin-right:6px; }
-.feature-mixer { width:var(--mixer-size); height:var(--mixer-size); display:grid; grid-template-rows:18px minmax(0,1fr) 14px; gap:4px; padding:12px; border:1px solid var(--line); border-radius:12px; background:linear-gradient(140deg,#fdfbff,#f7fcfb); }
+.feature-data-trigger { margin:8px 0; padding:0; border:0; background:none; color:var(--purple); font:10px "DM Sans",sans-serif; }
+.dataset-credit { grid-column:1/-1; margin:8px 0 0; font:10px "DM Sans",sans-serif; color:var(--muted); }
+.dataset-credit a { color:inherit; }
+.feature-mixer { width:min(var(--mixer-size),100%); height:auto; aspect-ratio:1; display:grid; grid-template-rows:18px minmax(0,1fr) 14px; gap:4px; padding:12px; border:1px solid var(--line); border-radius:12px; background:linear-gradient(140deg,#fdfbff,#f7fcfb); }
 .mix-title { display:flex; justify-content:space-between; align-items:center; }
 .mix-title h2 { font:600 12px Manrope,sans-serif; margin:0; }
 .mix-title>span { color:#9787a8; font:11px ui-monospace,monospace; }
@@ -201,6 +204,9 @@
 .mix-axis-label { font:600 12px Manrope,sans-serif; }
 .mix-axis-value { font:600 12px ui-monospace,monospace; }
 .mix-axis-status { font:9px "DM Sans",sans-serif; }
+.mix-dial svg[viewBox="0 0 500 480"] .mix-axis-label { font-size:16px; }
+.mix-dial svg[viewBox="0 0 500 480"] .mix-axis-value { font-size:16px; }
+.mix-dial svg[viewBox="0 0 500 480"] .mix-axis-status { font-size:12px; }
 .mix-web-ring,.mix-web-shape { pointer-events:none; }
 .mix-scale { display:flex; justify-content:space-between; font:9px "DM Sans",sans-serif; color:var(--muted); }
 .mix-precision-toggle { border:0; padding:0; font:10px "DM Sans",sans-serif; color:var(--purple); background:none; }

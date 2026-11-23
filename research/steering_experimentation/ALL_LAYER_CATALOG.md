@@ -1,11 +1,15 @@
 # Qwen all-layer catalog: extraction, promotion, and verification
 
 This release covers `Qwen/Qwen2.5-0.5B-Instruct` at pinned revision
-`7ae557604adf67be50417f59c2c2f167def9a775`. It contains **144 directions**:
-24 decoder block outputs × two extraction pooling methods × three features.
+`7ae557604adf67be50417f59c2c2f167def9a775`. It contains **336 directions**:
+24 decoder block outputs × two extraction pooling methods × seven features.
 Five unchanged legacy entries preserve the existing website defaults.
 Fluency adds 48 vectors using the existing mean-difference algorithm. See its
 [preparation and reproduction guide](../../docs/FLUENCY_EXTRACTION.md).
+Simplification, Conciseness, Empathy and Politeness each add another 48 vectors.
+Their source adapters and limitations are documented in the
+[expanded feature pipeline](../../docs/FEATURE_EXTRACTION.md). They use the same
+capture, pooling and mean-difference estimator.
 
 ## Extraction profile
 
@@ -64,7 +68,7 @@ and that all hooks were removed. The report also confirms that the original
 layer-11 default produces identical text through the compatibility and original
 mixed-steering contexts on the same loaded model. Short probe samples are retained
 for inspection; they are not evidence that each direction improves rewriting.
-The current verifier also covers fluency (149 entries total); rerun it to obtain
+The current verifier covers all seven features (341 entries total); rerun it to obtain
 a report for the current catalog version.
 
 ## Reproduce offline
@@ -109,18 +113,18 @@ exposing every index 0–23. Invalid catalog vectors are unavailable, not synthe
 The catalog digest participates in the runtime steering/cache version.
 
 The catalog also exposes `layer_evidence_profiles` for the website's layer
-heatmap: exact compatibility defaults plus six separate feature/pooling
+heatmap: exact compatibility defaults plus fourteen separate feature/pooling
 cohorts from this release. Colours use held-out pair ordering with Wilson 95%
 intervals and sample counts. Missing legacy scores are left unmeasured, never
 filled from a newer extraction. These measurements describe activation feature
-separation, not causal rewrite quality or semantic preservation. The UI uses only the six new-extraction cohorts and joins colours to the exact
+separation, not causal rewrite quality or semantic preservation. The UI uses only the fourteen new-extraction cohorts and joins colours to the exact
 vector IDs sent to generation; there is no separate colour-view selector.
 
 Older v1 API clients retain compatibility defaults: legacy directions at 0, 4,
 11, 21 and 22, and new mean-pooled formality at other indices. The lab UI now
 keeps an independent layer/pooling/strength bank for each enabled feature and
 sends a v2 intervention list, preserving multiple features at a shared layer. Reset uses Formality/mean and layer 11 at
-+0.5. All 144 feature/layer/pooling choices have saved held-out scores. The full
++0.5. All 336 feature/layer/pooling choices have saved held-out scores. The full
 matrix is available through the catalog and `compile_interventions`/
 `steering_context`. Exact vector choices are validated, echoed in run events and
 included in cache keys. Task presets, custom instructions and bounded input/output budgets are live
