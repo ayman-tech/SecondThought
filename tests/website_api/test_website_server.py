@@ -333,3 +333,22 @@ def test_task_prompt_and_larger_budgets_reach_worker_and_completed_metadata(task
         result = response.json()
         assert result['task'] == task and result['system_prompt'] == expected
         assert result['max_new_tokens'] == 512
+
+
+def test_download_buttons_always_point_at_the_zip():
+    import re
+
+    from jinja2 import Environment, FileSystemLoader
+
+    from website.api.server import FRONTEND
+
+    with TestClient(create_app(FakeService())) as client:
+        served = client.get("/community").text
+    # A server started before a pull renders the page without the download address;
+    # the buttons must still link to the zip, never to an empty href (which saves the page).
+    stale = Environment(loader=FileSystemLoader(str(FRONTEND))).get_template("community.html").render(
+        page="community", title="Community", description="", navigation=[]
+    )
+    for html in (served, stale):
+        links = re.findall(r'class="(?:download|install)-button" href="([^"]*)"', html)
+        assert links == ["/downloads/secondthought-extension.zip"] * 2
