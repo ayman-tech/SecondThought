@@ -147,10 +147,10 @@
     <div class="inspector-footnote"><strong>Review the meaning.</strong><p>Check names, numbers, deadlines, and who is doing what. Text changes are not a guarantee of preserved meaning.</p></div>
   </div>
   <div class="inspection-panel" id="inspect-panel-curves" role="tabpanel" aria-labelledby="inspect-curves" tabindex="0" hidden>
-    <div class="setup-field"><label for="curve-intervention">Vary one intervention</label><select id="curve-intervention" disabled><option>Choose a direction after integration</option></select></div>
-    <div class="empty-curve" role="img" aria-label="Empty strength curve. Evaluation and sweep execution are not connected."><div class="curve-grid" aria-hidden="true"><span></span><span></span><span></span></div><div class="curve-empty-label"><strong>Explore the response curve.</strong><span>Measured points will appear here.</span></div><div class="curve-axis" aria-hidden="true"><span>−2</span><span>Strength α</span><span>+2</span></div></div>
-    <p class="inspector-note">Vary one strength while holding other settings fixed. No estimated scores or simulated curves.</p>
-    <div class="sweep-actions"><button type="button" disabled>Run sweep</button><button type="button" disabled>Compare zero baseline</button></div><p class="inspector-note">Scoring, sweep execution, and baseline comparison are not connected yet.</p>
+    <div class="inspector-section-heading"><h3>Over time</h3><span class="setup-badge" id="trend-status" aria-live="polite">No responses yet</span></div>
+    <div class="trend-legend" aria-hidden="true"><span><i class="trend-key formality"></i>Formality</span><span><i class="trend-key toxicity"></i>Toxicity</span><span><i class="trend-key threshold"></i>Toxic at 0.5 or more</span></div>
+    <figure class="trend-chart" id="trend-chart" role="img" aria-label="Formality and toxicity of each completed response over time"></figure>
+    <div class="trend-actions"><p class="inspector-note">Each point is one completed response in this tab, scored by the same models as the Metrics tab. The chart grows as you type and change settings. Hover a point for its text.</p><button type="button" id="trend-clear">Clear</button></div>
   </div>
   <div class="inspection-panel" id="inspect-panel-run" role="tabpanel" aria-labelledby="inspect-run" tabindex="0" hidden>
     <h3>Last completed run</h3><dl class="inspection-values"><div><dt>Applied layers</dt><dd id="run-alpha">—</dd></div><div><dt>Generation time</dt><dd id="run-time">—</dd></div><div><dt>Generated tokens</dt><dd id="run-tokens">—</dd></div><div><dt>Finish reason</dt><dd id="run-finish">—</dd></div><div><dt>Result source</dt><dd id="run-source">—</dd></div><div><dt>Device / dtype</dt><dd id="run-runtime">—</dd></div><div><dt>Task</dt><dd id="run-task">—</dd></div><div><dt>System instruction</dt><dd id="run-prompt">—</dd></div><div><dt>Token budgets (input / output)</dt><dd id="run-budgets">—</dd></div></dl>
