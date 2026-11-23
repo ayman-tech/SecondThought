@@ -1,0 +1,920 @@
+{
+  "catalog_version": "fc0ae8a4b11d417debeccbd4e49f889769de5e711af5e4a25989378592e19bcf",
+  "device": "mps",
+  "precision": "torch.float32",
+  "model_revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+  "verification": "Exact added hook delta and cleanup during real generation; not a quality guarantee.",
+  "default_reference_unchanged": true,
+  "reference_output": "It is difficult for you to know what happened when you want to know.",
+  "results": [
+    {
+      "vector_id": "qwen-formality-l0-final_token-v1",
+      "feature": "formality",
+      "layer": 0,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is difficult to know what happened when"
+    },
+    {
+      "vector_id": "qwen-formality-l0-mean-v1",
+      "feature": "formality",
+      "layer": 0,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-formality-l10-final_token-v1",
+      "feature": "formality",
+      "layer": 10,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l10-mean-v1",
+      "feature": "formality",
+      "layer": 10,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is very difficult to understand what happened"
+    },
+    {
+      "vector_id": "qwen-formality-l11-final_token-v1",
+      "feature": "formality",
+      "layer": 11,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l11-mean-v1",
+      "feature": "formality",
+      "layer": 11,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l12-final_token-v1",
+      "feature": "formality",
+      "layer": 12,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l12-mean-v1",
+      "feature": "formality",
+      "layer": 12,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l13-final_token-v1",
+      "feature": "formality",
+      "layer": 13,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l13-mean-v1",
+      "feature": "formality",
+      "layer": 13,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l14-final_token-v1",
+      "feature": "formality",
+      "layer": 14,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l14-mean-v1",
+      "feature": "formality",
+      "layer": 14,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l15-final_token-v1",
+      "feature": "formality",
+      "layer": 15,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l15-mean-v1",
+      "feature": "formality",
+      "layer": 15,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to understand what"
+    },
+    {
+      "vector_id": "qwen-formality-l16-final_token-v1",
+      "feature": "formality",
+      "layer": 16,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to determine what"
+    },
+    {
+      "vector_id": "qwen-formality-l16-mean-v1",
+      "feature": "formality",
+      "layer": 16,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to understand what"
+    },
+    {
+      "vector_id": "qwen-formality-l17-final_token-v1",
+      "feature": "formality",
+      "layer": 17,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to determine what"
+    },
+    {
+      "vector_id": "qwen-formality-l17-mean-v1",
+      "feature": "formality",
+      "layer": 17,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l18-final_token-v1",
+      "feature": "formality",
+      "layer": 18,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to find out"
+    },
+    {
+      "vector_id": "qwen-formality-l18-mean-v1",
+      "feature": "formality",
+      "layer": 18,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l19-final_token-v1",
+      "feature": "formality",
+      "layer": 19,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l19-mean-v1",
+      "feature": "formality",
+      "layer": 19,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-formality-l1-final_token-v1",
+      "feature": "formality",
+      "layer": 1,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is difficult to know what happened when"
+    },
+    {
+      "vector_id": "qwen-formality-l1-mean-v1",
+      "feature": "formality",
+      "layer": 1,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-formality-l20-final_token-v1",
+      "feature": "formality",
+      "layer": 20,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l20-mean-v1",
+      "feature": "formality",
+      "layer": 20,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-formality-l21-final_token-v1",
+      "feature": "formality",
+      "layer": 21,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is very difficult to understand what has"
+    },
+    {
+      "vector_id": "qwen-formality-l21-mean-v1",
+      "feature": "formality",
+      "layer": 21,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-formality-l22-final_token-v1",
+      "feature": "formality",
+      "layer": 22,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to find out"
+    },
+    {
+      "vector_id": "qwen-formality-l22-mean-v1",
+      "feature": "formality",
+      "layer": 22,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-formality-l23-final_token-v1",
+      "feature": "formality",
+      "layer": 23,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l23-mean-v1",
+      "feature": "formality",
+      "layer": 23,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l2-final_token-v1",
+      "feature": "formality",
+      "layer": 2,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-formality-l2-mean-v1",
+      "feature": "formality",
+      "layer": 2,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "the rewritten sentence: \"Its really hard"
+    },
+    {
+      "vector_id": "qwen-formality-l3-final_token-v1",
+      "feature": "formality",
+      "layer": 3,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l3-mean-v1",
+      "feature": "formality",
+      "layer": 3,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is very difficult to understand what happened"
+    },
+    {
+      "vector_id": "qwen-formality-l4-final_token-v1",
+      "feature": "formality",
+      "layer": 4,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l4-mean-v1",
+      "feature": "formality",
+      "layer": 4,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-formality-l5-final_token-v1",
+      "feature": "formality",
+      "layer": 5,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l5-mean-v1",
+      "feature": "formality",
+      "layer": 5,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is very difficult for you to know"
+    },
+    {
+      "vector_id": "qwen-formality-l6-final_token-v1",
+      "feature": "formality",
+      "layer": 6,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l6-mean-v1",
+      "feature": "formality",
+      "layer": 6,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is very difficult to understand what has"
+    },
+    {
+      "vector_id": "qwen-formality-l7-final_token-v1",
+      "feature": "formality",
+      "layer": 7,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is very difficult to understand what has"
+    },
+    {
+      "vector_id": "qwen-formality-l7-mean-v1",
+      "feature": "formality",
+      "layer": 7,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l8-final_token-v1",
+      "feature": "formality",
+      "layer": 8,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is very difficult for you to understand"
+    },
+    {
+      "vector_id": "qwen-formality-l8-mean-v1",
+      "feature": "formality",
+      "layer": 8,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-formality-l9-final_token-v1",
+      "feature": "formality",
+      "layer": 9,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-l9-mean-v1",
+      "feature": "formality",
+      "layer": 9,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is very difficult for you to know"
+    },
+    {
+      "vector_id": "qwen-detoxification-l0-final_token-v1",
+      "feature": "detoxification",
+      "layer": 0,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-detoxification-l0-mean-v1",
+      "feature": "detoxification",
+      "layer": 0,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-detoxification-l10-final_token-v1",
+      "feature": "detoxification",
+      "layer": 10,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-detoxification-l10-mean-v1",
+      "feature": "detoxification",
+      "layer": 10,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l11-final_token-v1",
+      "feature": "detoxification",
+      "layer": 11,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-detoxification-l11-mean-v1",
+      "feature": "detoxification",
+      "layer": 11,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l12-final_token-v1",
+      "feature": "detoxification",
+      "layer": 12,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-detoxification-l12-mean-v1",
+      "feature": "detoxification",
+      "layer": 12,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-detoxification-l13-final_token-v1",
+      "feature": "detoxification",
+      "layer": 13,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-detoxification-l13-mean-v1",
+      "feature": "detoxification",
+      "layer": 13,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l14-final_token-v1",
+      "feature": "detoxification",
+      "layer": 14,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-detoxification-l14-mean-v1",
+      "feature": "detoxification",
+      "layer": 14,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-detoxification-l15-final_token-v1",
+      "feature": "detoxification",
+      "layer": 15,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l15-mean-v1",
+      "feature": "detoxification",
+      "layer": 15,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l16-final_token-v1",
+      "feature": "detoxification",
+      "layer": 16,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l16-mean-v1",
+      "feature": "detoxification",
+      "layer": 16,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l17-final_token-v1",
+      "feature": "detoxification",
+      "layer": 17,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l17-mean-v1",
+      "feature": "detoxification",
+      "layer": 17,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l18-final_token-v1",
+      "feature": "detoxification",
+      "layer": 18,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l18-mean-v1",
+      "feature": "detoxification",
+      "layer": 18,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l19-final_token-v1",
+      "feature": "detoxification",
+      "layer": 19,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l19-mean-v1",
+      "feature": "detoxification",
+      "layer": 19,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l1-final_token-v1",
+      "feature": "detoxification",
+      "layer": 1,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-detoxification-l1-mean-v1",
+      "feature": "detoxification",
+      "layer": 1,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l20-final_token-v1",
+      "feature": "detoxification",
+      "layer": 20,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l20-mean-v1",
+      "feature": "detoxification",
+      "layer": 20,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l21-final_token-v1",
+      "feature": "detoxification",
+      "layer": 21,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l21-mean-v1",
+      "feature": "detoxification",
+      "layer": 21,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l22-final_token-v1",
+      "feature": "detoxification",
+      "layer": 22,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l22-mean-v1",
+      "feature": "detoxification",
+      "layer": 22,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l23-final_token-v1",
+      "feature": "detoxification",
+      "layer": 23,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l23-mean-v1",
+      "feature": "detoxification",
+      "layer": 23,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l2-final_token-v1",
+      "feature": "detoxification",
+      "layer": 2,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l2-mean-v1",
+      "feature": "detoxification",
+      "layer": 2,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-detoxification-l3-final_token-v1",
+      "feature": "detoxification",
+      "layer": 3,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l3-mean-v1",
+      "feature": "detoxification",
+      "layer": 3,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l4-final_token-v1",
+      "feature": "detoxification",
+      "layer": 4,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l4-mean-v1",
+      "feature": "detoxification",
+      "layer": 4,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l5-final_token-v1",
+      "feature": "detoxification",
+      "layer": 5,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l5-mean-v1",
+      "feature": "detoxification",
+      "layer": 5,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-detoxification-l6-final_token-v1",
+      "feature": "detoxification",
+      "layer": 6,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l6-mean-v1",
+      "feature": "detoxification",
+      "layer": 6,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l7-final_token-v1",
+      "feature": "detoxification",
+      "layer": 7,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-detoxification-l7-mean-v1",
+      "feature": "detoxification",
+      "layer": 7,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l8-final_token-v1",
+      "feature": "detoxification",
+      "layer": 8,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-detoxification-l8-mean-v1",
+      "feature": "detoxification",
+      "layer": 8,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-l9-final_token-v1",
+      "feature": "detoxification",
+      "layer": 9,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-detoxification-l9-mean-v1",
+      "feature": "detoxification",
+      "layer": 9,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult when you want to"
+    },
+    {
+      "vector_id": "qwen-formality-legacy-alternative_layer4_final",
+      "feature": "formality",
+      "layer": 4,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-legacy-negative_layer11_mean",
+      "feature": "formality",
+      "layer": 11,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "It is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-formality-legacy-primary_layer21_mean",
+      "feature": "formality",
+      "layer": 21,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    },
+    {
+      "vector_id": "qwen-detoxification-legacy-best_mean",
+      "feature": "detoxification",
+      "layer": 0,
+      "pooling": "mean",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is difficult for you to know what"
+    },
+    {
+      "vector_id": "qwen-detoxification-legacy-best_final",
+      "feature": "detoxification",
+      "layer": 22,
+      "pooling": "final_token",
+      "hook_calls": 8,
+      "exact_hook_delta": true,
+      "sample": "it is very difficult to know what happened"
+    }
+  ]
+}

@@ -34,6 +34,12 @@ BASE_REWRITE_PROMPT = (
     "Return only the rewritten sentence."
 )
 
+# Used only when the caller explicitly requests assistant-prefill completion.
+CONTINUATION_USER_INSTRUCTION = (
+    "Continue the passage begun in your response. "
+    "Add new text in the same voice and point of view."
+)
+
 
 @dataclass(frozen=True)
 class SteeringVariant:
@@ -91,11 +97,12 @@ def select_device() -> torch.device:
     return torch.device("cpu")
 
 
-def resolve_model_source(model_id: str) -> str:
+def resolve_model_source(model_id: str, revision: str | None = None) -> str:
     """Prefer a local Hugging Face snapshot and download only when absent."""
 
     try:
-        return snapshot_download(repo_id=model_id, local_files_only=True)
+        return snapshot_download(repo_id=model_id, local_files_only=True,
+                                 **({"revision": revision} if revision is not None else {}))
     except LocalEntryNotFoundError:
         return model_id
 
@@ -159,6 +166,7 @@ class SteeredQwenRewriter:
         *,
         device: str | torch.device | None = None,
         max_new_tokens: int = 64,
+        model_revision: str | None = None,
     ) -> None:
         artifacts = {
             "formality": load_direction_artifact(
@@ -204,13 +212,15 @@ class SteeredQwenRewriter:
         # MPS float16 produced repetition even with no steering (e.g. "hello").
         # Full precision matches the CPU baseline on the supported Mac runtime.
         dtype = torch.float16 if self.device.type == "cuda" else torch.float32
-        model_source = resolve_model_source(self.model_id)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_source)
+        self.model_revision = model_revision
+        model_source = resolve_model_source(self.model_id, **({"revision": model_revision} if model_revision else {}))
+        source_options = {"revision": model_revision} if model_revision and model_source == self.model_id else {}
+        self.tokenizer = AutoTokenizer.from_pretrained(model_source, **source_options)
         if self.tokenizer.pad_token_id is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.padding_side = "right"
 
-        self.model = AutoModelForCausalLM.from_pretrained(model_source, dtype=dtype)
+        self.model = AutoModelForCausalLM.from_pretrained(model_source, dtype=dtype, **source_options)
         self.model = self.model.to(self.device)
         self.model.eval()
         self.decoder_layers = self.model.model.layers
@@ -245,16 +255,32 @@ class SteeredQwenRewriter:
                 stack.callback(handle.remove)
             yield
 
-    def _encode_prompt(self, message: str):
+    def _encode_prompt(self, message: str, system_prompt: str | None = BASE_REWRITE_PROMPT,
+                       *, user_instruction: str | None = None):
         messages = [
-            {"role": "system", "content": BASE_REWRITE_PROMPT},
-            {"role": "user", "content": message},
+            {"role": "system", "content": system_prompt or ''},
+            {"role": "user", "content": message if user_instruction is None else user_instruction},
         ]
         prompt = self.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
             add_generation_prompt=True,
         )
+        if system_prompt is None:
+            # Qwen's template inserts a default assistant instruction when the
+            # system role is omitted. Render an empty role and strip its exact
+            # template-produced prefix so "none" really has no system message.
+            empty_system = self.tokenizer.apply_chat_template(
+                [messages[0]], tokenize=False, add_generation_prompt=False)
+            if not empty_system or not prompt.startswith(empty_system):
+                raise ValueError('This chat template cannot omit the system instruction')
+            prompt = prompt[len(empty_system):]
+        if user_instruction is not None:
+            # The chat template ends at the start of the assistant turn. Seed
+            # that turn with the passage, without an end-of-turn token, so the
+            # generated suffix is the continuation. Prompt slicing excludes
+            # the entire supplied passage from returned/streamed text.
+            prompt += message
         return self.tokenizer(prompt, return_tensors="pt").to(self.device)
 
     def _generate(
@@ -267,19 +293,24 @@ class SteeredQwenRewriter:
 
     def _generate_result(
         self, model_inputs, alpha: float, beta: float, *,
-        streamer=None, stopping_criteria=None, layer_strengths=None,
+        streamer=None, stopping_criteria=None, layer_strengths=None, layer_vector_ids=None,
+        max_new_tokens=None, interventions=None,
     ) -> GenerationResult:
         extra = {}
         if streamer is not None:
             extra["streamer"] = streamer
         if stopping_criteria is not None:
             extra["stopping_criteria"] = stopping_criteria
-        context = (self._mixed_steering_context(alpha, beta) if layer_strengths is None
-                   else self._layer_steering_context(layer_strengths))
+        if interventions is not None:
+            context = self._intervention_context(interventions)
+        else:
+            context = (self._mixed_steering_context(alpha, beta) if layer_strengths is None
+                       else self._layer_steering_context(layer_strengths, **(
+                           {"vector_ids": layer_vector_ids} if layer_vector_ids else {})))
         with context, torch.inference_mode():
             generated_ids = self.model.generate(
                 **model_inputs,
-                max_new_tokens=self.max_new_tokens,
+                max_new_tokens=self.max_new_tokens if max_new_tokens is None else max_new_tokens,
                 do_sample=False,
                 temperature=None,
                 top_p=None,
@@ -306,25 +337,44 @@ class SteeredQwenRewriter:
         on_text: Callable[[str], None], cancelled: Event,
         max_input_tokens: int = 384, timeout_seconds: float = 25.0,
         layer_strengths: dict[int, float] | None = None,
+        layer_vector_ids: dict[int, str] | None = None,
+        system_prompt: str | None = BASE_REWRITE_PROMPT,
+        user_instruction: str | None = None,
+        max_new_tokens: int | None = None,
+        interventions=None,
     ) -> GenerationResult:
         """Stream the same deterministic generation with cooperative cancellation.
 
         The lock covers encoding, all forward hooks, and the entire generation.
         Partial/cancelled outputs are never returned as successful results.
         """
-        message = message.strip()
-        if not message:
+        if not message.strip():
             raise ValueError("Enter a message to rewrite.")
         alpha, beta = float(alpha), float(beta)
+        if interventions is not None and (layer_strengths is not None or layer_vector_ids is not None or alpha or beta):
+            raise ValueError('Explicit interventions cannot be combined with legacy steering controls')
+        if layer_vector_ids and layer_strengths is None:
+            raise ValueError('Vector choices require explicit layer strengths')
         if not -2 <= alpha <= 2 or not -2 <= beta <= 2:
             raise ValueError("Steering strengths must be between -2 and +2.")
         with self._generation_lock:
             if cancelled.is_set():
                 raise GenerationCancelled()
-            inputs = self._encode_prompt(message)
+            if user_instruction is not None:
+                inputs = self._encode_prompt(message, system_prompt=system_prompt,
+                                             user_instruction=user_instruction)
+            else:
+                inputs = (self._encode_prompt(message) if system_prompt == BASE_REWRITE_PROMPT
+                          else self._encode_prompt(message, system_prompt=system_prompt))
+            output_budget = self.max_new_tokens if max_new_tokens is None else max_new_tokens
+            if isinstance(output_budget, bool) or not isinstance(output_budget, int) or output_budget <= 0:
+                raise ValueError('Output token budget must be a positive integer')
+            context_limit = getattr(getattr(self.model, 'config', None), 'max_position_embeddings', None)
+            if context_limit and inputs['input_ids'].shape[1] + output_budget > context_limit:
+                raise ValueError('Input and output budgets exceed the model context window')
             if inputs["input_ids"].shape[1] > max_input_tokens:
                 raise ValueError(
-                    f"Please shorten the draft: the prompt exceeds {max_input_tokens} tokens."
+                    f"Please shorten the input or instructions: the full prompt exceeds {max_input_tokens} tokens."
                 )
             deadline = monotonic() + timeout_seconds
             try:
@@ -333,6 +383,9 @@ class SteeredQwenRewriter:
                     streamer=_CallbackStreamer(self.tokenizer, on_text),
                     stopping_criteria=StoppingCriteriaList([_StopGeneration(cancelled, deadline)]),
                     **({"layer_strengths": layer_strengths} if layer_strengths is not None else {}),
+                    **({"layer_vector_ids": layer_vector_ids} if layer_vector_ids else {}),
+                    **({"max_new_tokens": max_new_tokens} if max_new_tokens is not None else {}),
+                    **({"interventions": interventions} if interventions is not None else {}),
                 )
             except Exception:
                 # A stop before any decoded text can produce an empty-output

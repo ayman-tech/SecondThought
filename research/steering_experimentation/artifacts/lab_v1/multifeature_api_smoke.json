@@ -1,0 +1,165 @@
+{
+  "catalog_version": "fc0ae8a4b11d417debeccbd4e49f889769de5e711af5e4a25989378592e19bcf",
+  "checks": "passed",
+  "note": "Real-model routing/metadata/isolation smoke test, not a quality evaluation.",
+  "runs": [
+    {
+      "case": "baseline",
+      "text": "Please send me the report by noon.",
+      "finish_reason": "stop",
+      "latency_ms": 470.6,
+      "applied": {
+        "experiment_id": "bc82c9c4c8b27ee739edd67eadb861e9f6554d2a7b443ee8567bdbf678414446",
+        "plan": {
+          "plan_id": "bc06818f554c2d7f5dee985859a4aaa7985e3184a202f092b469eb9438e1c6f2",
+          "model_id": "qwen2.5-0.5b-instruct",
+          "model_revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+          "catalog_version": "fc0ae8a4b11d417debeccbd4e49f889769de5e711af5e4a25989378592e19bcf",
+          "adapter": "qwen2_decoder_output_v1",
+          "composition": "weighted_sum",
+          "token_scope": "all_tokens",
+          "interventions": []
+        },
+        "task": "rewrite",
+        "system_prompt": "Rewrite the user's sentence while preserving its meaning. Return only the rewritten sentence.",
+        "generation": {
+          "max_input_tokens": 2048,
+          "max_new_tokens": 64
+        },
+        "input_sha256": "3928ee80e6421c8c72795b7944fad5df28d9b925d810b49ec83bac818f3c1163",
+        "decoding": "greedy"
+      }
+    },
+    {
+      "case": "shared_layer",
+      "text": "Please send the report to me by noon.",
+      "finish_reason": "stop",
+      "latency_ms": 184.6,
+      "applied": {
+        "experiment_id": "8fdf56ea07399e94888d255ef342cf565ff8d978a0568f3005eabf20ca27cf33",
+        "plan": {
+          "plan_id": "833371d2606fcbf7d0f1ab0908e7f208e5fde1ae86cdf1d467b9d613df897339",
+          "model_id": "qwen2.5-0.5b-instruct",
+          "model_revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+          "catalog_version": "fc0ae8a4b11d417debeccbd4e49f889769de5e711af5e4a25989378592e19bcf",
+          "adapter": "qwen2_decoder_output_v1",
+          "composition": "weighted_sum",
+          "token_scope": "all_tokens",
+          "interventions": [
+            {
+              "vector_id": "qwen-detoxification-l7-mean-v1",
+              "strength": 0.25,
+              "feature_id": "detoxification",
+              "layer_index": 7,
+              "pooling": "mean",
+              "site": "decoder_block_output",
+              "scale": "unit_l2",
+              "artifact_id": "qwen-detoxification-all-layers-v1",
+              "artifact_sha256": "1f8ad495d1cb116192973fe6c4d12014905606b828256064b4b6cfc49933afbe",
+              "candidate": "layer7_mean"
+            },
+            {
+              "vector_id": "qwen-formality-l7-mean-v1",
+              "strength": 0.25,
+              "feature_id": "formality",
+              "layer_index": 7,
+              "pooling": "mean",
+              "site": "decoder_block_output",
+              "scale": "raw",
+              "artifact_id": "qwen-formality-all-layers-v1",
+              "artifact_sha256": "0ddcf36a81e582d22c7c178c754247af65a95ebbab6b2b11d3ed788e28c3677d",
+              "candidate": "layer7_mean"
+            }
+          ]
+        },
+        "task": "rewrite",
+        "system_prompt": "Rewrite the user's sentence while preserving its meaning. Return only the rewritten sentence.",
+        "generation": {
+          "max_input_tokens": 2048,
+          "max_new_tokens": 64
+        },
+        "input_sha256": "3928ee80e6421c8c72795b7944fad5df28d9b925d810b49ec83bac818f3c1163",
+        "decoding": "greedy"
+      }
+    },
+    {
+      "case": "independent_layers",
+      "text": "Please send the report to me by noon.",
+      "finish_reason": "stop",
+      "latency_ms": 216.5,
+      "applied": {
+        "experiment_id": "dc8bb38b1d90f3804bafe0fa26fbf4b13f01497014cd04bba1c166f85118084b",
+        "plan": {
+          "plan_id": "5cb9f7c5bc67f4659c8dc39d70bb48bf72c8c528d70165ba655942d60679b7d6",
+          "model_id": "qwen2.5-0.5b-instruct",
+          "model_revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+          "catalog_version": "fc0ae8a4b11d417debeccbd4e49f889769de5e711af5e4a25989378592e19bcf",
+          "adapter": "qwen2_decoder_output_v1",
+          "composition": "weighted_sum",
+          "token_scope": "all_tokens",
+          "interventions": [
+            {
+              "vector_id": "qwen-detoxification-l11-final_token-v1",
+              "strength": 0.25,
+              "feature_id": "detoxification",
+              "layer_index": 11,
+              "pooling": "final_token",
+              "site": "decoder_block_output",
+              "scale": "unit_l2",
+              "artifact_id": "qwen-detoxification-all-layers-v1",
+              "artifact_sha256": "1f8ad495d1cb116192973fe6c4d12014905606b828256064b4b6cfc49933afbe",
+              "candidate": "layer11_final_token"
+            },
+            {
+              "vector_id": "qwen-formality-l7-mean-v1",
+              "strength": 0.25,
+              "feature_id": "formality",
+              "layer_index": 7,
+              "pooling": "mean",
+              "site": "decoder_block_output",
+              "scale": "raw",
+              "artifact_id": "qwen-formality-all-layers-v1",
+              "artifact_sha256": "0ddcf36a81e582d22c7c178c754247af65a95ebbab6b2b11d3ed788e28c3677d",
+              "candidate": "layer7_mean"
+            }
+          ]
+        },
+        "task": "rewrite",
+        "system_prompt": "Rewrite the user's sentence while preserving its meaning. Return only the rewritten sentence.",
+        "generation": {
+          "max_input_tokens": 2048,
+          "max_new_tokens": 64
+        },
+        "input_sha256": "3928ee80e6421c8c72795b7944fad5df28d9b925d810b49ec83bac818f3c1163",
+        "decoding": "greedy"
+      }
+    },
+    {
+      "case": "baseline_after",
+      "text": "Please send me the report by noon.",
+      "finish_reason": "stop",
+      "latency_ms": 151.9,
+      "applied": {
+        "experiment_id": "bc82c9c4c8b27ee739edd67eadb861e9f6554d2a7b443ee8567bdbf678414446",
+        "plan": {
+          "plan_id": "bc06818f554c2d7f5dee985859a4aaa7985e3184a202f092b469eb9438e1c6f2",
+          "model_id": "qwen2.5-0.5b-instruct",
+          "model_revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+          "catalog_version": "fc0ae8a4b11d417debeccbd4e49f889769de5e711af5e4a25989378592e19bcf",
+          "adapter": "qwen2_decoder_output_v1",
+          "composition": "weighted_sum",
+          "token_scope": "all_tokens",
+          "interventions": []
+        },
+        "task": "rewrite",
+        "system_prompt": "Rewrite the user's sentence while preserving its meaning. Return only the rewritten sentence.",
+        "generation": {
+          "max_input_tokens": 2048,
+          "max_new_tokens": 64
+        },
+        "input_sha256": "3928ee80e6421c8c72795b7944fad5df28d9b925d810b49ec83bac818f3c1163",
+        "decoding": "greedy"
+      }
+    }
+  ]
+}
