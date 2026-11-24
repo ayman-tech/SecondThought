@@ -16,7 +16,7 @@ import tempfile
 import urllib.request
 import zipfile
 
-HF_REPO = os.getenv("SECONDTHOUGHT_MODEL_REPO", "SAI-RAHUL-M/secondthought-both-t5")
+HF_REPO = os.getenv("SECONDTHOUGHT_MODEL_REPO", "SaiRahul5/secondthought-both-t5")
 RELEASE_ZIP = "https://github.com/ayman-tech/SecondThought/releases/latest/download/both-t5.zip"
 MODELS = Path(__file__).resolve().parents[1] / "models"
 TARGET = MODELS / "both-t5"

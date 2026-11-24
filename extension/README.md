@@ -105,7 +105,7 @@ reachable and red when it isn't. Hovering it shows which model is loaded.
 ## Hosting the model
 
 The installers fetch `both-t5` with `scripts/get_model.py`: first from the
-Hugging Face repo `SAI-RAHUL-M/secondthought-both-t5`, then from `both-t5.zip`
+Hugging Face repo `SaiRahul5/secondthought-both-t5`, then from `both-t5.zip`
 on the latest GitHub release. Point them at a different repo with
 `SECONDTHOUGHT_MODEL_REPO`, or change `HF_REPO` in `get_model.py`.
 
@@ -114,7 +114,7 @@ https://huggingface.co/settings/tokens):
 
 ```bash
 uv run hf auth login
-uv run hf upload SAI-RAHUL-M/secondthought-both-t5 models/both-t5 . --exclude training_args.bin
+uv run hf upload SaiRahul5/secondthought-both-t5 models/both-t5 . --exclude training_args.bin
 ```
 
 Attach it to a GitHub release as the backup (after the release exists):
