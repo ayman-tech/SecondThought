@@ -335,7 +335,7 @@ def test_task_prompt_and_larger_budgets_reach_worker_and_completed_metadata(task
         assert result['max_new_tokens'] == 512
 
 
-def test_download_buttons_always_point_at_the_zip():
+def test_install_section_links_the_installers_and_the_zip():
     import re
 
     from jinja2 import Environment, FileSystemLoader
@@ -344,11 +344,14 @@ def test_download_buttons_always_point_at_the_zip():
 
     with TestClient(create_app(FakeService())) as client:
         served = client.get("/community").text
-    # A server started before a pull renders the page without the download address;
-    # the buttons must still link to the zip, never to an empty href (which saves the page).
+    # A server started before a pull renders the page without these addresses;
+    # the links must still work, never fall back to an empty href (which saves the page).
     stale = Environment(loader=FileSystemLoader(str(FRONTEND))).get_template("community.html").render(
         page="community", title="Community", description="", navigation=[]
     )
+    base = "https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts"
     for html in (served, stale):
-        links = re.findall(r'class="(?:download|install)-button" href="([^"]*)"', html)
-        assert links == ["/downloads/secondthought-extension.zip"] * 2
+        assert re.findall(r'class="zip-link" href="([^"]*)"', html) == ["/downloads/secondthought-extension.zip"]
+        assert re.findall(r'class="download-button" href="([^"]*)"', html) == ["#install"]
+        assert f'data-copy="irm {base}/install.ps1 | iex"' in html
+        assert f'data-copy="curl -fsSL {base}/install.sh | sh"' in html

@@ -54,6 +54,11 @@ LOCAL_DOWNLOAD = "/downloads/secondthought-extension.zip"
 # set these to the hosted package and API to switch, no code changes needed.
 EXTENSION_DOWNLOAD_URL = os.getenv("SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL", LOCAL_DOWNLOAD)
 EXTENSION_API_URL = os.getenv("SECONDTHOUGHT_EXTENSION_API_URL", "http://127.0.0.1:8000")
+# Where the one-command installers live (scripts/install.ps1 and install.sh).
+INSTALLER_BASE_URL = os.getenv(
+    "SECONDTHOUGHT_INSTALLER_BASE_URL",
+    "https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts",
+)
 TERMINAL = {"completed", "cancelled", "error"}
 PAGES = {
     "home": ("/", "Home", "Rewrite privately in Chrome or tune model behavior in the SecondThought Steering Lab."),
@@ -339,6 +344,7 @@ def create_app(service=None, *, service_factory=None, scorer_factory=None) -> Fa
                     steering_features=[f.label for f in get_catalog().spec.features] if page == "home" else [],
                     extension_download_url=EXTENSION_DOWNLOAD_URL,
                     extension_api_url=EXTENSION_API_URL,
+                    installer_base_url=INSTALLER_BASE_URL,
                     navigation=[(key, path, label) for key, (path, label, _) in PAGES.items()],
                 ),
             )

@@ -505,7 +505,7 @@ try {
     );
     if (path === "/community")
       assert.equal(
-        await evaluate(`document.querySelector('.download-button').getAttribute('href').endsWith('.zip')`),
+        await evaluate(`document.querySelector('.download-button').getAttribute('href') === '#install' && document.querySelector('.zip-link').getAttribute('href').endsWith('.zip')`),
         true,
       );
     if (path === "/evaluation") {
