@@ -18,10 +18,16 @@ including the offline artifact preflight and tests of the three steering feature
 From the repository root:
 
 ```bash
-uv sync --python 3.12 --locked
+uv sync --python 3.12 --locked --extra evaluation
 uv run --locked python -m website.api.check_setup
 uv run --locked python -m website.api.server
 ```
+
+`--extra evaluation` installs the models the response inspector scores with
+(Detoxify and sentence-transformers). Without it the site still runs, but the
+inspector shows "Scoring unavailable". Plain `uv sync` removes extras you don't
+name, so keep the flag on every sync. The first start downloads the scoring
+models (about 1.5 GB); until they load, the inspector shows "Scoring loading…".
 
 No `make` (e.g. on Windows)? Run `uv run python -m website.api.server` instead.
 The same goes for the extension's service: `uv run python -m extension.api.server`.
@@ -87,9 +93,13 @@ then press **Apply**. Typing in the editor does not change a running experiment
 until Apply is pressed. Choosing a task preset applies it immediately.
 
 The inspector has keyboard-accessible Metrics, Curves, and Run details tabs.
-Run metadata and original-input word comparisons are live. Quality scores,
-strength-curve points, sweep execution, and zero-baseline comparison are explicitly
-unconnected; the UI does not manufacture values or send unsupported request fields.
+Run metadata and original-input word comparisons are live. Each completed response
+is scored through `POST /api/v2/lab/score` with the same models as the evaluation
+pipeline: formality (`s-nlp/roberta-base-formality-ranker`), toxicity (Detoxify
+`original`) and, for Rewrite, meaning kept (`all-mpnet-base-v2`, cut-off 0.90) and
+facts kept (numbers, dates, times and names). Curves plots each response's formality
+and toxicity over time. Sweep execution and zero-baseline comparison are not
+connected; the UI does not manufacture values or send unsupported request fields.
 Opening the prompt display or changing inspector tabs never starts generation.
 
 Available directions come from the existing artifacts, never synthetic vectors:
