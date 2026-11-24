@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block styles %}<link rel="stylesheet" href="{{ frontend_assets }}/home.css">{% endblock %}
+{% block scripts %}<script type="module" src="{{ frontend_assets }}/home.js"></script>{% endblock %}
 {% block content %}
 <div class="landing">
   <section class="landing-hero" aria-labelledby="landing-title">
@@ -27,11 +28,25 @@
         </div>
       </div>
 
-      <div class="landing-extension-preview">
-        <dl class="landing-example" aria-label="Example rewrite">
-          <div><dt>Draft</dt><dd>This plan is a mess. Fix it by Friday.</dd></div>
-          <div><dt>Rewrite</dt><dd>This plan needs revision. Please update it by Friday.</dd></div>
+      <div class="landing-demo">
+        <header class="landing-demo-header">
+          <h3>Try the extension</h3>
+          <span>Recorded rewrite</span>
+        </header>
+        <dl class="landing-example" aria-label="Example draft">
+          <div>
+            <dt>Draft</dt>
+            <dd><span id="example-draft" aria-live="polite">This plan is a mess. Fix it by Friday.</span> We’ll review it together on Monday.</dd>
+          </div>
+          <div id="example-suggestion" class="landing-example-result">
+            <dt>Suggestion</dt>
+            <dd id="example-rewrite">This plan is not good. Fix it by Friday.</dd>
+          </div>
         </dl>
+        <div class="landing-demo-actions" id="extension-demo-actions" hidden>
+          <button type="button" id="extension-demo-action">SecondThought?</button>
+          <span id="extension-demo-status" role="status"></span>
+        </div>
       </div>
     </article>
 
@@ -40,17 +55,38 @@
         <p class="landing-audience">Custom models for Business</p>
         <h2 id="business-title">A text model built for your organization.</h2>
         <p>Get a custom text model tailored to your team’s writing standards. We use activation steering to tune its written responses for your workflows, from more empathetic support replies to clearer internal updates.</p>
-        <p>Use the Steering Lab to try combinations of seven features, choose which layers to steer, and adjust strength (α) for each direction. Compare responses on your own examples to see what fits.</p>
+        <p>Use the Steering Lab to combine formality, fluency, empathy, and politeness. Choose which layers to steer, adjust the strength (α) of each direction, and compare responses on your own examples.</p>
         <div class="landing-product-actions">
           <a class="landing-button landing-outline" href="/explore">Try model steering <span aria-hidden="true">↗</span></a>
         </div>
       </div>
 
       <div class="landing-model-preview">
+        <div class="landing-demo">
+          <header class="landing-demo-header">
+            <h3>One draft, four steering features</h3>
+            <span>Illustrative examples</span>
+          </header>
+          <dl class="landing-example">
+            <div><dt>Draft</dt><dd id="profile-draft">So the summary, it needs work. Fix it and send it back by Friday.</dd></div>
+          </dl>
+          <fieldset class="landing-profiles" hidden>
+            <legend>Combine steering features</legend>
+            {% for feature in steering_features %}
+            <label><input type="checkbox" name="steering-feature" value="{{ feature|lower }}"> {{ feature }}</label>
+            {% endfor %}
+          </fieldset>
+          <dl class="landing-example">
+            <div class="landing-example-result" aria-live="polite">
+              <dt id="profile-name">Original draft</dt>
+              <dd id="profile-response">So the summary, it needs work. Fix it and send it back by Friday.</dd>
+            </div>
+          </dl>
+        </div>
         <div class="landing-visual" aria-hidden="true">
           <div class="landing-fins">
             {% for layer in layers %}
-            <span{% if layer.index in [3, 11, 17, 22] %} class="accent-fin"{% endif %}></span>
+            <span{% if layer.index == 21 %} class="accent-fin"{% endif %}></span>
             {% endfor %}
           </div>
           <svg viewBox="0 0 1200 200" preserveAspectRatio="none" focusable="false">
@@ -58,11 +94,6 @@
             <path d="M0 132 C102 135 104 59 198 98 S298 136 361 106 S454 147 537 122 S620 43 708 87 S809 151 897 122 S955 99 1027 116 S1126 66 1200 71"/>
           </svg>
         </div>
-        <ul class="landing-features" aria-label="Steering features">
-          {% for feature in steering_features %}
-          <li>{{ feature }}</li>
-          {% endfor %}
-        </ul>
       </div>
     </article>
   </section>
