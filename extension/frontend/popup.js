@@ -16,7 +16,12 @@ const copyBtn = document.getElementById("copy");
 const bannerEl = document.getElementById("banner");
 const statusDot = document.getElementById("server-status");
 
+// Set while the banner shows a server problem, so a later check that finds the
+// server up clears that banner but leaves other messages alone.
+let serverBannerShown = false;
+
 function showBanner(html, kind = "error") {
+  serverBannerShown = false;
   bannerEl.innerHTML = html;
   bannerEl.className = kind === "info" ? "banner info" : "banner";
   bannerEl.hidden = false;
@@ -49,6 +54,13 @@ function errorDetail(body, status) {
   return `Server returned HTTP ${status}.`;
 }
 
+function showServerProblem(title, html) {
+  statusDot.className = "status-dot down";
+  statusDot.title = title;
+  showBanner(html);
+  serverBannerShown = true;
+}
+
 async function checkServer() {
   try {
     const response = await fetchWithTimeout(`${API_BASE}/health`, {}, 3000);
@@ -56,15 +68,14 @@ async function checkServer() {
     if (body.status === "ok") {
       statusDot.className = "status-dot ok";
       statusDot.title = `Server OK · ${body.model}`;
+      if (serverBannerShown) hideBanner();
+      serverBannerShown = false;
     } else {
-      statusDot.className = "status-dot down";
-      statusDot.title = "Server is running but not configured";
-      showBanner(`Server is running but not configured: ${escapeHtml(body.detail || "unknown error")}`);
+      showServerProblem("Server is running but not configured",
+        `Server is running but not configured: ${escapeHtml(body.detail || "unknown error")}`);
     }
   } catch {
-    statusDot.className = "status-dot down";
-    statusDot.title = "Server unreachable";
-    showBanner(`Can't reach the SecondThought server at ${API_BASE}. ${START_HINT}`);
+    showServerProblem("Server unreachable", `Can't reach the SecondThought server at ${API_BASE}. ${START_HINT}`);
   }
 }
 
@@ -213,6 +224,8 @@ async function setupSiteToggle() {
 
 prefillFromSelection();
 checkServer();
+// Keep the dot current while the popup is open, e.g. after starting the service.
+setInterval(checkServer, 4000);
 setupSiteToggle();
 document.getElementById("settings-link").addEventListener("click", () => chrome.runtime.openOptionsPage());
 document.getElementById("advanced-link").href = SecondThoughtSettings.siteLink("/explore");
