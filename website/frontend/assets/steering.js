@@ -120,15 +120,19 @@ function renderText(text, before = null) {
   elements.output.classList.remove("placeholder");
 }
 function keepPrevious() {
+  const label = completed
+    ? "Previous result · updating for your latest input"
+    : "Preparing your response";
+  // Already showing it: don't rebuild the response on every keystroke.
+  if (elements["output-context"].textContent === label) return;
   if (completed) {
-    renderText(completed.text);
-    elements["output-context"].textContent =
-      "Previous result · updating for your latest input";
+    // Keep the changed-word highlights, so the response doesn't flash plain while you type.
+    renderText(completed.text, completed.task === "rewrite" ? completed.source : null);
   } else {
     elements.output.textContent = "Generating a response…";
     elements.output.classList.add("placeholder");
-    elements["output-context"].textContent = "Preparing your response";
   }
+  elements["output-context"].textContent = label;
 }
 function refreshControls() {
   elements["character-count"].textContent =
@@ -160,6 +164,7 @@ function inputChanged(kind = "text") {
   // except text edits, where old-context generation is no longer useful.
   if (kind === "text") cancelActive();
   keepPrevious();
+  markScoresStale();
   setStatus(
     ready
       ? "Waiting for a short pause in your input…"
@@ -191,7 +196,207 @@ function finish(event, snapshot, fromCache = false) {
     ? `Cached · originally ${(event.latency_ms / 1000).toFixed(2)}s`
     : `${(event.latency_ms / 1000).toFixed(2)}s generation`;
   updateInspection(event, snapshot, fromCache);
+  void scoreResponse(event, snapshot, revisions.value);
   setStatus("");
+}
+
+// Response inspector scores. Fired for every completed response (typing and
+// slider changes both start a new run); a newer revision discards older scores.
+const SIMILARITY_CUTOFF = 0.9, TOXIC_CUTOFF = 0.5; // same cut-offs as the Evaluation page
+const scoreIds = ["formality", "toxicity", "similarity", "values"];
+const pair = (score) => `${score.input.toFixed(2)} → ${score.response.toFixed(2)}`;
+function setScores(values, state, note = null) {
+  for (const id of scoreIds) {
+    const [value, detail, title] = values[id] ?? [];
+    if (value !== undefined) $(`score-${id}`).textContent = value;
+    if (detail !== undefined) $(`score-${id}-detail`).textContent = detail;
+    if (value !== undefined) $(`score-${id}`).title = title ?? "";
+  }
+  $("quality-metrics").dataset.state = state;
+  if (note !== null) $("score-status").textContent = note;
+}
+function resetScores(note = "Waiting for a response") {
+  setScores({
+    formality: ["—", "Input → response, higher is more formal"],
+    toxicity: ["—", "Input → response, lower is better"],
+    similarity: ["—", "Meaning kept, rewrite task only"],
+    values: ["—", "Numbers, dates, amounts, links, IDs"],
+  }, "empty", note);
+}
+function markScoresStale() {
+  if ($("quality-metrics").dataset.state === "scored") setScores({}, "stale", "Updating with your input…");
+}
+function showScores(scores, snapshot, finishReason) {
+  const f = scores.formality, t = scores.toxicity, v = scores.values;
+  const lowest = f.lowest < f.response - 0.05 ? `Least formal sentence ${f.lowest.toFixed(2)}` : "Higher is more formal";
+  const similarity = scores.similarity === null
+    ? ["n/a", `Rewrite task only (this is ${snapshot.task})`]
+    : [scores.similarity.toFixed(2), scores.similarity >= SIMILARITY_CUTOFF ? "Same meaning (0.90 or more)" : "Meaning may have drifted (below 0.90)"];
+  let values = ["n/a", `Rewrite task only (this is ${snapshot.task})`];
+  if (v) {
+    const changes = [v.missing.length && `Lost: ${v.missing.join(", ")}`, v.added.length && `Added: ${v.added.join(", ")}`].filter(Boolean);
+    values = v.count === 0 && !v.added.length
+      ? ["None", "No numbers, dates or IDs in the input"]
+      : [`${v.kept} of ${v.count} kept`, changes.join(" · ") || "Every value kept exactly"];
+  }
+  setScores({
+    formality: [pair(f), lowest, f.lowest_sentence],
+    toxicity: [pair(t), t.response >= TOXIC_CUTOFF ? `Still toxic (${TOXIC_CUTOFF} or more)` : "Lower is better"],
+    similarity,
+    values,
+  }, "scored", finishReason === "length" ? "Scored · partial response" : "Scored");
+}
+// Curves tab: formality and toxicity of each scored response over time, newest on the right.
+const SVG_NS = "http://www.w3.org/2000/svg";
+const TREND_LIMIT = 60; // ponytail: keeps the last 60 responses in memory; no persistence across reloads
+const trend = [];
+let trendStart = null;
+const clock = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+const svg = (tag, attrs = {}, text) => {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  if (text !== undefined) node.textContent = text;
+  return node;
+};
+function recordTrend(scores, snapshot, text) {
+  const last = trend.at(-1);
+  if (last && last.text === text && last.input === snapshot.message) return; // same response re-shown
+  const now = Date.now();
+  trendStart ??= now;
+  trend.push({ t: (now - trendStart) / 1000, formality: scores.formality.response, toxicity: scores.toxicity.response, text, input: snapshot.message });
+  if (trend.length > TREND_LIMIT) trend.shift();
+  drawTrend();
+}
+function drawTrend() {
+  const figure = $("trend-chart");
+  $("trend-status").textContent = trend.length
+    ? `${trend.length} response${trend.length === 1 ? "" : "s"} · latest at ${clock(trend.at(-1).t)}`
+    : "No responses yet";
+  if ($("inspect-panel-curves").hidden) return; // drawn when the tab opens; hidden panels have no width
+  if (!trend.length) {
+    cancelAnimationFrame(trendFrame);
+    chartView = null;
+    figure.replaceChildren(Object.assign(document.createElement("p"), {
+      className: "trend-empty", textContent: "Type in the input. Each completed response adds a point here.",
+    }));
+    return;
+  }
+  const width = Math.max(figure.clientWidth, 320);
+  if (!chartView || chartView.width !== width || !figure.contains(chartView.chart)) chartView = buildTrendFrame(figure, width);
+  // The time axis grows in round steps, so older points don't slide sideways on every new one.
+  const span = trend.at(-1).t - trend[0].t;
+  const t0 = trend[0].t, target = [t0, t0 + ([10, 30, 60, 120, 300, 600, 1200].find((step) => span <= step * 0.9) ?? Math.ceil(span / 600) * 600)];
+  // Animate from what is on screen now: known points glide, a new point grows out of the previous line end.
+  const view = chartView, fromDomain = view.domain ?? target, from = view.shown;
+  const seeds = trend.map((p, i) => from.get(p) ?? from.get(trend[i - 1]) ?? p);
+  const duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 450;
+  const started = performance.now();
+  cancelAnimationFrame(trendFrame);
+  const step = (now) => {
+    const k = duration ? Math.min(1, (now - started) / duration) : 1, e = 1 - (1 - k) ** 3;
+    const mix = (a, b) => a + (b - a) * e;
+    view.domain = [mix(fromDomain[0], target[0]), mix(fromDomain[1], target[1])];
+    view.shown = new Map(trend.map((p, i) => [p, {
+      t: mix(seeds[i].t, p.t), formality: mix(seeds[i].formality, p.formality), toxicity: mix(seeds[i].toxicity, p.toxicity),
+    }]));
+    paintTrend(view);
+    if (k < 1) trendFrame = requestAnimationFrame(step);
+  };
+  trendFrame = requestAnimationFrame(step);
+}
+let chartView = null, trendFrame = 0;
+const TREND_H = 240, TREND_M = { top: 14, right: 118, bottom: 36, left: 38 };
+const trendY = (v) => TREND_M.top + (1 - v) * (TREND_H - TREND_M.top - TREND_M.bottom);
+// Static parts (grid, threshold, axis titles) are drawn once; paintTrend only moves the existing nodes.
+function buildTrendFrame(figure, width) {
+  const m = TREND_M, chart = svg("svg", { viewBox: `0 0 ${width} ${TREND_H}`, width, height: TREND_H });
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+    chart.append(svg("line", { class: "trend-grid", x1: m.left, x2: width - m.right, y1: trendY(v), y2: trendY(v) }),
+      svg("text", { class: "trend-axis", x: m.left - 8, y: trendY(v) + 3, "text-anchor": "end" }, v.toFixed(2)));
+  }
+  chart.append(svg("line", { class: "trend-threshold", x1: m.left, x2: width - m.right, y1: trendY(0.5), y2: trendY(0.5) }));
+  const ticks = [0, 1, 2, 3, 4].map((i) => svg("text", {
+    class: "trend-axis", x: m.left + ((width - m.left - m.right) * i) / 4, y: TREND_H - m.bottom + 16,
+    "text-anchor": i === 0 ? "start" : i === 4 ? "end" : "middle" }));
+  chart.append(...ticks, svg("text", { class: "trend-axis-title", x: m.left + (width - m.left - m.right) / 2, y: TREND_H - 4, "text-anchor": "middle" },
+    "Time since the first response (min:sec)"));
+  const series = {};
+  for (const name of ["formality", "toxicity"]) {
+    series[name] = { line: svg("polyline", { class: `trend-line ${name}` }), dots: svg("g"), label: svg("text", { class: `trend-label ${name}` }) };
+    chart.append(series[name].line, series[name].dots);
+  }
+  chart.append(series.formality.label, series.toxicity.label);
+  figure.replaceChildren(chart);
+  return { width, chart, ticks, series, domain: null, shown: new Map() };
+}
+function paintTrend(view) {
+  const m = TREND_M, [t0, t1] = view.domain;
+  const x = (t) => m.left + ((t - t0) / (t1 - t0 || 1)) * (view.width - m.left - m.right);
+  view.ticks.forEach((tick, i) => { tick.textContent = clock(t0 + ((t1 - t0) * i) / 4); });
+  const shown = trend.map((p) => [p, view.shown.get(p)]);
+  for (const [name, { line, dots }] of Object.entries(view.series)) {
+    line.setAttribute("points", shown.map(([, s]) => `${x(s.t).toFixed(1)},${trendY(s[name]).toFixed(1)}`).join(" "));
+    while (dots.children.length > shown.length) dots.lastChild.remove();
+    while (dots.children.length < shown.length) dots.append(svg("circle", { class: `trend-dot ${name}` }));
+    shown.forEach(([p, s], i) => {
+      const dot = dots.children[i];
+      if (!dot.firstChild) dot.append(svg("title"));
+      dot.setAttribute("cx", x(s.t).toFixed(1));
+      dot.setAttribute("cy", trendY(s[name]).toFixed(1));
+      dot.setAttribute("r", i === shown.length - 1 ? 5.5 : 4);
+      dot.firstChild.textContent = `${clock(p.t)} · formality ${p.formality.toFixed(2)} · toxicity ${p.toxicity.toFixed(2)}\n${p.text}`;
+    });
+  }
+  const end = shown.at(-1)[1]; // direct labels ride the line ends, nudged apart if they would overlap
+  let fy = trendY(end.formality) + 4, ty = trendY(end.toxicity) + 4;
+  if (Math.abs(fy - ty) < 14) [fy, ty] = fy < ty ? [fy - 7, ty + 7] : [fy + 7, ty - 7];
+  const latest = trend.at(-1);
+  for (const [name, yy] of [["formality", fy], ["toxicity", ty]]) {
+    const label = view.series[name].label;
+    label.setAttribute("x", (x(end.t) + 10).toFixed(1));
+    label.setAttribute("y", yy.toFixed(1));
+    label.textContent = `${name[0].toUpperCase()}${name.slice(1)} ${latest[name].toFixed(2)}`;
+  }
+}
+new MutationObserver(drawTrend).observe($("inspect-panel-curves"), { attributes: true, attributeFilter: ["hidden"] });
+window.addEventListener("resize", drawTrend);
+$("trend-clear").addEventListener("click", () => { trend.length = 0; trendStart = null; drawTrend(); });
+
+async function scoreResponse(event, snapshot, revision) {
+  if (event.scores) {
+    showScores(event.scores, snapshot, event.finish_reason);
+    return recordTrend(event.scores, snapshot, event.rewritten_text);
+  }
+  if (!event.rewritten_text?.trim()) return resetScores("Nothing to score");
+  setScores({}, $("quality-metrics").dataset.state === "empty" ? "empty" : "stale", "Scoring…");
+  for (let attempt = 0; attempt < 30; attempt++) {
+    let response, body;
+    try {
+      response = await fetch("/api/v2/lab/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: snapshot.message, response: event.rewritten_text, task: snapshot.task }),
+      });
+      body = await response.json().catch(() => ({}));
+    } catch {
+      if (revisions.accepts(revision)) resetScores("Couldn't reach the scorer");
+      return;
+    }
+    if (!revisions.accepts(revision)) return; // a newer response is on its way
+    if (response.ok) {
+      event.scores = body; // cached responses keep their scores
+      showScores(body, snapshot, event.finish_reason);
+      return recordTrend(body, snapshot, event.rewritten_text);
+    }
+    if (response.status === 503 && body.detail === "Scoring is loading") {
+      setScores({}, "stale", "Loading scoring models…");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (!revisions.accepts(revision)) return;
+      continue;
+    }
+    return resetScores(response.status === 503 ? "Scoring unavailable" : "Couldn't score this response");
+  }
+  if (revisions.accepts(revision)) resetScores("Scoring models still loading");
 }
 
 function clearInspection() {
@@ -209,6 +414,7 @@ function clearInspection() {
     $(id).textContent = "—";
   $("change-summary").textContent =
     "Complete a rewrite to inspect its wording.";
+  resetScores();
 }
 
 function updateInspection(event, snapshot, fromCache) {
