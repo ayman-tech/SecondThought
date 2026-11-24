@@ -9,20 +9,21 @@
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <img src="icons/icon48.png" alt="" width="32" height="32">
-      <span>SecondThought<b>.</b></span>
+  <header class="hero">
+    <div class="topbar">
+      <div class="brand">
+        <img src="icons/icon48.png" alt="" width="32" height="32">
+        <span>SecondThought<b>.</b></span>
+      </div>
+      <span id="version" class="version"></span>
     </div>
-    <span id="version" class="version"></span>
+    <div class="intro">
+      <h1>Settings</h1>
+      <p>Choose when SecondThought speaks up. Changes save as soon as you make them.</p>
+    </div>
   </header>
 
   <main>
-    <div class="intro">
-      <h1>Settings</h1>
-      <p>Changes save as soon as you make them.</p>
-    </div>
-
     <section id="server" class="card status-card" aria-live="polite">
       <span id="server-dot" class="status-dot big"></span>
       <div class="status-text">
@@ -33,7 +34,7 @@
     </section>
 
     <section class="card">
-      <h2>While you type</h2>
+      <h2><span class="icon" aria-hidden="true">✎</span>While you type</h2>
       <label class="switch-row">
         <span class="row-text">
           <strong>Suggest better wording</strong>
@@ -51,19 +52,19 @@
     </section>
 
     <section id="kinds-section" class="card">
-      <h2>What to look out for</h2>
+      <h2><span class="icon" aria-hidden="true">◎</span>What to look out for</h2>
       <p class="hint">The bubble appears when a line has any of these turned on.</p>
       <div id="kinds" class="kinds"></div>
     </section>
 
     <section class="card">
-      <h2>Paused sites</h2>
+      <h2><span class="icon" aria-hidden="true">⏸</span>Paused sites</h2>
       <ul id="sites" class="sites"></ul>
       <p id="no-sites" class="empty">No paused sites. To pause one, open the SecondThought menu on that site and turn it off there.</p>
     </section>
 
     <section class="card">
-      <h2>Help and more</h2>
+      <h2><span class="icon" aria-hidden="true">?</span>Help and more</h2>
       <div class="links">
         <a id="guide-link" class="link-card" target="_blank" rel="noopener">
           <strong>Setup guide ↗</strong>
