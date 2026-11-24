@@ -298,11 +298,16 @@
 .quality-metrics[data-state="scored"] .metric-value { color:var(--ink); }
 .quality-metrics[data-state="stale"] .metric-value { color:#b0a0c2; }
 /* Curves tab: formality and toxicity over time (steering.js drawTrend). Site purple and teal. */
-.trend-legend { display:flex; flex-wrap:wrap; gap:14px; margin:12px 0 4px; font-size:11px; color:#8a7b99; }
+.trend-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 16px; margin:12px 0 4px; }
+.trend-toggle { display:inline-flex; gap:2px; border:1px solid #e6dff1; border-radius:8px; background:#fff; padding:3px; }
+.trend-toggle button { border:0; padding:5px 12px; border-radius:6px; font-size:12px; color:#85838d; background:none; }
+.trend-toggle button[aria-pressed="true"] { background:#f0edf5; color:#4c3c70; font-weight:600; }
+.trend-legend { display:flex; flex-wrap:wrap; gap:14px; font-size:11px; color:#8a7b99; }
 .trend-legend span { display:inline-flex; align-items:center; gap:6px; }
 .trend-key { display:inline-block; width:14px; height:3px; border-radius:2px; }
 .trend-key.formality { background:var(--purple); }
 .trend-key.toxicity { background:var(--teal); }
+.trend-key.similarity { background:#c8693a; } /* third series: passes the dataviz CVD check against purple and teal */
 .trend-key.threshold { height:0; border-top:1.5px dashed #b5afbd; }
 .trend-chart { margin:4px 0 0; min-height:240px; }
 .trend-chart svg { display:block; max-width:100%; height:auto; overflow:visible; }
@@ -313,10 +318,12 @@
 .trend-line { fill:none; stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
 .trend-line.formality { stroke:var(--purple); }
 .trend-line.toxicity { stroke:var(--teal); }
+.trend-line.similarity { stroke:#c8693a; }
 .trend-dot { stroke:#fff; stroke-width:2; }
 .trend-dot.formality { fill:var(--purple); }
 .trend-dot.toxicity { fill:var(--teal); }
-.trend-label { font:600 11px "DM Sans",sans-serif; fill:var(--ink); }
+.trend-dot.similarity { fill:#c8693a; }
+.trend-label { font:600 11px "DM Sans",sans-serif; fill:var(--ink); paint-order:stroke; stroke:#fff; stroke-width:4px; stroke-linejoin:round; }
 .trend-actions { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
 .trend-actions button { flex:none; margin-top:8px; font-size:12px; padding:5px 12px; }
 /* Steadier updates: reserve two lines under each value so cards don't change height. The chart animates in steering.js. */
