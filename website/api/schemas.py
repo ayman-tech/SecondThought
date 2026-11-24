@@ -30,6 +30,14 @@ class PromptInstructions(BaseModel):
         return self
 
 
+class ScoreRequest(BaseModel):
+    """A completed response to score for the response inspector."""
+    model_config = ConfigDict(extra='forbid', frozen=True)
+    input: str = Field(min_length=1, max_length=MAX_CHARACTERS)
+    response: str = Field(min_length=1, max_length=2 * MAX_CHARACTERS)
+    task: Literal['rewrite','answer','summarize','continue','rewrite_continue','custom','none'] = 'rewrite'
+
+
 class GenerationSettings(BaseModel):
     model_config = ConfigDict(extra='forbid', frozen=True, allow_inf_nan=False)
     max_input_tokens: int = Field(default=DEFAULT_INPUT_TOKENS, strict=True, ge=128, le=MAX_INPUT_TOKENS)

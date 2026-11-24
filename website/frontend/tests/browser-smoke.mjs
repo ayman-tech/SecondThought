@@ -156,6 +156,14 @@ try {
   const report=await checkEveryVectorRoute({evaluate,until});
   assert.equal(report.length,192);
   await writeFile(join(directory,'vector-routing.json'),JSON.stringify(report,null,2));
+  // Keep inspector coverage alongside the compact layer controls.
+  await evaluate(`document.querySelector('#inspect-curves').click();document.querySelector('#inspect-curves').focus()`);
+  assert.equal(await evaluate(`document.querySelector('#inspect-panel-curves').hidden`),false);
+  assert.equal(await evaluate(`document.querySelector('#trend-chart')!==null`),true);
+  await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Home',code:'Home'});
+  await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Home',code:'Home'});
+  assert.equal(await evaluate(`document.querySelector('#inspect-metrics').getAttribute('aria-selected')`),'true');
+  assert.equal(await evaluate(`document.querySelectorAll('.quality-metrics dd.metric-value').length`),4);
   // Multiple features retain separate layer banks without exposing a mode switch.
   await evaluate(`
     document.querySelector('#clear-layers').click();document.querySelector('[data-layer="4"]').click();document.querySelector('[data-layer="7"]').click();

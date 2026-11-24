@@ -64,6 +64,7 @@ On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
 
 ## Pages and layer controls
 
+- **Home** (`/`): product overview with links to the free extension and Steering Lab.
 - **Explore** (`/explore`): animated 24-layer schematic above the live draft/rewrite
   comparison. Click a layer to inspect it, check **Select layer** to include it,
   and set its independent alpha from -2 to +2. Default: layer 11 at +0.5.
@@ -71,7 +72,7 @@ On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
   disabled until packaging is ready.
 - **Evaluation** (`/evaluation`): empty content area for the upcoming evaluation UI.
 
-Old `/` and `/steering` links redirect to Explore; `/extension` and `/about`
+Legacy `/steering` links redirect to Explore; `/extension` and `/about`
 redirect to Community. Only Explore loads the generation JavaScript. Shared
 styles live in `assets/styles.css`; `assets/lab.css` is a retained legacy asset
 and is no longer loaded.
@@ -219,6 +220,7 @@ Interactive schema: **http://127.0.0.1:8001/docs**.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
+| GET | `/` | Product landing page |
 | GET | `/explore` | Interactive steering lab |
 | GET | `/community` | Extension introduction |
 | GET | `/evaluation` | Empty evaluation page |

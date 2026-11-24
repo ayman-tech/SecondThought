@@ -292,3 +292,33 @@
 .page-steering .layer.focused .layer-fin { outline:1px solid #929aaa; outline-offset:3px; }
 .page-steering .layer:hover .layer-fin { background:var(--layer-fill,#edf0f5); }
 .page-steering .layer.selected .layer-label { color:var(--layer-border); }
+/* Response inspector scores (steering.js scoreResponse): empty, stale while a newer response loads, scored */
+.quality-metrics .metric-detail { font:400 10.5px/1.45 "DM Sans",sans-serif; color:#93859e; margin:3px 0 0; }
+.quality-metrics .metric-value { font-size:19px; white-space:nowrap; font-variant-numeric:tabular-nums; transition:color .2s; }
+.quality-metrics[data-state="scored"] .metric-value { color:var(--ink); }
+.quality-metrics[data-state="stale"] .metric-value { color:#b0a0c2; }
+/* Curves tab: formality and toxicity over time (steering.js drawTrend). Site purple and teal. */
+.trend-legend { display:flex; flex-wrap:wrap; gap:14px; margin:12px 0 4px; font-size:11px; color:#8a7b99; }
+.trend-legend span { display:inline-flex; align-items:center; gap:6px; }
+.trend-key { display:inline-block; width:14px; height:3px; border-radius:2px; }
+.trend-key.formality { background:var(--purple); }
+.trend-key.toxicity { background:var(--teal); }
+.trend-key.threshold { height:0; border-top:1.5px dashed #b5afbd; }
+.trend-chart { margin:4px 0 0; min-height:240px; }
+.trend-chart svg { display:block; max-width:100%; height:auto; overflow:visible; }
+.trend-empty { display:grid; place-items:center; min-height:200px; margin:0; border:1px dashed #e4dfeb; border-radius:8px; color:#93859e; font-size:12px; }
+.trend-grid { stroke:#f0edf5; }
+.trend-threshold { stroke:#b5afbd; stroke-width:1.5; stroke-dasharray:4 4; }
+.trend-axis, .trend-axis-title { fill:#a69aaf; font:10px "DM Sans",sans-serif; }
+.trend-line { fill:none; stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+.trend-line.formality { stroke:var(--purple); }
+.trend-line.toxicity { stroke:var(--teal); }
+.trend-dot { stroke:#fff; stroke-width:2; }
+.trend-dot.formality { fill:var(--purple); }
+.trend-dot.toxicity { fill:var(--teal); }
+.trend-label { font:600 11px "DM Sans",sans-serif; fill:var(--ink); }
+.trend-actions { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.trend-actions button { flex:none; margin-top:8px; font-size:12px; padding:5px 12px; }
+/* Steadier updates: reserve two lines under each value so cards don't change height. The chart animates in steering.js. */
+.quality-metrics .metric-detail { min-height:2.9em; }
+@media (prefers-reduced-motion: reduce) { .quality-metrics .metric-value { transition:none; } }
