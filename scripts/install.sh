@@ -9,6 +9,7 @@
 # Optional, set before running:
 #   SECONDTHOUGHT_HOME   where to install (default: ~/SecondThought)
 #   SECONDTHOUGHT_MODEL  path to the both-t5 model folder or its .zip
+#                        (otherwise it's downloaded from the latest release, if attached there)
 set -eu
 
 REPO="https://github.com/ayman-tech/SecondThought"
@@ -76,8 +77,22 @@ elif [ -n "${SECONDTHOUGHT_MODEL:-}" ] && [ -e "$SECONDTHOUGHT_MODEL" ]; then
         warn "Couldn't find model.safetensors in $SECONDTHOUGHT_MODEL. Copy the both-t5 folder to $MODEL_DIR yourself."
     fi
 else
-    warn "One manual step: copy the both-t5 model folder (ask the team) to"
-    warn "  $MODEL_DIR"
+    # The release only has the model once someone attaches both-t5.zip to it.
+    note "Downloading the model (about 230 MB)..."
+    model_zip="${TMPDIR:-/tmp}/both-t5.zip"
+    if curl -fsSL "$REPO/releases/latest/download/both-t5.zip" -o "$model_zip"; then
+        mkdir -p "$DIR/models"
+        (cd "$DIR" && uv run python -m zipfile -e "$model_zip" models)
+    else
+        note "It isn't available for download yet."
+    fi
+    rm -f "$model_zip"
+    if [ -f "$MODEL_DIR/model.safetensors" ]; then
+        note "Downloaded the model into models/both-t5."
+    else
+        warn "One manual step: copy the both-t5 model folder (ask the team) to"
+        warn "  $MODEL_DIR"
+    fi
 fi
 
 # 5. A way to start the service. On macOS the .command file is double-clickable.
@@ -94,7 +109,14 @@ chmod +x "$START"
 if [ "$(uname)" = "Darwin" ]; then
     cp "$START" "$DIR/start-secondthought.command"
     chmod +x "$DIR/start-secondthought.command"
-    note "Double-click start-secondthought.command in $DIR to start it."
+    # And a shortcut on the Desktop, which is where most people will look for it.
+    if [ -d "$HOME/Desktop" ] && [ -z "${SECONDTHOUGHT_NO_SHORTCUT:-}" ]; then
+        printf '#!/bin/sh\nexec "%s"\n' "$START" > "$HOME/Desktop/Start SecondThought.command"
+        chmod +x "$HOME/Desktop/Start SecondThought.command"
+        note "Added Start SecondThought to your Desktop."
+    else
+        note "Double-click start-secondthought.command in $DIR to start it."
+    fi
 else
     note "Run $START to start it."
 fi

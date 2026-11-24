@@ -8,6 +8,7 @@
 # Optional, set before running:
 #   $env:SECONDTHOUGHT_HOME   where to install (default: ~\SecondThought)
 #   $env:SECONDTHOUGHT_MODEL  path to the both-t5 model folder or its .zip
+#                             (otherwise it's downloaded from the latest release, if attached there)
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"  # makes downloads much faster
@@ -81,8 +82,24 @@ if (Test-Path (Join-Path $ModelDir "model.safetensors")) {
     if (Test-Path (Join-Path $ModelDir "model.safetensors")) { Note "Copied the model into models\both-t5." }
     else { Warn "Couldn't find model.safetensors in $env:SECONDTHOUGHT_MODEL. Copy the both-t5 folder to $ModelDir yourself." }
 } else {
-    Warn "One manual step: copy the both-t5 model folder (ask the team) to"
-    Warn "  $ModelDir"
+    # The release only has the model once someone attaches both-t5.zip to it.
+    $modelZip = Join-Path $env:TEMP "both-t5.zip"
+    try {
+        Note "Downloading the model (about 230 MB)..."
+        Invoke-WebRequest "$Repo/releases/latest/download/both-t5.zip" -OutFile $modelZip
+        New-Item -ItemType Directory -Force (Split-Path $ModelDir) | Out-Null
+        Expand-Archive $modelZip (Split-Path $ModelDir) -Force
+    } catch {
+        Note "It isn't available for download yet."
+    } finally {
+        Remove-Item $modelZip -ErrorAction SilentlyContinue
+    }
+    if (Test-Path (Join-Path $ModelDir "model.safetensors")) {
+        Note "Downloaded the model into models\both-t5."
+    } else {
+        Warn "One manual step: copy the both-t5 model folder (ask the team) to"
+        Warn "  $ModelDir"
+    }
 }
 
 # 5. A double-clickable way to start the service.
@@ -97,7 +114,16 @@ echo Starting SecondThought. Keep this window open while you use it.
 uv run python -m extension.api.server
 pause
 "@ | Set-Content -Encoding ASCII $Start
-Note "Double-click start-secondthought in $Dir to start it."
+# And a shortcut on the Desktop, which is where most people will look for it.
+$Desktop = [Environment]::GetFolderPath("Desktop")
+if ($Desktop -and -not $env:SECONDTHOUGHT_NO_SHORTCUT) {
+    "@call `"$Start`"" | Set-Content -Encoding ASCII (Join-Path $Desktop "Start SecondThought.cmd")
+    Note "Added Start SecondThought to your Desktop."
+    $StartHint = "Double-click Start SecondThought on your Desktop"
+} else {
+    Note "Double-click start-secondthought in $Dir to start it."
+    $StartHint = "Double-click start-secondthought in $Dir"
+}
 
 try {
     Invoke-RestMethod http://127.0.0.1:8000/health -TimeoutSec 2 | Out-Null
@@ -127,5 +153,5 @@ Write-Host "`nAlmost there. In $name ($page):" -ForegroundColor Green
 Note "1. Switch on Developer mode (top right)."
 Note "2. Click Load unpacked and choose this folder:"
 Note "   $ExtensionDir"
-Note "3. Double-click start-secondthought in $Dir, then type something heated in Gmail or Slack."
+Note "3. $StartHint, then type something heated in Gmail or Slack."
 Write-Host ""
