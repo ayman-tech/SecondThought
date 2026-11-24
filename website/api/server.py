@@ -125,6 +125,7 @@ def create_app(service=None, *, service_factory=None, scorer_factory=None) -> Fa
                 if loaded is None:
                     factory = service_factory or (lambda: ExploreRewriter(
                         device=os.getenv("SECONDTHOUGHT_WEBSITE_DEVICE") or None,
+                        precision=os.getenv("SECONDTHOUGHT_WEBSITE_PRECISION", "auto"),
                     ))
                     loaded = await asyncio.to_thread(factory)
                 manager = GenerationManager(loaded)

@@ -20,7 +20,7 @@ export async function checkEveryVectorRoute({evaluate,until}) {
         headers:{'Content-Type':'application/x-ndjson'}});
     };
   `);
-  const features=await evaluate(`[...document.querySelector('#focused-feature').options].map(o=>o.value)`);
+  const features=await evaluate(`[...document.querySelectorAll('[data-mix-toggle]')].map(o=>o.dataset.mixToggle)`);
   const report=[];
   try {
     for(const feature of features) for(const pooling of ['mean','final_token']) {
@@ -30,6 +30,7 @@ export async function checkEveryVectorRoute({evaluate,until}) {
         await evaluate(`
           document.querySelector('#draft').value='Vector audit ${feature} ${pooling} ${layer}';
           document.querySelector('#draft').dispatchEvent(new Event('input'));
+          document.querySelector('#clear-layers').click();
           document.querySelector('[data-layer="${layer}"]').click();
           document.querySelector('#mix-${feature}').value=${strength};
           document.querySelector('#mix-${feature}').dispatchEvent(new Event('input'));
@@ -38,7 +39,7 @@ export async function checkEveryVectorRoute({evaluate,until}) {
         await until(`window.__vectorQA.requests.length===${count} && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,10);
         const actual=await evaluate(`(() => {
           const request=window.__vectorQA.requests.at(-1),button=document.querySelector('[data-layer="${layer}"]');
-          return {...request,colourVector:button.dataset.evidenceVectorId,score:Number(button.dataset.evidenceValue)};
+          return {...request,colourVector:button.dataset.vectorId,selectedFeatures:button.dataset.selectedFeatures,fill:button.style.getPropertyValue('--layer-fill')};
         })()`);
         const expectedId=`qwen-${feature}-l${layer}-${pooling}-v1`;
         assert.deepEqual(actual.body.interventions,[{vector_id:expectedId,strength}]);
@@ -50,7 +51,8 @@ export async function checkEveryVectorRoute({evaluate,until}) {
         assert.equal(resolved[0].pooling,pooling);
         assert.equal(resolved[0].strength,strength);
         assert.equal(actual.colourVector,expectedId);
-        report.push({vector_id:expectedId,layer,pooling,feature,strength,score:actual.score,
+        assert.equal(actual.selectedFeatures,feature);
+        report.push({vector_id:expectedId,layer,pooling,feature,strength,fill:actual.fill,
           artifact_id:resolved[0].artifact_id,artifact_sha256:resolved[0].artifact_sha256});
       }
     }

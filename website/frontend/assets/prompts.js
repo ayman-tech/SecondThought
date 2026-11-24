@@ -8,6 +8,7 @@ export function mountPromptControls(onChange) {
   const settings = () => ({...applied});
   function update() {
     $('experiment-prompt').value = applied.task;
+    if ($('task-label')) $('task-label').textContent = presets[applied.task].label || applied.task;
     $('system-prompt').value = applied.system_prompt ?? '';
     $('system-prompt').readOnly = applied.task === 'none';
     $('input-budget').value = applied.max_input_tokens;

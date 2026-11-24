@@ -1,0 +1,31 @@
+name: secondthought-demo
+services:
+  app:
+    image: secondthought-lab:cpu
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        TORCH_BACKEND: cpu
+    restart: unless-stopped
+    init: true
+    environment:
+      SECONDTHOUGHT_WEBSITE_DEVICE: cpu
+      SECONDTHOUGHT_WEBSITE_PRECISION: float32
+      HF_HOME: /cache/huggingface
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
+    ports:
+      - "127.0.0.1:8001:8001"
+    volumes:
+      - model-cache:/cache/huggingface
+    shm_size: 1gb
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  model-cache:

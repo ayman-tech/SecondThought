@@ -103,192 +103,85 @@ try {
       `Timed out waiting for ${expression}; page state: ${JSON.stringify(geometry)}; exceptions: ${JSON.stringify(exceptions)}`,
     );
   };
-  await cdp("Runtime.enable");
-  await cdp("Page.enable");
-  // Full-page navigation can leave a headless target unfocused. Emulate the
-  // foreground tab so focus/blur and viewport events behave like a user session.
-  await cdp("Emulation.setFocusEmulationEnabled", { enabled: true });
-  await cdp("Emulation.setDeviceMetricsOverride", {
-    width: 1440,
-    height: 1100,
-    deviceScaleFactor: 1,
-    mobile: false,
-  });
-  await cdp("Page.navigate", { url: base + "/explore" });
-  await until(
-    `document.getElementById('model-status')?.parentElement.hidden`,
-    90,
-  );
+
+  await cdp('Runtime.enable');await cdp('Page.enable');
+  await cdp('Emulation.setFocusEmulationEnabled',{enabled:true});
+  await cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});
+  await cdp('Page.navigate',{url:base+'/explore'});
+  await until(`document.getElementById('model-status')?.parentElement.hidden`,90);
+  assert.deepEqual(await evaluate(`[...document.querySelectorAll('[data-mix-toggle]')].map(n=>n.dataset.mixToggle)`),
+    ['formality','fluency','empathy','politeness']);
+  assert.equal(await evaluate(`document.querySelector('.experiment-settings,#layer-enabled,#layer-mode-single,#layer-mode-multi,#focused-feature')`),null);
+  assert.equal(await evaluate(`document.querySelectorAll('[data-layer]').length`),24);
+  assert.equal(await evaluate(`document.querySelector('[data-mix-toggle="empathy"]').closest('.mix-feature-axis').getAttribute('opacity')`),'0.5');
   await evaluate(`
-    window.__captureRun=body=>{
-      const vectors=JSON.parse(document.querySelector('#layer-vector-data').textContent);
-      return {...body,message:body.input,max_input_tokens:body.generation.max_input_tokens,max_new_tokens:body.generation.max_new_tokens,
-        layer_strengths:Object.fromEntries(body.interventions.map(i=>[vectors.find(v=>v.id===i.vector_id).layer_index,i.strength])),
-        layer_vector_ids:Object.fromEntries(body.interventions.map(i=>[vectors.find(v=>v.id===i.vector_id).layer_index,i.vector_id]))};
-    };
     window.__chooseFamily=(feature,pooling)=>{
-      for(const checkbox of document.querySelectorAll('#feature-selection input')) {
-        const enabled=checkbox.dataset.feature===feature;
-        if(checkbox.checked!==enabled) checkbox.click();
+      const ids=[...document.querySelectorAll('[data-mix-toggle]')].map(n=>n.dataset.mixToggle);
+      for(const id of ids){const button=document.querySelector('[data-mix-toggle="'+id+'"]');
+        if((button.getAttribute('aria-pressed')==='true')!==(id===feature))
+          button.dispatchEvent(new MouseEvent('click',{bubbles:true}));
       }
-      document.querySelector('#focused-feature').value=feature;
-      document.querySelector('#focused-feature').dispatchEvent(new Event('change'));
-      document.querySelector('#focused-pooling').value=pooling;
-      document.querySelector('#focused-pooling').dispatchEvent(new Event('change'));
+      const select=document.querySelector('#focused-pooling');select.value=pooling;
+      select.dispatchEvent(new Event('change'));
     };
+    document.querySelector('#clear-layers').click();
+    document.querySelector('[data-layer="7"]').click();document.querySelector('[data-layer="9"]').click();
   `);
-  assert.equal(
-    await evaluate(`document.querySelectorAll('[data-layer]').length`),
-    24,
-  );
-  assert.equal(await evaluate(`document.querySelectorAll('.site-header nav a').length`), 4);
-  assert.equal(
-    await evaluate(`document.documentElement.scrollWidth <= innerWidth`),
-    true,
-  );
-  assert.equal(await evaluate(`document.querySelector('#layer-colour-profile')`), null);
-  assert.equal(await evaluate(`document.querySelectorAll('#feature-selection input').length`),7);
-  assert.equal(await evaluate(`document.querySelectorAll('#mix-wheel .mix-web-ring').length`),4);
-  assert.equal(await evaluate(`new Set([...document.querySelectorAll('#mix-wheel .mix-axis-label')]
-    .map(label=>label.textContent)).size`),7,'Feature axes have distinct full labels');
-  assert.equal(await evaluate(`new Set([...document.querySelectorAll('.feature-check span')].map(label=>label.style.getPropertyValue('--feature-colour'))).size`),7);
-  await evaluate(`document.querySelector('#mix-precise-controls').showPopover()`);
-  assert.equal(await evaluate(`document.querySelectorAll('#mix-controls input[type=range]').length`),7,'Every feature has a precise slider');
-  await evaluate(`document.querySelector('#mix-precise-controls').hidePopover()`);
-  for (const [id,count] of [['focused-feature',7],['focused-pooling',2]])
-    assert.deepEqual(await evaluate(`[...document.querySelector('#${id}').options].map(o=>o.disabled)`),Array(count).fill(false));
-  // Verify every feature/layer/pooling mapping against the shipped catalog.
-  for (const feature of ['formality','detoxification','fluency','simplification','conciseness','empathy','politeness']) {
-    for (const pooling of ['mean','final_token']) {
-      await evaluate(`window.__chooseFamily('${feature}','${pooling}')`);
-      await until(`[...document.querySelectorAll('[data-layer]')].every(button=>{
-        const expected=document.createElement('span');expected.style.backgroundColor=button.style.getPropertyValue('--evidence-fill');
-        return getComputedStyle(button.querySelector('.layer-fin')).backgroundColor===expected.style.backgroundColor;
-      })`);
-      assert.equal(await evaluate(`document.querySelector('#feature-data-name').textContent`),feature[0].toUpperCase()+feature.slice(1));
-      if(['empathy','politeness'].includes(feature))
-        assert.ok(await evaluate(`document.querySelector('#feature-data-pairs').textContent.includes('derived:')`),'Derived pairs are identified in the UI');
-      const mapping = await evaluate(`(() => {
-        const vectors=JSON.parse(document.querySelector('#layer-vector-data').textContent);
-        const evidence=JSON.parse(document.querySelector('#layer-evidence-data').textContent).flatMap(p=>p.layers);
-        return [...document.querySelectorAll('[data-layer]')].map(b=>{
-          const matches=vectors.filter(v=>v.selectable && v.feature_id==='${feature}' && v.pooling==='${pooling}' && v.layer_index===Number(b.dataset.layer));
-          const vector=matches[0], score=evidence.find(e=>e.vector_id===vector?.id);
-          return {count:matches.length,id:b.dataset.evidenceVectorId,expected:vector?.id,
-            score:Number(b.dataset.evidenceValue),expectedScore:score?.value,state:b.dataset.evidenceState};
-        });
-      })()`);
-      assert.equal(mapping.length,24);
-      for (const row of mapping) {
-        assert.equal(row.count,1);
-        assert.equal(row.id,row.expected);
-        assert.equal(row.score,row.expectedScore);
-        assert.equal(row.state,'measured');
-      }
-    }
-  }
-  const routingAudit=await checkEveryVectorRoute({evaluate,until});
-  await writeFile(join(directory,'vector-routing.json'),JSON.stringify(routingAudit,null,2));
-  await evaluate(`document.querySelector('#reset-layers').click()`);
-  assert.equal(await evaluate(`document.querySelector('[data-layer="11"]').getAttribute('aria-pressed')`),'true');
-  assert.equal(await evaluate(`document.querySelector('#mix-formality').value`),'0.5');
-  await until(`getComputedStyle(document.querySelector('[data-layer="11"] .layer-fin')).backgroundColor === document.querySelector('[data-layer="11"]').style.getPropertyValue('--evidence-fill')`);
-  for (const id of ['focused-feature','focused-pooling'])
-    assert.equal(await evaluate(`document.getElementById(${JSON.stringify(id)}).disabled`), false);
-  for (const id of ['experiment-model'])
-    assert.equal(await evaluate(`document.getElementById(${JSON.stringify(id)}).disabled`), true);
-  assert.equal(await evaluate(`document.querySelector('#system-prompt').readOnly`), false);
-  assert.equal(await evaluate(`document.querySelector('#system-prompt').value`),
-    "Rewrite the user's sentence while preserving its meaning. Return only the rewritten sentence.");
-  for (const [layer, feature, pooling] of [
-    [0, 'formality', 'mean'], [22, 'formality', 'mean'],
-    [4, 'formality', 'mean'], [3, 'formality', 'mean'], [11, 'formality', 'mean'],
-  ]) {
-    await evaluate(`document.querySelector('[data-layer="${layer}"]').click()`);
-    assert.equal(await evaluate(`document.querySelector('#focused-feature').value`), feature);
-    assert.equal(await evaluate(`document.querySelector('#focused-pooling').value`), pooling);
-  }
+  assert.deepEqual(await evaluate(`[...document.querySelectorAll('.layer.selected')].map(n=>Number(n.dataset.layer))`),[7,9]);
+  await evaluate(`document.querySelector('[data-layer="7"]').click()`);
+  assert.deepEqual(await evaluate(`[...document.querySelectorAll('.layer.selected')].map(n=>Number(n.dataset.layer))`),[9]);
+  await evaluate(`document.querySelector('[data-mix-toggle="empathy"]').dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
+  assert.equal(await evaluate(`document.querySelector('[data-mix-toggle="empathy"]').closest('.mix-feature-axis').getAttribute('opacity')`),'1');
+  await evaluate(`document.querySelector('[data-layer="4"]').click();window.__chooseFamily('formality','mean')`);
+  assert.deepEqual(await evaluate(`[...document.querySelectorAll('.layer.selected')].map(n=>Number(n.dataset.layer))`),[9]);
+  // Selection paint follows all enabled feature banks, including shared layers.
+  assert.equal(await evaluate(`document.querySelector('.layer-score,.heat-scale')`),null);
+  assert.equal(await evaluate(`document.querySelector('[data-layer="0"]').style.getPropertyValue('--layer-fill')`),'#edf0f5');
+  await evaluate(`document.querySelector('[data-mix-toggle="empathy"]').dispatchEvent(new MouseEvent('click',{bubbles:true}));document.querySelector('[data-layer="9"]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-layer="9"]').dataset.selectedFeatures`),'formality,empathy');
+  assert.equal(await evaluate(`getComputedStyle(document.querySelector('[data-layer="9"] .layer-fin')).backgroundImage.startsWith('linear-gradient')`),true);
+  assert.equal(await evaluate(`document.querySelector('[data-layer="4"]').dataset.selectedFeatures`),'empathy');
+  await evaluate(`document.querySelector('[data-mix-toggle="empathy"]').dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
+  assert.equal(await evaluate(`document.querySelector('[data-layer="9"]').dataset.selectedFeatures`),'formality');
+  assert.equal(await evaluate(`document.querySelector('[data-layer="4"]').style.getPropertyValue('--layer-fill')`),'#edf0f5');
+  // The Task menu contains the existing, live prompt controls.
+  await evaluate(`document.querySelector('[popovertarget="task-controls"]').click();
+    document.querySelector('#experiment-prompt').value='summarize';document.querySelector('#experiment-prompt').dispatchEvent(new Event('change'))`);
+  assert.equal(await evaluate(`document.querySelector('#task-label').textContent`),'Summarize');
+  await evaluate(`document.querySelector('#experiment-prompt').value='rewrite';document.querySelector('#experiment-prompt').dispatchEvent(new Event('change'));document.querySelector('#task-controls').hidePopover();document.querySelector('#reset-layers').click()`);
+  await evaluate(`document.querySelector('#draft').value='Please send the report today.';document.querySelector('#draft').dispatchEvent(new Event('input'))`);
+  await until(`document.querySelector('#output-card').getAttribute('aria-busy')==='false'&&!document.querySelector('#output').classList.contains('placeholder')`,90);
+  await evaluate(`document.querySelector('#clear').click()`);
+  await checkSliderRelease({evaluate,cdp,until});
+  const report=await checkEveryVectorRoute({evaluate,until});
+  assert.equal(report.length,192);
+  await writeFile(join(directory,'vector-routing.json'),JSON.stringify(report,null,2));
+  // Keep inspector coverage alongside the compact layer controls.
   await evaluate(`document.querySelector('#inspect-curves').click();document.querySelector('#inspect-curves').focus()`);
-  assert.equal(await evaluate(`document.querySelector('#inspect-panel-curves').hidden`), false);
-  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Home', code: 'Home' });
-  await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Home', code: 'Home' });
-  assert.equal(await evaluate(`document.querySelector('#inspect-metrics').getAttribute('aria-selected')`), 'true');
-  assert.equal(await evaluate(`document.querySelectorAll('.quality-metrics dd.metric-value').length`), 4);
-  // Single mode replaces selection; multi mode requires an explicit enable.
-  assert.equal(await evaluate(`document.querySelector('#layer-mode-single').checked`),true);
-  await evaluate(`document.querySelector('[data-layer="4"]').click();document.querySelector('[data-layer="3"]').click()`);
-  assert.deepEqual(await evaluate(`[...document.querySelectorAll('.layer.selected')].map(b=>Number(b.dataset.layer))`),[3]);
-  await evaluate(`document.querySelector('#layer-mode-multi').click();document.querySelector('[data-layer="4"]').click()`);
-  assert.equal(await evaluate(`document.querySelector('#layer-enabled').checked`),false);
-  await evaluate(`document.querySelector('#layer-enabled').click()`);
-  assert.equal(await evaluate(`document.querySelectorAll('.active-layer-chip').length`),2);
-  assert.equal(await evaluate(`document.querySelector('#multi-layer-note').hidden`),false);
-  await evaluate(`document.querySelector('#layer-mode-single').click()`);
-  assert.deepEqual(await evaluate(`[...document.querySelectorAll('.layer.selected')].map(b=>Number(b.dataset.layer))`),[4]);
-  await evaluate(`document.querySelector('.active-layer-chip').click()`);
-  assert.equal(await evaluate(`document.querySelectorAll('.layer.selected').length`),0);
-  assert.ok(await evaluate(`document.querySelector('#active-layer-summary').textContent.includes('Prompt only')`));
-  await evaluate(`document.querySelector('[data-layer="4"]').click();document.querySelector('#clear-layers').click()`);
-  assert.equal(await evaluate(`document.querySelectorAll('.active-layer-chip').length`),0);
-  await evaluate(`document.querySelector('#reset-layers').click()`);
-  await checkSliderRelease({ evaluate, cdp, until });
-  await evaluate(`document.querySelector('#draft').value='hey can u send the report by 3 PM?';document.querySelector('#draft').dispatchEvent(new Event('input'))`);
-  await until(
-    `!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`,
-  );
-  const checkHighlights = async () => {
-    const diff = await evaluate(
-      `(async()=>{const {wordChanges}=await import('/assets/lifecycle.js');return {expected:wordChanges(document.querySelector('#draft').value.trim(),document.querySelector('#output').textContent).filter(x=>x.added).map(x=>x.text),actual:[...document.querySelectorAll('.word-new')].map(x=>x.textContent)}})()`,
-    );
-    assert.deepEqual(diff.actual, diff.expected);
-  };
-  await checkHighlights();
-  await evaluate(`window.__singleRequests=[];window.__singleFetch=window.fetch;window.fetch=(url,options)=>{if(String(url).endsWith('/stream'))window.__singleRequests.push(window.__captureRun(JSON.parse(options.body)));return window.__singleFetch(url,options)};document.querySelector('[data-layer="4"]').click()`);
-  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
-  assert.deepEqual(await evaluate(`window.__singleRequests.at(-1).layer_strengths`),{4:.5});
-  await evaluate(`document.querySelector('#reset-layers').click();window.fetch=window.__singleFetch`);
-  await until(`document.querySelector('#run-source').textContent === 'Tab cache'`);
-  await evaluate(`document.querySelector('#layer-mode-multi').click()`);
-  const baseline = await evaluate(
-    `document.querySelector('#output').textContent`,
-  );
-  await evaluate(
-    `document.querySelector('[data-layer="3"]').click()`,
-  );
-  assert.equal(
-    await evaluate(`document.querySelector('#output').textContent`),
-    baseline,
-  );
-  assert.ok(
-    await evaluate(
-      `document.querySelector('#layer-kind').textContent.includes('Formality')`,
-    ),
-  );
-  // Layer 3 was previously unavailable. Verify the new catalog direction goes
-  // through the actual browser/API/model path, then restore the default run.
+  assert.equal(await evaluate(`document.querySelector('#inspect-panel-curves').hidden`),false);
+  assert.equal(await evaluate(`document.querySelector('#trend-chart')!==null`),true);
+  await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Home',code:'Home'});
+  await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Home',code:'Home'});
+  assert.equal(await evaluate(`document.querySelector('#inspect-metrics').getAttribute('aria-selected')`),'true');
+  assert.equal(await evaluate(`document.querySelectorAll('.quality-metrics dd.metric-value').length`),4);
+  // Multiple features retain separate layer banks without exposing a mode switch.
   await evaluate(`
-    window.__catalogRequests=[];window.__catalogFetch=window.fetch;
-    window.fetch=(url,options)=>{if(String(url).endsWith('/stream'))window.__catalogRequests.push(window.__captureRun(JSON.parse(options.body)));return window.__catalogFetch(url,options)};
-    document.querySelector('#layer-enabled').click();
+    document.querySelector('#clear-layers').click();document.querySelector('[data-layer="4"]').click();document.querySelector('[data-layer="7"]').click();
+    document.querySelector('[data-mix-toggle="empathy"]').dispatchEvent(new MouseEvent('click',{bubbles:true}));
+    document.querySelector('[data-layer="12"]').click();
   `);
-  await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
-  assert.deepEqual(await evaluate(`window.__catalogRequests.at(-1).layer_strengths`), {3:0.5,11:0.5});
-  assert.ok(await evaluate(`document.querySelector('#run-alpha').textContent.includes('L3')`));
-  // Exercise generation for all four families with both selected layers.
-  for (const feature of ['detoxification','formality']) {
-    for (const pooling of ['final_token','mean']) {
-      await evaluate(`window.__chooseFamily('${feature}','${pooling}');document.querySelector('#layer-mode-multi').click();for(const index of [3,11]){document.querySelector('[data-layer=\"'+index+'\"]').click();if(!document.querySelector('#layer-enabled').checked)document.querySelector('#layer-enabled').click()}`);
-      await until(`!document.querySelector('#output').classList.contains('placeholder') && document.querySelector('#output-card').getAttribute('aria-busy')==='false'`);
-      // The last formality/mean run can be served from the earlier tab cache.
-      const expected = await evaluate(`Object.fromEntries(JSON.parse(document.querySelector('#layer-vector-data').textContent).filter(v=>v.selectable && v.feature_id==='${feature}' && v.pooling==='${pooling}' && [3,11].includes(v.layer_index)).map(v=>[v.layer_index,v.id]))`);
-      if (await evaluate(`document.querySelector('#run-source').textContent !== 'Tab cache'`)) {
-        const request = await evaluate(`window.__catalogRequests.at(-1)`);
-        assert.deepEqual(request.layer_strengths,{3:.5,11:.5});
-        assert.deepEqual(request.layer_vector_ids,expected);
-      }
-      for (const id of Object.values(expected))
-        assert.ok(await evaluate(`document.querySelector('#run-alpha').title.includes(${JSON.stringify(id)})`));
+  assert.equal(await evaluate(`document.querySelectorAll('#active-layer-list button').length`),4);
+  await evaluate(`document.querySelector('#clear-layers').click();document.querySelector('#reset-layers').click()`);
+  for(const [width,height] of [[1920,1080],[1440,1100],[390,844]]){
+    await cdp('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});
+    await evaluate(`new Promise(resolve=>setTimeout(resolve,150))`);
+    assert.equal(await evaluate(`document.documentElement.scrollWidth<=innerWidth`),true,`overflow at ${width}`);
+    if(width>=1280){
+      const geometry=await evaluate(`(()=>{const model=document.querySelector('.model-section').getBoundingClientRect(),writing=document.querySelector('.writing-section').getBoundingClientRect();return {model:model.left,writing:writing.left,width:model.width}})()`);
+      assert.ok(Math.abs(geometry.model-geometry.writing)<2);
+      assert.ok(geometry.width>width*.8);
     }
+    await writeFile(join(directory,`compact-${width}.png`),Buffer.from((await cdp('Page.captureScreenshot',{format:'png'})).data,'base64'));
   }
   await evaluate(`document.querySelector('#reset-layers').click()`);
   await until(`document.querySelector('#run-source').textContent === 'Tab cache'`);
@@ -541,6 +434,5 @@ try {
   );
   console.log("Screenshots:", directory);
 } finally {
-  if (socket) socket.close();
-  chrome.kill("SIGTERM");
+  if(socket)socket.close();chrome.kill('SIGTERM');
 }

@@ -31,6 +31,16 @@ class FakeService:
         return GenerationResult("A considered rewrite.", 5, "stop")
 
 
+def test_compact_lab_has_task_menu_without_old_setup_and_selection_controls():
+    with TestClient(create_app(FakeService())) as client:
+        html = client.get('/explore').text
+    for identifier in ('layer-enabled','layer-mode-single','layer-mode-multi','focused-feature','experiment-model','feature-selection'):
+        assert f'id="{identifier}"' not in html
+    assert 'class="experiment-settings"' not in html
+    for identifier in ('mix-wheel','task-controls','experiment-prompt','system-prompt','focused-pooling','active-layer-list'):
+        assert f'id="{identifier}"' in html
+
+
 def payload(**overrides):
     return dict(session_id=str(uuid4()), revision=1, message="hello", alpha=0.5) | overrides
 

@@ -140,7 +140,7 @@ Cancellation and the generation deadline apply to the whole job. Run details
 and resolved metadata include both instructions and the rendering strategy.
 New continuation text can introduce ideas; it is not a meaning-preserving rewrite.
 
-The feature mixer is a seven-axis spider-web control. Drag coloured points along
+The feature mixer shows Formality, Fluency, Empathy and Politeness. Click a feature name to toggle it; inactive features have half opacity. The left setup rail has been removed; Task opens the task and instruction controls. The four-axis spider-web controls strengths. Drag coloured points along
 their axes, or focus a point and use arrow keys (Home/End select the bounds).
 The centre means −2, the middle ring means 0, and the outer ring means +2. Disabled
 features display `Off` and do not enter generation. Each point edits only that
@@ -164,8 +164,7 @@ claim follows from their held-out ordering scores.
 
 If a vector is unavailable, its layer is **preview only** and never enters an
 inference request or triggers generation. With the complete current catalog,
-every layer has an available default. Clicking a layer only inspects it;
-the checkbox controls selection. Selected available vectors combine in a single
+every layer has an available default. Clicking a layer adds it immediately; clicking it again removes it. Selected available vectors combine in a single
 forward pass at their respective blocks. Magnitudes are not comparable across
 raw and normalized directions. These combinations are experimental, not a
 validated quality improvement. The layer-11 default preserves the previous lab.
@@ -300,19 +299,18 @@ vectors remain available to older API clients; they are not the lab UI defaults.
 Positive strength follows the chosen direction (formal-minus-informal or
 neutral-minus-toxic); output quality and meaning preservation remain experimental.
 
-**Single layer** is the default for each feature: clicking or using arrow keys on the layer strip
-replaces the enabled layer. **Multi-layer** is explicit: clicking only focuses a
-layer, and **Enable layer** adds/removes it. Each enabled layer retains its own
-strength. Returning to Single layer keeps the focused enabled layer, or the
-lowest enabled index if the focused layer was not enabled. With no enabled
-layers it preserves the prompt-only baseline.
+Layer selection uses direct toggles with no mode switch. Each feature can keep
+one or several selected layers; each retains its own strength. Arrow keys focus
+a layer; Enter or Space toggles its selection. Feature selection and focused-layer
+strengths live in Feature mix. Pooling is under Layer controls, and Task contains
+presets, custom instructions and token budgets.
 
 The enabled-layer chips show every strength (including zero) and can individually
 disable layers. **Clear layers** disables all layers. The count describes only
 nonzero shifts; a zero strength registers no hook. Multiple nonzero layers are counted explicitly; the help panel explains that
 their shifts are applied together and can degrade generation.
-Mode is UI state; exact strengths and vector IDs remain the inference contract.
-Reset returns to Single layer, only Formality enabled, mean pooling, layer 11 at +0.5.
+Exact strengths and vector IDs remain the inference contract.
+Reset enables only Formality, mean pooling, layer 11 at +0.5.
 
 An optional `layer_vector_ids` map selects exact vectors, for example
 `{"11":"qwen-detoxification-l11-mean-v1"}` alongside `layer_strengths`.
@@ -375,30 +373,22 @@ successful completed generation. The JSON endpoint maps worker failures to HTTP
 422/500/504. Cancellation contains only `session_id` and `revision` and cannot
 cancel a newer revision. The UUID routes work between tabs; it is not authentication.
 
-## Layer evidence colours
+## Layer selection colours
 
 The lab loads its JavaScript module tree and styles through a content-versioned
 asset prefix. Asset responses require cache revalidation, preventing stale
 control scripts from being reused with updated option values. Restart the
 server after backend changes and refresh the page to load the current build.
 
-Layer colours show recorded **held-out pair ordering**, not measured rewrite
-quality. Darker teal means a higher proportion of held-out positive examples
-project above their paired negative examples along that exact vector. The scale
-is fixed at 50–100%; values below 50% retain their numerical score and use the
-lowest colour. This is not a shuffle-adjusted score.
+Layer tiles are neutral until selected. Selected tiles use the feature's colour:
+purple for Formality, orange for Fluency, pink for Empathy and teal for Politeness.
+Layers selected for multiple enabled features show coloured stripes. Turning a
+feature off removes its colour while retaining its saved settings. Colours do
+not encode strength or quality. Layer indices remain visible; accuracy scores
+and the heat legend are no longer displayed.
 
-The feature and pooling controls choose the vector family and its colours
-together; there is no independent colour selector. Every family has 24 scored
-vectors, including layers 4, 11 and 21. Grey means no valid measurement for the
-exact chosen vector or that vector is unavailable, not poor performance.
-
-Each layer exposes the score, sample count and Wilson 95% interval through its
-tooltip and focused evidence text. Purple outlines indicate selection/focus
-independently of the score. Scores remain visible for unselected layers to help
-choose where to steer; only selected layers enter generation. The read-only
-catalog retains `layer_evidence_profiles`, including legacy default evidence for
-compatibility. Missing legacy scores are never borrowed from a new extraction.
+Held-out measurements remain in the backend catalog and research artifacts;
+this presentation change does not modify vector extraction or interventions.
 
 ## Verify
 

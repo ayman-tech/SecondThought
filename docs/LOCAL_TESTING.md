@@ -115,41 +115,32 @@ as partial text; increase the output budget if needed.
 
 In the spider-web mixer, drag a feature point or focus it and use arrow keys.
 The centre is −2, the middle ring is 0, and the edge is +2. **Layer controls**
-opens the precise sliders and saved-layer details. Feature checkboxes still
-enable/disable steering, and each feature keeps its own layer settings.
+opens precise sliders and per-feature pooling. Click feature names in the mixer
+to enable or disable Formality, Fluency, Empathy and Politeness. Inactive features
+are shown at half opacity. Each feature keeps its own layer settings.
 
 1. Enter: `hey can you send me the report before noon?` A response should stream
    automatically. The initial setting is Formality, mean pooling, layer 11/+0.5.
-2. In Single layer mode, click layer 7. The Formality chip should change to L7,
-   replacing its previous layer.
-3. Check **Detoxification**, leaving Formality checked. There should now be two
-   feature chips and two active points in the left-hand **Feature mix** block.
-   Open **Layer controls** for the precise sliders.
-   **Fluency** is also available: enable it to combine all three features, or
-   disable the others to inspect fluency alone. Its layer selection, pooling and
-   strength remain independent. Test both pooling options and several layers;
-   the colours measure held-out pair ordering, not generated response quality.
-   Simplification, Conciseness, Empathy and Politeness are also available. Open
-   **Dataset & direction** to inspect the exact source and pairing limitations.
-4. Choose **Edit layers for → Detoxification**, then click layer 11. Formality
-   should retain L7. Change either point or precise slider; the other strength should stay
-   unchanged. Coloured points on the spider-web axes are draggable; release should
-   submit the final value immediately.
-5. Change pooling for the edited feature. Switch the editing selector back and
-   confirm the other feature retained its pooling and layers.
-6. Try Multi-layer mode for one feature: click another layer and check **Enable
-   layer**. Its earlier layers should remain listed. Switching that feature back
-   to Single layer removes its extra selections.
+2. Click layer 7. It is added immediately alongside L11. Click L11 to remove it;
+   only L7 remains. No enable checkbox or selection-mode switch is needed.
+3. Click **Empathy** in Feature mix. Its saved layer is enabled, alongside Formality.
+   Drag either feature point to edit its focused layer; release submits immediately.
+4. Click another layer for Empathy. Both empathy layers should remain in the chips.
+   Remove one by clicking its panel again or using the chip's × button.
+5. Focus Formality's point or precise slider. Its layer selections and strengths
+   should be retained independently. Change pooling under **Layer controls**.
+6. Click Empathy's name to turn it off. Its saved strengths remain, but its
+   interventions must disappear from generated requests.
 7. Use **Clear layers** for an unsteered baseline. The task instructions still
    apply. Use **Reset** to restore the initial Formality setup.
-8. Select **Summarize** and paste a paragraph. Under **Instructions & limits**,
+8. Open **Task** and select **Summarize** and paste a paragraph. Under **Instructions & limits**,
    edit the system instruction or budgets and press **Apply**. Run details should
    report the applied task, instruction and budgets. No system instruction is
    also available as a task option.
 
 Changing a slider does not guarantee different wording. Vectors are experimental;
 strong/many interventions can change meaning or produce repetition. Layer colours
-show held-out activation separation, not measured response quality.
+identify selected features; unselected layers are neutral and shared layers use stripes.
 
 ## 6. Automated checks
 

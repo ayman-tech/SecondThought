@@ -9,6 +9,20 @@ const vectors=['formality','detoxification','fluency','simplification','concisen
     available:true,selectable:true,
   }))));
 
+test('direct layer clicks toggle independent feature selections without an enable step',()=>{
+  const state=new FeatureExperiment(vectors);
+  state.clear();state.bank.toggle(4);state.bank.values[4]=.7;state.bank.toggle(12);
+  assert.deepEqual([...state.bank.selected],[4,12]);
+  state.enableFeature('empathy',true);state.bank.toggle(7);state.bank.values[7]=-.3;
+  state.selectFeature('formality');
+  assert.equal(state.bank.values[4],.7);
+  state.bank.toggle(4);
+  assert.deepEqual([...state.bank.selected],[12]);
+  assert.ok(state.interventions().some(v=>v.vector_id==='empathy-7-mean'&&v.strength===-.3));
+  state.bank.toggle(100);
+  assert.deepEqual([...state.bank.selected],[12],'Unavailable layers cannot enter the request');
+});
+
 test('features retain independent layers, mode, pooling, and strengths',()=>{
   const state=new FeatureExperiment(vectors);
   state.bank.focus(7);state.bank.values[7]=.4;
