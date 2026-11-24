@@ -56,6 +56,7 @@ EXTENSION_DOWNLOAD_URL = os.getenv("SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL", LOCAL
 EXTENSION_API_URL = os.getenv("SECONDTHOUGHT_EXTENSION_API_URL", "http://127.0.0.1:8000")
 TERMINAL = {"completed", "cancelled", "error"}
 PAGES = {
+    "home": ("/", "Home", "Rewrite privately in Chrome or tune model behavior in the SecondThought Steering Lab."),
     "steering": ("/explore", "Explore", "Explore activation steering, one layer at a time."),
     "community": ("/community", "Community", "Bring a second thought to your everyday writing."),
     "evaluation": ("/evaluation", "Evaluation", "SecondThought evaluation."),
@@ -335,6 +336,7 @@ def create_app(service=None, *, service_factory=None, scorer_factory=None) -> Fa
                         selectable=get_catalog().artifacts[v['artifact_id']].format == 'all_layers_v1')
                         for v in get_catalog().public()['vectors'] if v['model_id'] == DEFAULT_MODEL]
                         if page == 'steering' else [],
+                    steering_features=[f.label for f in get_catalog().spec.features] if page == "home" else [],
                     extension_download_url=EXTENSION_DOWNLOAD_URL,
                     extension_api_url=EXTENSION_API_URL,
                     navigation=[(key, path, label) for key, (path, label, _) in PAGES.items()],
@@ -351,7 +353,7 @@ def create_app(service=None, *, service_factory=None, scorer_factory=None) -> Fa
             return RedirectResponse(destination, status_code=307)
         return redirect
 
-    for old_path, target in (("/", "/explore"), ("/steering", "/explore"),
+    for old_path, target in (("/steering", "/explore"),
                              ("/extension", "/community"), ("/about", "/community")):
         app.add_api_route(old_path, redirect_handler(target), include_in_schema=False)
 
