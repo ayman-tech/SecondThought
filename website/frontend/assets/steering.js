@@ -263,7 +263,7 @@ function recordTrend(scores, snapshot, text) {
   if (last && last.text === text && last.input === snapshot.message) return; // same response re-shown
   const now = Date.now();
   trendStart ??= now;
-  trend.push({ t: (now - trendStart) / 1000, formality: scores.formality.response, toxicity: scores.toxicity.response, text, input: snapshot.message });
+  trend.push({ t: (now - trendStart) / 1000, formality: scores.formality, toxicity: scores.toxicity, text, input: snapshot.message });
   if (trend.length > TREND_LIMIT) trend.shift();
   drawTrend();
 }
@@ -282,13 +282,16 @@ function drawTrend() {
     return;
   }
   const width = Math.max(figure.clientWidth, 320);
-  if (!chartView || chartView.width !== width || !figure.contains(chartView.chart)) chartView = buildTrendFrame(figure, width);
+  if (!chartView || chartView.width !== width || chartView.mode !== trendMode || !figure.contains(chartView.chart)) {
+    chartView = buildTrendFrame(figure, width, chartView);
+  }
   // The time axis grows in round steps, so older points don't slide sideways on every new one.
   const span = trend.at(-1).t - trend[0].t;
   const t0 = trend[0].t, target = [t0, t0 + ([10, 30, 60, 120, 300, 600, 1200].find((step) => span <= step * 0.9) ?? Math.ceil(span / 600) * 600)];
   // Animate from what is on screen now: known points glide, a new point grows out of the previous line end.
   const view = chartView, fromDomain = view.domain ?? target, from = view.shown;
-  const seeds = trend.map((p, i) => from.get(p) ?? from.get(trend[i - 1]) ?? p);
+  const targets = trend.map((p) => ({ t: p.t, formality: plotted(p, "formality"), toxicity: plotted(p, "toxicity") }));
+  const seeds = trend.map((p, i) => from.get(p) ?? from.get(trend[i - 1]) ?? targets[i]);
   const duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 450;
   const started = performance.now();
   cancelAnimationFrame(trendFrame);
@@ -297,7 +300,7 @@ function drawTrend() {
     const mix = (a, b) => a + (b - a) * e;
     view.domain = [mix(fromDomain[0], target[0]), mix(fromDomain[1], target[1])];
     view.shown = new Map(trend.map((p, i) => [p, {
-      t: mix(seeds[i].t, p.t), formality: mix(seeds[i].formality, p.formality), toxicity: mix(seeds[i].toxicity, p.toxicity),
+      t: mix(seeds[i].t, p.t), formality: mix(seeds[i].formality, targets[i].formality), toxicity: mix(seeds[i].toxicity, targets[i].toxicity),
     }]));
     paintTrend(view);
     if (k < 1) trendFrame = requestAnimationFrame(step);
@@ -305,16 +308,33 @@ function drawTrend() {
   trendFrame = requestAnimationFrame(step);
 }
 let chartView = null, trendFrame = 0;
+// "change" plots response minus input (what the rewrite did); "score" plots the response's own score.
+let trendMode = "change";
+const TREND_MODES = {
+  change: { range: [-1, 1], grid: [-1, -0.5, 0, 0.5, 1], baseline: 0, baselineLabel: "No change",
+    label: "Change in formality and toxicity from input to response, for each completed response over time",
+    note: "Response minus input, so you see what the rewrite did rather than how the input started: formality above zero means more formal, toxicity below zero means less toxic. Hover a point for its text." },
+  score: { range: [0, 1], grid: [0, 0.25, 0.5, 0.75, 1], baseline: 0.5, baselineLabel: "Toxic at 0.5 or more",
+    label: "Formality and toxicity of each completed response over time",
+    note: "Each point is one completed response, scored by the same models as the Metrics tab. Hover a point for its text." },
+};
+const plotted = (p, name) => trendMode === "change" ? p[name].response - p[name].input : p[name].response;
+const signedChange = (v) => { const r = Number(v.toFixed(2)); return r === 0 ? "0.00" : `${r > 0 ? "+" : "−"}${Math.abs(r).toFixed(2)}`; };
+const axisValue = (v) => trendMode === "change" ? signedChange(v) : v.toFixed(2);
 const TREND_H = 240, TREND_M = { top: 14, right: 118, bottom: 36, left: 38 };
-const trendY = (v) => TREND_M.top + (1 - v) * (TREND_H - TREND_M.top - TREND_M.bottom);
-// Static parts (grid, threshold, axis titles) are drawn once; paintTrend only moves the existing nodes.
-function buildTrendFrame(figure, width) {
-  const m = TREND_M, chart = svg("svg", { viewBox: `0 0 ${width} ${TREND_H}`, width, height: TREND_H });
-  for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+const trendY = (v) => {
+  const [lo, hi] = TREND_MODES[trendMode].range;
+  return TREND_M.top + ((hi - v) / (hi - lo)) * (TREND_H - TREND_M.top - TREND_M.bottom);
+};
+// Static parts (grid, baseline, axis titles) are drawn once per mode and width; paintTrend only moves the
+// existing nodes. Carrying the previous view's positions over lets a mode switch glide instead of jump.
+function buildTrendFrame(figure, width, previous) {
+  const m = TREND_M, mode = TREND_MODES[trendMode], chart = svg("svg", { viewBox: `0 0 ${width} ${TREND_H}`, width, height: TREND_H });
+  for (const v of mode.grid) {
     chart.append(svg("line", { class: "trend-grid", x1: m.left, x2: width - m.right, y1: trendY(v), y2: trendY(v) }),
-      svg("text", { class: "trend-axis", x: m.left - 8, y: trendY(v) + 3, "text-anchor": "end" }, v.toFixed(2)));
+      svg("text", { class: "trend-axis", x: m.left - 8, y: trendY(v) + 3, "text-anchor": "end" }, axisValue(v)));
   }
-  chart.append(svg("line", { class: "trend-threshold", x1: m.left, x2: width - m.right, y1: trendY(0.5), y2: trendY(0.5) }));
+  chart.append(svg("line", { class: "trend-threshold", x1: m.left, x2: width - m.right, y1: trendY(mode.baseline), y2: trendY(mode.baseline) }));
   const ticks = [0, 1, 2, 3, 4].map((i) => svg("text", {
     class: "trend-axis", x: m.left + ((width - m.left - m.right) * i) / 4, y: TREND_H - m.bottom + 16,
     "text-anchor": i === 0 ? "start" : i === 4 ? "end" : "middle" }));
@@ -327,7 +347,7 @@ function buildTrendFrame(figure, width) {
   }
   chart.append(series.formality.label, series.toxicity.label);
   figure.replaceChildren(chart);
-  return { width, chart, ticks, series, domain: null, shown: new Map() };
+  return { width, mode: trendMode, chart, ticks, series, domain: previous?.domain ?? null, shown: previous?.shown ?? new Map() };
 }
 function paintTrend(view) {
   const m = TREND_M, [t0, t1] = view.domain;
@@ -344,7 +364,8 @@ function paintTrend(view) {
       dot.setAttribute("cx", x(s.t).toFixed(1));
       dot.setAttribute("cy", trendY(s[name]).toFixed(1));
       dot.setAttribute("r", i === shown.length - 1 ? 5.5 : 4);
-      dot.firstChild.textContent = `${clock(p.t)} · formality ${p.formality.toFixed(2)} · toxicity ${p.toxicity.toFixed(2)}\n${p.text}`;
+      const describe = (key) => `${key} ${p[key].input.toFixed(2)} → ${p[key].response.toFixed(2)} (${signedChange(p[key].response - p[key].input)})`;
+      dot.firstChild.textContent = `${clock(p.t)} · ${describe("formality")} · ${describe("toxicity")}\n${p.text}`;
     });
   }
   const end = shown.at(-1)[1]; // direct labels ride the line ends, nudged apart if they would overlap
@@ -355,9 +376,18 @@ function paintTrend(view) {
     const label = view.series[name].label;
     label.setAttribute("x", (x(end.t) + 10).toFixed(1));
     label.setAttribute("y", yy.toFixed(1));
-    label.textContent = `${name[0].toUpperCase()}${name.slice(1)} ${latest[name].toFixed(2)}`;
+    label.textContent = `${name[0].toUpperCase()}${name.slice(1)} ${axisValue(plotted(latest, name))}`;
   }
 }
+document.querySelectorAll("[data-trend-mode]").forEach((button) => button.addEventListener("click", () => {
+  trendMode = button.dataset.trendMode;
+  const mode = TREND_MODES[trendMode];
+  document.querySelectorAll("[data-trend-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+  $("trend-threshold-label").textContent = mode.baselineLabel;
+  $("trend-note").textContent = mode.note;
+  $("trend-chart").setAttribute("aria-label", mode.label);
+  drawTrend();
+}));
 new MutationObserver(drawTrend).observe($("inspect-panel-curves"), { attributes: true, attributeFilter: ["hidden"] });
 window.addEventListener("resize", drawTrend);
 $("trend-clear").addEventListener("click", () => { trend.length = 0; trendStart = null; drawTrend(); });
