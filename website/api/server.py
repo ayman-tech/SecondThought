@@ -71,6 +71,9 @@ PAGES = {
 INSTALL_NOTE = """SecondThought for Chrome
 =======================
 
+Easiest: run the one-command installer from the website's Community page.
+It sets everything up and opens the browser for you. Doing it by hand:
+
 1. Keep this folder somewhere it can stay, like Documents/SecondThought.
    Chrome runs the extension from here, so don't move or delete it.
 

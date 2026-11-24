@@ -47,8 +47,10 @@ The website API currently runs from the repository checkout, not a standalone wh
 
 ## The extension download
 
-The Community page (`/community`) is the extension's home: a download button and
-a four-step setup guide. `/downloads/secondthought-extension.zip` zips
+The Community page (`/community`) is the extension's home. It leads with the
+one-command installers in `scripts/` (`install.ps1` for Windows, `install.sh` for
+macOS and Linux), shown under OS tabs, then three short steps and an FAQ. The
+manual route stays in the FAQ: `/downloads/secondthought-extension.zip` zips
 `extension/frontend/` on the fly (plus a short `HOW TO INSTALL.txt`), so it's
 always the current version. The guide also checks live whether the extension's
 service is running.
@@ -58,6 +60,7 @@ changing code:
 
 - `SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL`: where the download button goes
 - `SECONDTHOUGHT_EXTENSION_API_URL`: the service the guide checks (default `http://127.0.0.1:8000`)
+- `SECONDTHOUGHT_INSTALLER_BASE_URL`: where the install commands fetch the scripts from (default: `scripts/` on GitHub master)
 
 On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
 `SITE_URL` (`extension/frontend/settings.js`) are the matching switches.

@@ -35,12 +35,24 @@ change them without touching code.
 
 ## Running it
 
-**Just want to use it?** Run the website (`uv run python -m website.api.server`,
-or `make website` on Mac/Linux) and open
-http://127.0.0.1:8001/community. It has a download button and a four-step setup
-guide with a live check that the service is running. The download is a zip of
-`extension/frontend/` with a short `HOW TO INSTALL.txt` inside. The steps below
-are the same thing, from the repo.
+**Just want to use it?** One command sets everything up in `~/SecondThought`
+(no admin rights) and opens the browser's extensions page for the last three
+clicks. Run it again any time to update.
+
+```powershell
+irm https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts/install.ps1 | iex   # Windows
+```
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts/install.sh | sh   # macOS / Linux
+```
+
+The model isn't public yet, so copy the `both-t5` folder into
+`~/SecondThought/models/`, or set `SECONDTHOUGHT_MODEL` to its path before
+running. Then double-click `start-secondthought`. The website's Community page
+(`uv run python -m website.api.server`, then http://127.0.0.1:8001/community)
+walks through the same steps with a live status check. The steps below do it
+by hand from the repo.
 
 You need Python 3.12+ and the project installed as described in the main
 README (`uv sync` is the easiest route).
