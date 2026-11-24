@@ -3,11 +3,26 @@
 
 .community-page {
   --accent: var(--landing-accent);
-  --body: #625d70;
+  --body: #4f4a5c;
 }
 
-/* Hero */
-.community-hero { padding-bottom: clamp(40px, 5vw, 72px); }
+/* Hero, with a soft glow behind the headline. */
+.community-hero {
+  position: relative;
+  isolation: isolate;
+  padding-bottom: clamp(40px, 5vw, 72px);
+}
+.community-hero::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(38% 46% at 32% 38%, #d9c8fbb3, transparent 70%),
+    radial-gradient(34% 40% at 70% 52%, #c9ece5a6, transparent 70%);
+  filter: blur(8px);
+  content: "";
+}
+.community-hero > p:not(.hero-badge):not(.setup-other) { color: var(--body) !important; }
 .hero-badge {
   display: inline-flex;
   align-items: center;
@@ -46,7 +61,9 @@
 .link-button:hover:not(:disabled) { background: none; color: #5535a9; }
 
 /* Panels share Home's look; these ones size to their content. */
-.community-page .landing-product { min-height: 0; }
+.community-page .landing-product { min-height: 0; border-color: #e6def2; }
+.community-page .landing-product p:not(.landing-audience) { color: var(--body); }
+.community-page .how { background: linear-gradient(125deg, #fff 15%, #efe6fd); }
 
 /* How it works */
 .how-steps {
@@ -136,10 +153,19 @@
 }
 
 /* Install */
-.install {
+.community-page .install {
+  position: relative;
   display: block;
-  background: linear-gradient(160deg, #fff 30%, #f7f3fd);
+  overflow: hidden;
+  border: 0;
+  background:
+    radial-gradient(60% 80% at 100% 0%, #8f6cf266, transparent 60%),
+    radial-gradient(50% 70% at 0% 100%, #36aa9b40, transparent 60%),
+    linear-gradient(140deg, #5b37bf, #6945ca 45%, #4a2a9e);
+  box-shadow: 0 30px 70px #4a2a9e3d;
 }
+.install-head .landing-audience { color: #d9ccff !important; }
+.install-head h2 { color: #fff; }
 .install-head {
   display: grid;
   gap: 14px;
@@ -157,15 +183,16 @@
 }
 .requirements li {
   padding: 6px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid #ffffff33;
   border-radius: 999px;
-  background: #fff;
-  color: var(--body);
+  background: #ffffff1a;
+  color: #fff;
   font-size: 13px;
+  font-weight: 550;
 }
 .requirements li::before {
   margin-right: 6px;
-  color: var(--teal);
+  color: #8ee6d8;
   font-weight: 700;
   content: "✓";
 }
@@ -186,7 +213,7 @@
   left: 16%;
   right: 16%;
   height: 2px;
-  background: linear-gradient(90deg, #d9cbf5, #bfe6df);
+  background: #ffffff4d;
   content: "";
 }
 .install-step {
@@ -196,10 +223,10 @@
   gap: 12px;
   min-width: 0;
   padding: 28px clamp(18px, 2vw, 28px) 26px;
-  border: 1px solid #ebe5f3;
+  border: 0;
   border-radius: 18px;
   background: #fff;
-  box-shadow: 0 10px 30px #5334870a;
+  box-shadow: 0 18px 40px #2a145a33;
 }
 .step-number {
   display: grid;
@@ -211,7 +238,7 @@
   background: var(--accent);
   color: #fff;
   font: 750 15px Manrope, sans-serif;
-  box-shadow: 0 0 0 1px #e5dcef, 0 6px 16px #6945ca33;
+  box-shadow: 0 6px 16px #6945ca4d;
 }
 .install-step h3 {
   margin: 4px 0 0;
@@ -266,12 +293,13 @@
   margin: clamp(20px, 3vw, 32px) auto 0;
   padding: 13px 20px;
   max-width: 560px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 999px;
   background: #fff;
-  color: var(--body);
+  color: var(--ink);
   font-size: 14px;
-  font-weight: 550;
+  font-weight: 600;
+  box-shadow: 0 10px 26px #2a145a33;
   text-align: center;
 }
 .service-status .dot {
@@ -283,8 +311,7 @@
 }
 .service-status.stopped .dot { background: #e0a14f; box-shadow: 0 0 0 4px #e0a14f26; }
 .service-status.running {
-  border-color: #bfe6df;
-  background: #eef8f6;
+  background: #e3f7f3;
   color: #1d6b62;
 }
 .service-status.running .dot {
