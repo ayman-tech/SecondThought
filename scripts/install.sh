@@ -9,7 +9,8 @@
 # Optional, set before running:
 #   SECONDTHOUGHT_HOME   where to install (default: ~/SecondThought)
 #   SECONDTHOUGHT_MODEL  path to the both-t5 model folder or its .zip
-#                        (otherwise it's downloaded from the latest release, if attached there)
+#                        (otherwise it's downloaded from Hugging Face, or the latest release)
+#   SECONDTHOUGHT_MODEL_REPO  the Hugging Face repo to download it from (see get_model.py)
 set -eu
 
 REPO="https://github.com/ayman-tech/SecondThought"
@@ -61,7 +62,7 @@ unset VIRTUAL_ENV  # always use SecondThought's own environment
 (cd "$DIR" && uv sync --extra evaluation)
 note "Done."
 
-# 4. The rewriting model isn't public yet, so it comes from the team.
+# 4. The rewriting model: Hugging Face first, then the GitHub release.
 step "Checking for the rewriting model"
 if [ -f "$MODEL_DIR/model.safetensors" ]; then
     note "Found models/both-t5."
@@ -77,20 +78,9 @@ elif [ -n "${SECONDTHOUGHT_MODEL:-}" ] && [ -e "$SECONDTHOUGHT_MODEL" ]; then
         warn "Couldn't find model.safetensors in $SECONDTHOUGHT_MODEL. Copy the both-t5 folder to $MODEL_DIR yourself."
     fi
 else
-    # The release only has the model once someone attaches both-t5.zip to it.
-    note "Downloading the model (about 230 MB)..."
-    model_zip="${TMPDIR:-/tmp}/both-t5.zip"
-    if curl -fsSL "$REPO/releases/latest/download/both-t5.zip" -o "$model_zip"; then
-        mkdir -p "$DIR/models"
-        (cd "$DIR" && uv run python -m zipfile -e "$model_zip" models)
-    else
-        note "It isn't available for download yet."
-    fi
-    rm -f "$model_zip"
-    if [ -f "$MODEL_DIR/model.safetensors" ]; then
-        note "Downloaded the model into models/both-t5."
-    else
-        warn "One manual step: copy the both-t5 model folder (ask the team) to"
+    # Hugging Face first, then the GitHub release (scripts/get_model.py).
+    if ! (cd "$DIR" && uv run python scripts/get_model.py); then
+        warn "Couldn't download the model. Copy the both-t5 folder (ask the team) to"
         warn "  $MODEL_DIR"
     fi
 fi

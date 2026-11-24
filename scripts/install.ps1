@@ -8,7 +8,8 @@
 # Optional, set before running:
 #   $env:SECONDTHOUGHT_HOME   where to install (default: ~\SecondThought)
 #   $env:SECONDTHOUGHT_MODEL  path to the both-t5 model folder or its .zip
-#                             (otherwise it's downloaded from the latest release, if attached there)
+#                             (otherwise it's downloaded from Hugging Face, or the latest release)
+#   $env:SECONDTHOUGHT_MODEL_REPO  the Hugging Face repo to download it from (see get_model.py)
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"  # makes downloads much faster
@@ -68,7 +69,7 @@ Push-Location $Dir
 try { uv sync --extra evaluation; Check "Installing packages" } finally { Pop-Location }
 Note "Done."
 
-# 4. The rewriting model isn't public yet, so it comes from the team.
+# 4. The rewriting model: Hugging Face first, then the GitHub release.
 Step "Checking for the rewriting model"
 if (Test-Path (Join-Path $ModelDir "model.safetensors")) {
     Note "Found models\both-t5."
@@ -82,22 +83,11 @@ if (Test-Path (Join-Path $ModelDir "model.safetensors")) {
     if (Test-Path (Join-Path $ModelDir "model.safetensors")) { Note "Copied the model into models\both-t5." }
     else { Warn "Couldn't find model.safetensors in $env:SECONDTHOUGHT_MODEL. Copy the both-t5 folder to $ModelDir yourself." }
 } else {
-    # The release only has the model once someone attaches both-t5.zip to it.
-    $modelZip = Join-Path $env:TEMP "both-t5.zip"
-    try {
-        Note "Downloading the model (about 230 MB)..."
-        Invoke-WebRequest "$Repo/releases/latest/download/both-t5.zip" -OutFile $modelZip
-        New-Item -ItemType Directory -Force (Split-Path $ModelDir) | Out-Null
-        Expand-Archive $modelZip (Split-Path $ModelDir) -Force
-    } catch {
-        Note "It isn't available for download yet."
-    } finally {
-        Remove-Item $modelZip -ErrorAction SilentlyContinue
-    }
-    if (Test-Path (Join-Path $ModelDir "model.safetensors")) {
-        Note "Downloaded the model into models\both-t5."
-    } else {
-        Warn "One manual step: copy the both-t5 model folder (ask the team) to"
+    # Hugging Face first, then the GitHub release (scripts/get_model.py).
+    Push-Location $Dir
+    try { uv run python scripts/get_model.py } finally { Pop-Location }
+    if ($LASTEXITCODE -ne 0) {
+        Warn "Couldn't download the model. Copy the both-t5 folder (ask the team) to"
         Warn "  $ModelDir"
     }
 }
