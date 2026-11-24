@@ -263,7 +263,8 @@ function recordTrend(scores, snapshot, text) {
   if (last && last.text === text && last.input === snapshot.message) return; // same response re-shown
   const now = Date.now();
   trendStart ??= now;
-  trend.push({ t: (now - trendStart) / 1000, formality: scores.formality, toxicity: scores.toxicity, text, input: snapshot.message });
+  trend.push({ t: (now - trendStart) / 1000, formality: scores.formality, toxicity: scores.toxicity,
+    similarity: scores.similarity ?? null, text, input: snapshot.message });
   if (trend.length > TREND_LIMIT) trend.shift();
   drawTrend();
 }
@@ -290,17 +291,17 @@ function drawTrend() {
   const t0 = trend[0].t, target = [t0, t0 + ([10, 30, 60, 120, 300, 600, 1200].find((step) => span <= step * 0.9) ?? Math.ceil(span / 600) * 600)];
   // Animate from what is on screen now: known points glide, a new point grows out of the previous line end.
   const view = chartView, fromDomain = view.domain ?? target, from = view.shown;
-  const targets = trend.map((p) => ({ t: p.t, formality: plotted(p, "formality"), toxicity: plotted(p, "toxicity") }));
+  const targets = trend.map((p) => ({ t: p.t, ...Object.fromEntries(TREND_SERIES.map((name) => [name, plotted(p, name)])) }));
   const seeds = trend.map((p, i) => from.get(p) ?? from.get(trend[i - 1]) ?? targets[i]);
   const duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 450;
   const started = performance.now();
   cancelAnimationFrame(trendFrame);
   const step = (now) => {
     const k = duration ? Math.min(1, (now - started) / duration) : 1, e = 1 - (1 - k) ** 3;
-    const mix = (a, b) => a + (b - a) * e;
+    const mix = (a, b) => b == null ? null : a == null ? b : a + (b - a) * e; // similarity can be missing
     view.domain = [mix(fromDomain[0], target[0]), mix(fromDomain[1], target[1])];
     view.shown = new Map(trend.map((p, i) => [p, {
-      t: mix(seeds[i].t, p.t), formality: mix(seeds[i].formality, targets[i].formality), toxicity: mix(seeds[i].toxicity, targets[i].toxicity),
+      t: mix(seeds[i].t, p.t), ...Object.fromEntries(TREND_SERIES.map((name) => [name, mix(seeds[i][name], targets[i][name])])),
     }]));
     paintTrend(view);
     if (k < 1) trendFrame = requestAnimationFrame(step);
@@ -308,20 +309,30 @@ function drawTrend() {
   trendFrame = requestAnimationFrame(step);
 }
 let chartView = null, trendFrame = 0;
-// "change" plots response minus input (what the rewrite did); "score" plots the response's own score.
+// "change" plots what the rewrite did, oriented so up is better for both: formality gained (response minus
+// input) and toxicity removed (input minus response). "score" plots the response's own scores.
+// Similarity is already a response-vs-input measure (meaning kept, 0 to 1), so it is the same in both modes.
 let trendMode = "change";
+const TREND_SERIES = ["formality", "toxicity", "similarity"];
 const TREND_MODES = {
   change: { range: [-1, 1], grid: [-1, -0.5, 0, 0.5, 1], baseline: 0, baselineLabel: "No change",
-    label: "Change in formality and toxicity from input to response, for each completed response over time",
-    note: "Response minus input, so you see what the rewrite did rather than how the input started: formality above zero means more formal, toxicity below zero means less toxic. Hover a point for its text." },
+    names: { formality: "Formality change", toxicity: "Toxicity reduction", similarity: "Similarity" },
+    label: "Formality change, toxicity reduction and similarity of each completed response over time",
+    note: "Above zero is better for both changes: formality change is response minus input, toxicity reduction is input minus response. Similarity is how much of the input's meaning the response keeps (0 to 1, Rewrite task only). Hover a point for its text." },
   score: { range: [0, 1], grid: [0, 0.25, 0.5, 0.75, 1], baseline: 0.5, baselineLabel: "Toxic at 0.5 or more",
-    label: "Formality and toxicity of each completed response over time",
-    note: "Each point is one completed response, scored by the same models as the Metrics tab. Hover a point for its text." },
+    names: { formality: "Formality", toxicity: "Toxicity", similarity: "Similarity" },
+    label: "Formality, toxicity and similarity of each completed response over time",
+    note: "Each point is one completed response, scored by the same models as the Metrics tab. Similarity is for the Rewrite task only. Hover a point for its text." },
 };
-const plotted = (p, name) => trendMode === "change" ? p[name].response - p[name].input : p[name].response;
+const plotted = (p, name) => {
+  if (name === "similarity") return p.similarity;
+  if (trendMode === "score") return p[name].response;
+  return name === "toxicity" ? p.toxicity.input - p.toxicity.response : p.formality.response - p.formality.input;
+};
 const signedChange = (v) => { const r = Number(v.toFixed(2)); return r === 0 ? "0.00" : `${r > 0 ? "+" : "−"}${Math.abs(r).toFixed(2)}`; };
 const axisValue = (v) => trendMode === "change" ? signedChange(v) : v.toFixed(2);
-const TREND_H = 240, TREND_M = { top: 14, right: 118, bottom: 36, left: 38 };
+const seriesValue = (name, v) => name === "similarity" || trendMode === "score" ? v.toFixed(2) : signedChange(v);
+const TREND_H = 240, TREND_M = { top: 14, right: 168, bottom: 36, left: 38 };
 const trendY = (v) => {
   const [lo, hi] = TREND_MODES[trendMode].range;
   return TREND_M.top + ((hi - v) / (hi - lo)) * (TREND_H - TREND_M.top - TREND_M.bottom);
@@ -341,11 +352,11 @@ function buildTrendFrame(figure, width, previous) {
   chart.append(...ticks, svg("text", { class: "trend-axis-title", x: m.left + (width - m.left - m.right) / 2, y: TREND_H - 4, "text-anchor": "middle" },
     "Time since the first response (min:sec)"));
   const series = {};
-  for (const name of ["formality", "toxicity"]) {
-    series[name] = { line: svg("polyline", { class: `trend-line ${name}` }), dots: svg("g"), label: svg("text", { class: `trend-label ${name}` }) };
+  for (const name of TREND_SERIES) {
+    series[name] = { line: svg("path", { class: `trend-line ${name}` }), dots: svg("g"), label: svg("text", { class: `trend-label ${name}` }) };
     chart.append(series[name].line, series[name].dots);
   }
-  chart.append(series.formality.label, series.toxicity.label);
+  chart.append(...TREND_SERIES.map((name) => series[name].label));
   figure.replaceChildren(chart);
   return { width, mode: trendMode, chart, ticks, series, domain: previous?.domain ?? null, shown: previous?.shown ?? new Map() };
 }
@@ -355,28 +366,42 @@ function paintTrend(view) {
   view.ticks.forEach((tick, i) => { tick.textContent = clock(t0 + ((t1 - t0) * i) / 4); });
   const shown = trend.map((p) => [p, view.shown.get(p)]);
   for (const [name, { line, dots }] of Object.entries(view.series)) {
-    line.setAttribute("points", shown.map(([, s]) => `${x(s.t).toFixed(1)},${trendY(s[name]).toFixed(1)}`).join(" "));
+    // A missing value (similarity outside Rewrite) breaks the line instead of bridging it.
+    let d = "", pen = "M";
+    for (const [, s] of shown) {
+      if (s[name] == null) { pen = "M"; continue; }
+      d += `${pen}${x(s.t).toFixed(1)},${trendY(s[name]).toFixed(1)}`;
+      pen = "L";
+    }
+    line.setAttribute("d", d);
     while (dots.children.length > shown.length) dots.lastChild.remove();
     while (dots.children.length < shown.length) dots.append(svg("circle", { class: `trend-dot ${name}` }));
     shown.forEach(([p, s], i) => {
       const dot = dots.children[i];
       if (!dot.firstChild) dot.append(svg("title"));
+      dot.setAttribute("visibility", s[name] == null ? "hidden" : "visible");
+      if (s[name] == null) return;
       dot.setAttribute("cx", x(s.t).toFixed(1));
       dot.setAttribute("cy", trendY(s[name]).toFixed(1));
       dot.setAttribute("r", i === shown.length - 1 ? 5.5 : 4);
-      const describe = (key) => `${key} ${p[key].input.toFixed(2)} → ${p[key].response.toFixed(2)} (${signedChange(p[key].response - p[key].input)})`;
-      dot.firstChild.textContent = `${clock(p.t)} · ${describe("formality")} · ${describe("toxicity")}\n${p.text}`;
+      const f = p.formality, t = p.toxicity;
+      dot.firstChild.textContent = `${clock(p.t)} · formality ${f.input.toFixed(2)} → ${f.response.toFixed(2)} (${signedChange(f.response - f.input)})`
+        + ` · toxicity ${t.input.toFixed(2)} → ${t.response.toFixed(2)} (reduced ${signedChange(t.input - t.response)})`
+        + ` · similarity ${p.similarity == null ? "n/a (Rewrite only)" : p.similarity.toFixed(2)}\n${p.text}`;
     });
   }
-  const end = shown.at(-1)[1]; // direct labels ride the line ends, nudged apart if they would overlap
-  let fy = trendY(end.formality) + 4, ty = trendY(end.toxicity) + 4;
-  if (Math.abs(fy - ty) < 14) [fy, ty] = fy < ty ? [fy - 7, ty + 7] : [fy + 7, ty - 7];
-  const latest = trend.at(-1);
-  for (const [name, yy] of [["formality", fy], ["toxicity", ty]]) {
-    const label = view.series[name].label;
+  // Direct labels ride the line ends, pushed apart top to bottom so they never overlap.
+  const end = shown.at(-1)[1], latest = trend.at(-1), names = TREND_MODES[trendMode].names;
+  const placed = TREND_SERIES.filter((name) => end[name] != null)
+    .map((name) => ({ name, y: trendY(end[name]) + 4 })).sort((a, b) => a.y - b.y);
+  placed.forEach((item, i) => { if (i && item.y - placed[i - 1].y < 14) item.y = placed[i - 1].y + 14; });
+  for (const name of TREND_SERIES) {
+    const label = view.series[name].label, spot = placed.find((item) => item.name === name);
+    label.setAttribute("visibility", spot ? "visible" : "hidden");
+    if (!spot) continue;
     label.setAttribute("x", (x(end.t) + 10).toFixed(1));
-    label.setAttribute("y", yy.toFixed(1));
-    label.textContent = `${name[0].toUpperCase()}${name.slice(1)} ${axisValue(plotted(latest, name))}`;
+    label.setAttribute("y", spot.y.toFixed(1));
+    label.textContent = `${names[name]} ${seriesValue(name, plotted(latest, name))}`;
   }
 }
 document.querySelectorAll("[data-trend-mode]").forEach((button) => button.addEventListener("click", () => {
@@ -384,6 +409,7 @@ document.querySelectorAll("[data-trend-mode]").forEach((button) => button.addEve
   const mode = TREND_MODES[trendMode];
   document.querySelectorAll("[data-trend-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
   $("trend-threshold-label").textContent = mode.baselineLabel;
+  for (const name of TREND_SERIES) $(`trend-key-${name}`).textContent = mode.names[name];
   $("trend-note").textContent = mode.note;
   $("trend-chart").setAttribute("aria-label", mode.label);
   drawTrend();
