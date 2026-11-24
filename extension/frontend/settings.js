@@ -15,10 +15,10 @@ const SecondThoughtSettings = (() => {
 
   // The kinds of wording triggers.js can spot, as shown on the settings page.
   const KINDS = [
-    { key: "swearing", label: "Swearing and offensive words", examples: "damn, wtf, plus an open list of offensive terms" },
-    { key: "harsh", label: "Harsh words", examples: "idiot, lazy, \"did you even\"" },
-    { key: "casual", label: "Texting shorthand", examples: "u, gonna, tbh" },
-    { key: "shouting", label: "Shouting", examples: "ALL CAPS, \"!!\"" },
+    { key: "swearing", label: "Swearing and offensive words", examples: ["damn", "wtf", "+ an open word list"] },
+    { key: "harsh", label: "Harsh words", examples: ["idiot", "lazy", "did you even"] },
+    { key: "casual", label: "Texting shorthand", examples: ["u", "gonna", "tbh"] },
+    { key: "shouting", label: "Shouting", examples: ["ALL CAPS", "!!"] },
   ];
 
   async function load() {

@@ -1,6 +1,7 @@
 // Settings page. Everything is stored through settings.js, so the popup and
 // the in-page nudge pick up changes straight away.
 const API_BASE = "http://127.0.0.1:8000";
+const CHECK_EVERY_MS = 4000;
 
 const nudgeToggle = document.getElementById("nudge-enabled");
 const idleToggle = document.getElementById("idle-check");
@@ -22,21 +23,28 @@ async function save(changes) {
   showSaved();
 }
 
-function kindRow(kind, checked, triggerKinds) {
-  const row = document.createElement("label");
-  row.className = "row";
+function kindTile(kind, checked, triggerKinds) {
+  const tile = document.createElement("label");
+  tile.className = "kind";
+  const head = document.createElement("span");
+  head.className = "kind-head";
+  const name = document.createElement("span");
+  name.textContent = kind.label;
   const box = document.createElement("input");
   box.type = "checkbox";
+  box.setAttribute("role", "switch");
   box.checked = checked;
   box.addEventListener("change", () => save({ triggerKinds: { ...triggerKinds, [kind.key]: box.checked } }));
-  const text = document.createElement("span");
-  const name = document.createElement("strong");
-  name.textContent = kind.label;
-  const examples = document.createElement("small");
-  examples.textContent = kind.examples;
-  text.append(name, examples);
-  row.append(box, text);
-  return row;
+  head.append(name, box);
+  const examples = document.createElement("span");
+  examples.className = "examples";
+  examples.append(...kind.examples.map((text) => {
+    const chip = document.createElement("span");
+    chip.textContent = text;
+    return chip;
+  }));
+  tile.append(head, examples);
+  return tile;
 }
 
 function siteRow(site) {
@@ -61,37 +69,68 @@ async function render() {
   kindsSection.classList.toggle("off", !nudgeEnabled);
   document.getElementById("idle-row").classList.toggle("off", !nudgeEnabled);
   kindsEl.replaceChildren(
-    ...SecondThoughtSettings.KINDS.map((kind) => kindRow(kind, triggerKinds[kind.key], triggerKinds)),
+    ...SecondThoughtSettings.KINDS.map((kind) => kindTile(kind, triggerKinds[kind.key], triggerKinds)),
   );
   sitesEl.replaceChildren(...[...disabledSites].sort().map(siteRow));
   noSitesEl.hidden = disabledSites.length > 0;
 }
 
+// The service status, kept live while this tab is visible.
+const statusCard = document.getElementById("server");
+const statusDot = document.getElementById("server-dot");
+const statusTitle = document.getElementById("server-title");
+const statusDetail = document.getElementById("server-detail");
+
+function showStatus(state, title, detail) {
+  statusCard.className = `card status-card ${state}`;
+  statusDot.className = `status-dot big ${state}`;
+  statusTitle.textContent = title;
+  statusDetail.textContent = detail;
+}
+
 async function checkServer() {
-  const dot = document.getElementById("server-dot");
-  const text = document.getElementById("server-text");
   try {
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 3000);
-    const body = await (await fetch(`${API_BASE}/health`, { signal: controller.signal })).json();
-    dot.className = body.status === "ok" ? "status-dot ok" : "status-dot down";
-    const tone = { ready: "tone check ready", loading: "tone check starting up", off: "tone check off", error: "tone check failed to start" }[body.tone_check];
-    text.textContent = body.status === "ok"
-      ? `Running · ${body.model}${tone ? ` · ${tone}` : ""}`
-      : `Running, but not ready: ${body.detail}`;
+    const body = await (await fetch(`${API_BASE}/health`, { cache: "no-store", signal: controller.signal })).json();
+    if (body.status !== "ok") {
+      showStatus("down", "SecondThought is starting", body.detail || "Give it a moment.");
+      return;
+    }
+    const tone = {
+      ready: "tone check ready",
+      loading: "tone check starting up",
+      off: "tone check off",
+      error: "tone check failed to start",
+    }[body.tone_check];
+    showStatus("ok", "SecondThought is running", [body.model?.replace("->", "→"), tone].filter(Boolean).join(" · "));
   } catch {
-    dot.className = "status-dot down";
-    text.textContent = "Not running";
+    showStatus("down", "SecondThought isn't running",
+      "Double-click Start SecondThought on your Desktop. This updates by itself.");
   }
 }
+
+let timer = null;
+function watchServer() {
+  clearInterval(timer);
+  if (document.hidden) return;
+  checkServer();
+  timer = setInterval(checkServer, CHECK_EVERY_MS);
+}
+document.addEventListener("visibilitychange", watchServer);
+document.getElementById("server-recheck").addEventListener("click", () => {
+  statusTitle.textContent = "Checking…";
+  watchServer();
+});
 
 nudgeToggle.addEventListener("change", () => save({ nudgeEnabled: nudgeToggle.checked }));
 idleToggle.addEventListener("change", () => save({ idleCheck: idleToggle.checked }));
 // Stay in sync when the popup changes something while this page is open.
 chrome.storage.onChanged.addListener(render);
 
+document.getElementById("version").textContent = `Version ${chrome.runtime.getManifest().version}`;
 document.getElementById("advanced-link").href = SecondThoughtSettings.siteLink("/explore");
 document.getElementById("guide-link").href = SecondThoughtSettings.siteLink("/community#install");
 
 render();
-checkServer();
+watchServer();
