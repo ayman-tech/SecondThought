@@ -1,117 +1,395 @@
-/* The "Get SecondThought" section of the Community page. Uses the site's tokens from styles.css. */
-a.download-button {
-  display: inline-block;
-  border-radius: 7px;
-  text-decoration: none;
-}
-a.download-button:hover { background: #46395a; }
-a.download-button:focus-visible,
-.install a:focus-visible,
-.install button:focus-visible,
-.install summary:focus-visible {
-  outline: 2px solid var(--purple);
-  outline-offset: 3px;
+/* The Community page. Builds on home.css (container, buttons, panels) so it
+   matches the Home page; only what's specific to this page lives here. */
+
+.community-page {
+  --accent: var(--landing-accent);
+  --body: #4f4a5c;
 }
 
-.install {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 48px 6% 110px;
-  scroll-margin-top: 16px;
+/* Hero, with a soft glow behind the headline. */
+.community-hero {
+  position: relative;
+  isolation: isolate;
+  padding-bottom: clamp(40px, 5vw, 72px);
 }
-.install-head { max-width: 620px; }
-.install h2 {
-  font-family: Manrope, sans-serif;
-  font-size: 38px;
-  letter-spacing: -1.5px;
-  font-weight: 650;
-  margin: 0;
+.community-hero::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(38% 46% at 32% 38%, #d9c8fbb3, transparent 70%),
+    radial-gradient(34% 40% at 70% 52%, #c9ece5a6, transparent 70%);
+  filter: blur(8px);
+  content: "";
 }
-.install-intro {
-  color: var(--muted);
-  margin: 12px 0 0;
-  line-height: 1.6;
+.community-hero > p:not(.hero-badge):not(.setup-other) { color: var(--body) !important; }
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 26px !important;
+  padding: 6px 14px;
+  border: 1px solid #e5dcef;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent) !important;
+  font-size: 13px !important;
+  font-weight: 600;
 }
-
-/* Steps */
-.install-steps {
-  list-style: none;
-  display: grid;
-  grid-template-columns: 1.25fr 1fr 1fr;
-  gap: 18px;
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 0 4px #48baa924;
+}
+.setup-other {
+  margin: 14px auto 0 !important;
+  color: var(--muted) !important;
+  font-size: 14px !important;
+}
+.link-button {
+  border: 0;
   padding: 0;
-  margin: 40px 0 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.link-button:hover:not(:disabled) { background: none; color: #5535a9; }
+
+/* Panels share Home's look; these ones size to their content. */
+.community-page .landing-product { min-height: 0; border-color: #e6def2; }
+.community-page .landing-product p:not(.landing-audience) { color: var(--body); }
+.community-page .how { background: linear-gradient(125deg, #fff 15%, #efe6fd); }
+
+/* How it works */
+.how-steps {
+  display: grid;
+  gap: 16px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: how;
+}
+.how-steps li {
+  position: relative;
+  padding-left: 44px;
+  color: var(--body);
+  line-height: 1.55;
+  counter-increment: how;
+}
+.how-steps li::before {
+  position: absolute;
+  left: 0;
+  top: -2px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--pale);
+  color: var(--accent);
+  font: 750 13px Manrope, sans-serif;
+  content: counter(how);
+}
+.how-steps strong { display: block; color: var(--ink); }
+
+.demo {
+  padding: clamp(16px, 2.6vw, 34px);
+  border: 1px solid #e5dcef;
+  border-radius: 19px;
+  background: #ffffffb3;
+  box-shadow: 0 20px 55px #5334870d;
+}
+.demo-tabs {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 16px;
+  padding: 3px;
+  border-radius: 10px;
+  background: #f1edf8;
+}
+.demo-tabs button {
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 16px;
+  color: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+}
+.demo-tabs button[aria-selected="true"] {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: 0 1px 3px #24232d1f;
+}
+.demo-panel { animation: demo-in 260ms ease; }
+.demo-panel dd { font-size: 17px; line-height: 1.5; }
+.demo mark {
+  padding: 0 2px;
+  border-radius: 4px;
+  background: #fbe3e3;
+  color: #9c3434;
+  text-decoration: line-through;
+  text-decoration-color: #d98b8b;
+}
+.demo ins {
+  padding: 0 2px;
+  border-radius: 4px;
+  background: #cdeee8;
+  color: #1d6b62;
+  text-decoration: none;
+  font-weight: 600;
+}
+.demo-note {
+  margin: 14px 0 0 !important;
+  color: var(--muted) !important;
+  font-size: 12.5px;
+}
+@keyframes demo-in {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+/* Install */
+.community-page .install {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 0;
+  background:
+    radial-gradient(60% 80% at 100% 0%, #8f6cf266, transparent 60%),
+    radial-gradient(50% 70% at 0% 100%, #36aa9b40, transparent 60%),
+    linear-gradient(140deg, #5b37bf, #6945ca 45%, #4a2a9e);
+  box-shadow: 0 30px 70px #4a2a9e3d;
+}
+.install-head .landing-audience { color: #d9ccff !important; }
+.install-head h2 { color: #fff; }
+.install-head {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  text-align: center;
+}
+.requirements {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.requirements li {
+  padding: 6px 12px;
+  border: 1px solid #ffffff33;
+  border-radius: 999px;
+  background: #ffffff1a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 550;
+}
+.requirements li::before {
+  margin-right: 6px;
+  color: #8ee6d8;
+  font-weight: 700;
+  content: "✓";
+}
+
+.install-steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 24px);
+  margin: clamp(30px, 4vw, 48px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* The line that joins the step numbers. */
+.install-steps::before {
+  position: absolute;
+  top: 46px;
+  left: 16%;
+  right: 16%;
+  height: 2px;
+  background: #ffffff4d;
+  content: "";
 }
 .install-step {
   position: relative;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 24px;
-  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   min-width: 0;
+  padding: 28px clamp(18px, 2vw, 28px) 26px;
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 40px #2a145a33;
 }
 .step-number {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
+  border: 4px solid #fff;
   border-radius: 50%;
-  background: var(--pale);
-  color: var(--purple);
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 14px;
+  background: var(--accent);
+  color: #fff;
+  font: 750 15px Manrope, sans-serif;
+  box-shadow: 0 6px 16px #6945ca4d;
 }
-.install-step h3,
-.faq-title {
-  font-family: Manrope, sans-serif;
-  font-size: 18px;
-  font-weight: 650;
-  letter-spacing: -0.3px;
-  margin: 0 0 10px;
+.install-step h3 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font: 700 19px/1.25 Manrope, sans-serif;
+  letter-spacing: -0.02em;
 }
 .install-step p,
-.mini-steps li,
-.faq p,
-.what-it-does li {
-  font-size: 14px;
+.mini-steps li {
+  margin: 0;
+  color: var(--body);
+  font-size: 14.5px;
   line-height: 1.6;
 }
-.install-step p { margin: 0 0 10px; }
-.step-hint {
-  color: var(--muted);
-  font-size: 13px !important;
-}
-.ui-label {
-  padding: 1px 6px;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  background: #faf9fc;
-  font-size: 0.92em;
-  font-weight: 550;
-  white-space: nowrap;
-}
+.install-step strong { color: var(--ink); }
+.install-step .setup-button { align-self: stretch; margin: 2px 0; }
+.os-help { display: grid; gap: 12px; }
 .mini-steps {
-  margin: 0 0 12px;
+  display: grid;
+  gap: 6px;
+  margin: 0;
   padding-left: 20px;
 }
-.mini-steps li { margin-bottom: 6px; }
+.mini-steps li::marker { color: var(--accent); font-weight: 700; }
+.step-hint { color: var(--muted) !important; font-size: 13px !important; }
+.ui-label {
+  padding: 1px 7px;
+  border: 1px solid #e3deec;
+  border-radius: 6px;
+  background: #faf9fc;
+  color: var(--ink);
+  font-size: 0.92em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.friendly-note {
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #fdf6ec;
+  color: #6b5330 !important;
+  font-size: 13px !important;
+}
+.friendly-note strong { color: #5a4223 !important; }
 
-/* OS tabs and the command */
+/* Live status */
+.install .service-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: fit-content;
+  margin: clamp(20px, 3vw, 32px) auto 0;
+  padding: 13px 20px;
+  max-width: 560px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 10px 26px #2a145a33;
+  text-align: center;
+}
+.service-status .dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line);
+}
+.service-status.stopped .dot { background: #e0a14f; box-shadow: 0 0 0 4px #e0a14f26; }
+.service-status.running {
+  background: #e3f7f3;
+  color: #1d6b62;
+}
+.service-status.running .dot {
+  background: var(--teal);
+  box-shadow: 0 0 0 4px #48baa933;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% { box-shadow: 0 0 0 7px #48baa900; }
+}
+
+/* Help */
+.help {
+  align-items: start;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+  background: #fff;
+}
+.help-intro { display: grid; gap: 12px; }
+.help-body { display: grid; gap: 22px; min-width: 0; }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq details:first-child { border-top: 1px solid var(--line); }
+.help summary { justify-content: flex-start; }
+.faq summary {
+  padding: 17px 2px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.faq summary::before {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-right: 12px;
+  border-radius: 50%;
+  background: var(--pale);
+  color: var(--accent);
+  font-size: 14px;
+  line-height: 1;
+}
+.faq details p {
+  margin: -6px 0 18px 36px;
+  color: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.developers {
+  border: 1px dashed #ddd6e8;
+  border-radius: 14px;
+  background: #fcfbfe;
+}
+.developers > summary {
+  padding: 15px 18px;
+  color: var(--body);
+  font-size: 14px;
+  font-weight: 600;
+}
+.developers-body { padding: 0 18px 18px; }
+.developers-body > p {
+  margin: 0 0 12px;
+  color: var(--body);
+  font-size: 14px;
+}
 .os-tabs {
   display: inline-flex;
   gap: 2px;
+  margin-bottom: 12px;
   padding: 3px;
-  margin-bottom: 14px;
   border-radius: 9px;
-  background: #f3f1f7;
+  background: #f1edf8;
 }
 .os-tabs button {
   border: 0;
   border-radius: 7px;
   padding: 6px 14px;
+  color: var(--body);
   font-size: 13px;
-  color: var(--muted);
 }
 .os-tabs button[aria-selected="true"] {
   background: #fff;
@@ -123,8 +401,7 @@ a.download-button:focus-visible,
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin: 0 0 10px;
-  padding: 10px 10px 10px 14px;
+  padding: 11px 11px 11px 15px;
   border-radius: 10px;
   background: #24232d;
 }
@@ -147,181 +424,53 @@ a.download-button:focus-visible,
   font-size: 12px;
   font-weight: 600;
 }
-.terminal .copy:hover { background: #ffffff33; }
-code {
+.terminal .copy:hover:not(:disabled) { background: #ffffff33; }
+.community-page code {
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 0.92em;
+  font-size: 0.9em;
 }
-
-/* Disclosures use the site's +/- summary style; keep them compact. */
-.install details summary {
-  justify-content: flex-start;
-  font-size: 13px;
-  font-weight: 550;
-  color: var(--purple);
-}
-.what-it-does ul {
-  margin: 10px 0 0;
+.dev-notes {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
   padding-left: 18px;
-  color: #5d5b6a;
+  color: var(--body);
+  font-size: 13.5px;
+  line-height: 1.6;
 }
-
-/* Live service status */
-.service-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px !important;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: #faf9fc;
-  font-size: 13px !important;
-  color: var(--muted);
-}
-.service-status .dot {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--line);
-}
-.service-status.running { color: #2f8f80; background: #eef8f6; }
-.service-status.running .dot { background: var(--teal); }
-.service-status.stopped .dot { background: #e0a14f; }
-
-/* FAQ */
-.faq {
-  max-width: 760px;
-  margin-top: 56px;
-}
-.faq details {
-  border-bottom: 1px solid var(--line);
-  padding: 14px 0;
-}
-.faq summary {
-  font-size: 15px !important;
-  color: var(--ink) !important;
-}
-.faq p { margin: 10px 0 0; color: #5d5b6a; }
-.zip-link {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 8px 14px;
-  border-radius: 7px;
-  background: var(--pale);
-  color: var(--purple);
-  font-size: 13px;
+.text-link {
+  color: var(--accent);
   font-weight: 600;
-  text-decoration: none;
+}
+.text-link:hover { text-decoration: underline; }
+.dev-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+}
+.zip-link {
+  padding: 9px 14px;
+  border-radius: 8px;
+  background: var(--pale);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 650;
 }
 .zip-link:hover { background: #ebe3fb; }
+.releases-link { font-size: 13px; white-space: nowrap; }
 
 @media (max-width: 960px) {
   .install-steps { grid-template-columns: 1fr; }
+  .install-steps::before { top: 30px; bottom: 30px; left: 39px; right: auto; width: 2px; height: auto; }
+  .help { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .install h2 { font-size: 29px; }
-  .install { padding-bottom: 70px; }
-  .install-step { padding: 20px; }
+  .community-page .landing-actions { flex-direction: column; align-items: stretch; }
+  .community-page .landing-actions .landing-button { align-self: stretch; }
+  .faq details p { margin-left: 0; }
 }
-
-/* Hero: one clear action. */
-.cta-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
+@media (prefers-reduced-motion: reduce) {
+  .demo-panel, .service-status.running .dot { animation: none; }
 }
-/* What you need, at a glance. */
-.requirements {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  list-style: none;
-  padding: 0;
-  margin: 18px 0 0;
-}
-.requirements li {
-  padding: 5px 11px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: #fff;
-  color: #5d5b6a;
-  font-size: 12.5px;
-}
-.releases-link {
-  margin-left: 14px;
-  font-size: 13px;
-}
-
-/* Step 1: the big download button and the security-prompt notes. */
-.setup-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 4px 0 10px;
-  padding: 15px 20px;
-  border-radius: 10px;
-  background: var(--purple);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 650;
-  text-decoration: none;
-  box-shadow: 0 6px 18px #7955db40;
-}
-.setup-button::before {
-  content: "↓";
-  font-size: 17px;
-}
-.setup-button:hover { background: #6945ca; }
-.setup-other {
-  color: var(--muted);
-  font-size: 13px !important;
-  text-align: center;
-}
-.link-button {
-  border: 0;
-  padding: 0;
-  background: none;
-  color: var(--purple);
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-.friendly-note {
-  padding: 10px 12px;
-  border-left: 3px solid #e0a14f;
-  border-radius: 6px;
-  background: #fdf7ee;
-  color: #6b5330;
-  font-size: 13px !important;
-}
-
-/* Everything technical, folded away. */
-.developers {
-  max-width: 760px;
-  margin-top: 40px;
-  padding: 16px 20px;
-  border: 1px dashed var(--line);
-  border-radius: 12px;
-}
-.developers > summary { color: var(--muted) !important; }
-.developers-body { margin-top: 14px; }
-.developers-body > p {
-  margin: 0 0 12px;
-  font-size: 14px;
-  color: #5d5b6a;
-}
-.dev-notes {
-  margin: 6px 0 4px;
-  padding-left: 18px;
-  color: #5d5b6a;
-  font-size: 13px;
-  line-height: 1.6;
-}
-.dev-notes li { margin-bottom: 6px; }
-.dev-notes .text-link { color: var(--purple); }
-.releases-link { white-space: nowrap; }

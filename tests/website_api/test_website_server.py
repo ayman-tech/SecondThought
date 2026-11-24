@@ -380,8 +380,8 @@ def test_install_section_links_the_installers_and_the_zip():
     for html in (served, stale):
         release = "https://github.com/ayman-tech/SecondThought/releases/latest/download/secondthought-extension.zip"
         assert re.findall(r'class="zip-link" href="([^"]*)"', html) == [release]
-        assert re.findall(r'class="setup-button" href="([^"]*)"', html) == ["/downloads/SecondThought-Setup-Windows.cmd"]
+        assert re.findall(r'setup-button" href="([^"]*)"', html) == ["/downloads/SecondThought-Setup-Windows.cmd"] * 2
         assert 'data-mac="/downloads/SecondThought-Setup-macOS.zip"' in html
-        assert re.findall(r'class="download-button" href="([^"]*)"', html) == ["#install"]
+        assert re.findall(r'landing-outline" href="([^"]*)"', html) == ["#install"]
         assert f'data-copy="irm {base}/install.ps1 | iex"' in html
         assert f'data-copy="curl -fsSL {base}/install.sh | sh"' in html

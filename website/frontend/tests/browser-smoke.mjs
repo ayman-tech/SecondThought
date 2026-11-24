@@ -398,8 +398,14 @@ try {
     );
     if (path === "/community")
       assert.equal(
-        await evaluate(`document.querySelector('.download-button').getAttribute('href') === '#install' && document.querySelector('.zip-link').getAttribute('href').endsWith('.zip') && /Setup-(Windows|macOS)/.test(document.querySelector('.setup-button').getAttribute('href'))`),
+        await evaluate(`document.querySelector('.community-hero .landing-outline').getAttribute('href') === '#install' && document.querySelector('.zip-link').getAttribute('href').endsWith('.zip') && /Setup-(Windows|macOS)/.test(document.querySelector('.setup-button').getAttribute('href'))`),
         true,
+      );
+    if (path === "/community")
+      assert.equal(
+        await evaluate(`(() => { document.querySelector('#tab-mac').click(); return !document.querySelector('#panel-mac').hidden && document.querySelector('#panel-windows').hidden; })()`),
+        true,
+        "the developer OS tabs switch the command",
       );
     if (path === "/evaluation") {
       await until(
