@@ -2,9 +2,10 @@
 {% block styles %}<link rel="stylesheet" href="/assets/install.css">{% endblock %}
 {% block scripts %}<script src="/assets/install.js" defer></script>{% endblock %}
 {% block content %}
-{% set download_url = extension_download_url | default("/downloads/secondthought-extension.zip", true) %}
+{% set download_url = extension_download_url | default("https://github.com/ayman-tech/SecondThought/releases/latest/download/secondthought-extension.zip", true) %}
+{% set installer = installer_base_url | default("https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts", true) %}
 <section class="community">
-<div class="community-copy"><p class="eyebrow">SECONDTHOUGHT, WHERE YOU WRITE</p><h1>Keep the thought.<br><span>Find the words.</span></h1><p class="lede">A little pause can change a conversation. Detoxify or formalize your writing with our browser extension, before you hit send.</p><a class="download-button" href="{{ download_url }}">Download extension <span aria-hidden="true">↓</span></a><p class="small-note">Free · For Chrome · Runs on your own computer. <a class="text-link" href="#install">How to set it up ↓</a></p>
+<div class="community-copy"><p class="eyebrow">SECONDTHOUGHT, WHERE YOU WRITE</p><h1>Keep the thought.<br><span>Find the words.</span></h1><p class="lede">A little pause can change a conversation. Detoxify or formalize your writing with our browser extension, before you hit send.</p><div class="cta-row"><a class="download-button" href="#install">Get SecondThought <span aria-hidden="true">↓</span></a></div><p class="small-note">Free · Windows and Mac · Runs on your own computer</p>
 <div class="community-features">
 <div><span>01 / DETOXIFY</span><p>Less heat.<br>Same intention.</p>
 </div>
@@ -29,57 +30,115 @@
 </section>
 
 <section id="install" class="install" data-api="{{ extension_api_url }}" aria-labelledby="install-title">
-  <p class="eyebrow">SET IT UP</p>
-  <h2 id="install-title">Four steps, about five minutes.</h2>
-  <p class="install-intro">The extension isn't in the Chrome Web Store yet, so you add it yourself. It's quick, and you only do it once.</p>
+  <header class="install-head">
+    <p class="eyebrow">GET SECONDTHOUGHT</p>
+    <h2 id="install-title">Set it up in three easy steps.</h2>
+    <p class="install-intro">It's free, needs no admin password, and everything you write stays on your own computer.</p>
+    <ul class="requirements" aria-label="What you need">
+      <li>A Windows or Mac computer</li>
+      <li>Chrome, Edge or Brave</li>
+      <li>About 4 GB of free space</li>
+      <li>Around 10 minutes</li>
+    </ul>
+  </header>
 
   <ol class="install-steps">
-    <li>
-      <h3>Download and unzip</h3>
-      <p>Unzip it somewhere it can stay, like <strong>Documents › SecondThought</strong>. Chrome runs the extension from that folder, so don't move or delete it later.</p>
-      <a class="install-button" href="{{ download_url }}">Download the zip</a>
+    <li class="install-step">
+      <span class="step-number" aria-hidden="true">1</span>
+      <h3>Download and open the setup</h3>
+      <a class="setup-button" href="/downloads/SecondThought-Setup-Windows.cmd"
+         data-windows="/downloads/SecondThought-Setup-Windows.cmd" data-mac="/downloads/SecondThought-Setup-macOS.zip">
+        <span class="setup-label">Download for Windows</span>
+      </a>
+      <p class="setup-other">Not on Windows? <button type="button" class="link-button" data-switch-os>Get the Mac version</button></p>
+      <div class="os-help" data-os="windows">
+        <p>Open the file you downloaded. A window opens and sets everything up on its own, including the writing model. Leave it running, it takes about 5 minutes.</p>
+        <p class="friendly-note"><strong>"Windows protected your PC"?</strong> That's normal for new apps. Click <span class="ui-label">More info</span>, then <span class="ui-label">Run anyway</span>.</p>
+      </div>
+      <div class="os-help" data-os="mac" hidden>
+        <p>Open the file you downloaded to unzip it, then double-click <span class="ui-label">SecondThought Setup</span>. A window opens and sets everything up, including the writing model. Leave it running, it takes about 5 minutes.</p>
+        <p class="friendly-note"><strong>Mac won't open it?</strong> Go to <span class="ui-label">System Settings</span> → <span class="ui-label">Privacy &amp; Security</span>, scroll down and click <span class="ui-label">Open Anyway</span>.</p>
+      </div>
     </li>
-    <li>
-      <h3>Add it to Chrome</h3>
-      <p>Open this address in a new tab:</p>
-      <div class="command"><code>chrome://extensions</code><button type="button" class="copy" data-copy="chrome://extensions">Copy</button></div>
-      <p>Switch on <strong>Developer mode</strong> in the top-right corner, click <strong>Load unpacked</strong>, and choose the <strong>SecondThought</strong> folder you just unzipped.</p>
+
+    <li class="install-step">
+      <span class="step-number" aria-hidden="true">2</span>
+      <h3>Add it to your browser</h3>
+      <p>When the setup is done, it opens your browser's extensions page and a folder. On that page:</p>
+      <ol class="mini-steps">
+        <li>Turn on <span class="ui-label">Developer mode</span> (top-right corner).</li>
+        <li>Click <span class="ui-label">Load unpacked</span>.</li>
+        <li>Pick the <span class="ui-label">frontend</span> folder that opened.</li>
+      </ol>
+      <p class="step-hint">You only have to do this once.</p>
     </li>
-    <li>
-      <h3>Start the rewriting service</h3>
-      <p>Rewrites happen on your own computer, so a small service needs to be running. In a terminal, from the project folder, run:</p>
-      <div class="command"><code>uv run python -m extension.api.server</code><button type="button" class="copy" data-copy="uv run python -m extension.api.server">Copy</button></div>
+
+    <li class="install-step">
+      <span class="step-number" aria-hidden="true">3</span>
+      <h3>Start it and try it</h3>
+      <p>Double-click <span class="ui-label">Start SecondThought</span> on your Desktop and leave its window open. Then type something heated in Gmail or Slack and click the <strong>SecondThought?</strong> bubble.</p>
       <p class="service-status" role="status" aria-live="polite"><span class="dot"></span><span class="label">Checking…</span></p>
-      <details>
-        <summary>First time on this computer?</summary>
-        <ol>
-          <li>Install <a class="text-link" href="https://docs.astral.sh/uv/getting-started/installation/" target="_blank" rel="noopener">uv</a>, which sets up Python for you.</li>
-          <li>Get the project: <code>git clone https://github.com/ayman-tech/SecondThought</code>, then open that folder in a terminal.</li>
-          <li>Install what it needs: <code>uv sync --extra evaluation</code></li>
-          <li>Put the <code>both-t5</code> model folder in <code>models/</code> (ask the team for it).</li>
-        </ol>
-        <p>The first start also downloads the tone-check models (about 500 MB). After that it starts in seconds.</p>
-      </details>
-    </li>
-    <li>
-      <h3>Pin it and try it</h3>
-      <p>Click the puzzle-piece icon in Chrome's toolbar and pin <strong>SecondThought</strong>. Then type something heated in Gmail or Slack. A small <strong>SecondThought?</strong> pill appears; click it for a calmer version you can drop in with one click.</p>
     </li>
   </ol>
 
-  <div class="install-notes">
-    <div>
-      <h3>Updating</h3>
-      <p>Download the new zip, replace what's in your SecondThought folder, then click ↻ on SecondThought in <code>chrome://extensions</code>.</p>
-    </div>
-    <div>
-      <h3>Pill not showing?</h3>
-      <p>Refresh the page after installing. If the dot in the extension's popup is red, the service isn't running.</p>
-    </div>
-    <div>
-      <h3>Your words stay yours</h3>
-      <p>Nothing leaves the page until you click the pill, and then it only goes to the service on your own computer.</p>
-    </div>
+  <div class="faq">
+    <h2 class="faq-title">Questions</h2>
+    <details>
+      <summary>Is my writing private?</summary>
+      <p>Yes. SecondThought only reads your text when you click the bubble, and even then it stays on your computer. Nothing is sent to us.</p>
+    </details>
+    <details>
+      <summary>Why does my computer warn me about it?</summary>
+      <p>We're a student project, so Microsoft and Apple haven't signed our setup file. You can see exactly what it does under "For developers" below.</p>
+    </details>
+    <details>
+      <summary>Do I have to keep that window open?</summary>
+      <p>Yes, while you want suggestions. That window is SecondThought working. Close it when you're done, and double-click <span class="ui-label">Start SecondThought</span> next time.</p>
+    </details>
+    <details>
+      <summary>The bubble doesn't show up.</summary>
+      <p>Refresh the page you're writing on. If the dot in the extension's menu is red, SecondThought isn't running. Double-click <span class="ui-label">Start SecondThought</span> on your Desktop.</p>
+    </details>
+    <details>
+      <summary>The setup said it couldn't download the model.</summary>
+      <p>Check your internet connection and open the setup again. It picks up where it left off. If it still fails, ask us for the <strong>both-t5</strong> folder and put it in the <strong>models</strong> folder inside SecondThought (in your home folder).</p>
+    </details>
+    <details>
+      <summary>How do I update?</summary>
+      <p>Download and open the setup again, then click ↻ on SecondThought in your browser's extensions page.</p>
+    </details>
+    <details>
+      <summary>How do I remove it?</summary>
+      <p>Click <span class="ui-label">Remove</span> on SecondThought in your browser's extensions page. Then delete the SecondThought folder in your home folder and the shortcut on your Desktop.</p>
+    </details>
   </div>
+
+  <details class="developers">
+    <summary>For developers: terminal install, Linux and the manual zip</summary>
+    <div class="developers-body">
+      <p>The setup file just runs one of these commands. You can paste it into a terminal instead:</p>
+      <div class="os-tabs" role="tablist" aria-label="Your operating system">
+        <button type="button" role="tab" id="tab-windows" aria-controls="panel-windows" data-os="windows">Windows</button>
+        <button type="button" role="tab" id="tab-mac" aria-controls="panel-mac" data-os="mac">macOS</button>
+        <button type="button" role="tab" id="tab-linux" aria-controls="panel-linux" data-os="linux">Linux</button>
+      </div>
+      <div class="os-panel" role="tabpanel" id="panel-windows" aria-labelledby="tab-windows" data-os="windows">
+        <div class="terminal"><code>irm {{ installer }}/install.ps1 | iex</code><button type="button" class="copy" data-copy="irm {{ installer }}/install.ps1 | iex">Copy</button></div>
+      </div>
+      <div class="os-panel" role="tabpanel" id="panel-mac" aria-labelledby="tab-mac" data-os="mac" hidden>
+        <div class="terminal"><code>curl -fsSL {{ installer }}/install.sh | sh</code><button type="button" class="copy" data-copy="curl -fsSL {{ installer }}/install.sh | sh">Copy</button></div>
+      </div>
+      <div class="os-panel" role="tabpanel" id="panel-linux" aria-labelledby="tab-linux" data-os="linux" hidden>
+        <div class="terminal"><code>curl -fsSL {{ installer }}/install.sh | sh</code><button type="button" class="copy" data-copy="curl -fsSL {{ installer }}/install.sh | sh">Copy</button></div>
+      </div>
+      <ul class="dev-notes">
+        <li>It installs <a class="text-link" href="https://docs.astral.sh/uv/" target="_blank" rel="noopener">uv</a> (which brings Python), clones the repo to <code>~/SecondThought</code>, runs <code>uv sync --extra evaluation</code>, downloads the model from <a class="text-link" href="https://huggingface.co/SaiRahul5/secondthought-both-t5" target="_blank" rel="noopener">Hugging Face</a> (or the release) and writes a start script. <a class="text-link" href="https://github.com/ayman-tech/SecondThought/tree/master/scripts" target="_blank" rel="noopener">Read the scripts ↗</a></li>
+        <li>Already have the model? Set <code>SECONDTHOUGHT_MODEL</code> to the <code>both-t5</code> folder or its zip before running, and the installer copies it in.</li>
+        <li>To install by hand, load the zip below with <span class="ui-label">Load unpacked</span> and run <code>uv run python -m extension.api.server</code> from the project.</li>
+      </ul>
+      <a class="zip-link" href="{{ download_url }}">Download the extension (.zip)</a>
+      <a class="text-link releases-link" href="https://github.com/ayman-tech/SecondThought/releases" target="_blank" rel="noopener">All releases ↗</a>
+    </div>
+  </details>
 </section>
 {% endblock %}

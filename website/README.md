@@ -53,8 +53,13 @@ The website API currently runs from the repository checkout, not a standalone wh
 
 ## The extension download
 
-The Community page (`/community`) is the extension's home: a download button and
-a four-step setup guide. `/downloads/secondthought-extension.zip` zips
+The Community page (`/community`) is the extension's home, written for people
+who have never opened a terminal. Its big button downloads a double-click setup
+file for the visitor's system (`/downloads/SecondThought-Setup-Windows.cmd`, or
+`/downloads/SecondThought-Setup-macOS.zip`, which keeps the `.command` file
+runnable). Both just run the installers in `scripts/`. Three short steps and an
+FAQ follow. The terminal commands and the manual zip sit in a folded "For
+developers" section: `/downloads/secondthought-extension.zip` zips
 `extension/frontend/` on the fly (plus a short `HOW TO INSTALL.txt`), so it's
 always the current version. The guide also checks live whether the extension's
 service is running.
@@ -64,6 +69,7 @@ changing code:
 
 - `SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL`: where the download button goes
 - `SECONDTHOUGHT_EXTENSION_API_URL`: the service the guide checks (default `http://127.0.0.1:8000`)
+- `SECONDTHOUGHT_INSTALLER_BASE_URL`: where the install commands fetch the scripts from (default: `scripts/` on GitHub master)
 
 On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
 `SITE_URL` (`extension/frontend/settings.js`) are the matching switches.
@@ -74,9 +80,11 @@ On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
 - **Explore** (`/explore`): animated 24-layer schematic above the live draft/rewrite
   comparison. Click a layer to inspect it, check **Select layer** to include it,
   and set its independent alpha from -2 to +2. Default: layer 11 at +0.5.
-- **Community** (`/community`): extension introduction. Download is deliberately
-  disabled until packaging is ready.
-- **Evaluation** (`/evaluation`): empty content area for the upcoming evaluation UI.
+- **Community** (`/community`): the extension's home, with the download and a
+  setup guide (see "The extension download" above).
+- **Evaluation** (`/evaluation`): results dashboard for `both-t5` on the 35
+  workplace messages: pipeline, headline scores, ready to send, light touch and
+  before/after.
 
 Legacy `/steering` links redirect to Explore; `/extension` and `/about`
 redirect to Community. Only Explore loads the generation JavaScript. Shared

@@ -1,0 +1,56 @@
+# Publishes the Chrome extension as a GitHub release.
+#
+# Bump "version" in extension/frontend/manifest.json, merge, then tag:
+#   git tag extension-v0.3.0 && git push origin extension-v0.3.0
+#
+# The release gets secondthought-extension.zip (one SecondThought folder plus
+# the install note), both installers and the double-click setup files. The website's download button points
+# at releases/latest, so it always serves the newest one.
+name: Release extension
+
+on:
+  push:
+    tags: ["extension-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag matches the extension's version
+        run: |
+          manifest_version=$(jq -r .version extension/frontend/manifest.json)
+          tag_version="${GITHUB_REF_NAME#extension-v}"
+          if [ "$manifest_version" != "$tag_version" ]; then
+            echo "Tag says $tag_version but manifest.json says $manifest_version. Bump one to match."
+            exit 1
+          fi
+
+      - name: Package the extension
+        run: |
+          mkdir -p dist/SecondThought
+          cp -R extension/frontend/. dist/SecondThought/
+          cp "extension/HOW TO INSTALL.txt" dist/SecondThought/
+          cd dist && zip -qr secondthought-extension.zip SecondThought
+
+      - name: Package the double-click setup files
+        run: |
+          cp scripts/SecondThought-Setup-Windows.cmd dist/
+          cp scripts/SecondThought-Setup-macOS.command "dist/SecondThought Setup.command"
+          chmod +x "dist/SecondThought Setup.command"
+          cd dist && zip -q SecondThought-Setup-macOS.zip "SecondThought Setup.command"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: SecondThought extension ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            dist/secondthought-extension.zip
+            dist/SecondThought-Setup-Windows.cmd
+            dist/SecondThought-Setup-macOS.zip
+            scripts/install.ps1
+            scripts/install.sh

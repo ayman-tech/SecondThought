@@ -52,8 +52,16 @@ EXTENSION_FRONTEND = Path(__file__).resolve().parents[2] / "extension" / "fronte
 LOCAL_DOWNLOAD = "/downloads/secondthought-extension.zip"
 # Where the setup page sends people. Both point at this machine until we deploy;
 # set these to the hosted package and API to switch, no code changes needed.
-EXTENSION_DOWNLOAD_URL = os.getenv("SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL", LOCAL_DOWNLOAD)
+# The latest GitHub release (see .github/workflows/release-extension.yml). For a
+# copy built from this checkout instead, set this to {LOCAL_DOWNLOAD}.
+RELEASE_DOWNLOAD = "https://github.com/ayman-tech/SecondThought/releases/latest/download/secondthought-extension.zip"
+EXTENSION_DOWNLOAD_URL = os.getenv("SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL", RELEASE_DOWNLOAD)
 EXTENSION_API_URL = os.getenv("SECONDTHOUGHT_EXTENSION_API_URL", "http://127.0.0.1:8000")
+# Where the one-command installers live (scripts/install.ps1 and install.sh).
+INSTALLER_BASE_URL = os.getenv(
+    "SECONDTHOUGHT_INSTALLER_BASE_URL",
+    "https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts",
+)
 TERMINAL = {"completed", "cancelled", "error"}
 PAGES = {
     "home": ("/", "Home", "Rewrite privately in Chrome or tune model behavior in the SecondThought Steering Lab."),
@@ -63,29 +71,8 @@ PAGES = {
 }
 
 
-INSTALL_NOTE = """SecondThought for Chrome
-=======================
-
-1. Keep this folder somewhere it can stay, like Documents/SecondThought.
-   Chrome runs the extension from here, so don't move or delete it.
-
-2. Open chrome://extensions, switch on "Developer mode" (top right),
-   click "Load unpacked" and choose this SecondThought folder.
-
-3. Start the rewriting service. From the project folder, run:
-
-       uv run python -m extension.api.server
-
-   Leave that window open. First time on this computer? Run
-   "uv sync --extra evaluation" first, and put the both-t5 model
-   folder in models/.
-
-4. Pin SecondThought from the puzzle-piece icon, then type something
-   heated in Gmail or Slack. A small "SecondThought?" pill appears.
-
-The full guide, with a live check of the service, is on the website's
-Community page.
-"""
+# Short install steps that go inside the zip, shared with the GitHub release build.
+INSTALL_NOTE = EXTENSION_FRONTEND.parent / "HOW TO INSTALL.txt"
 
 
 def extension_zip() -> bytes:
@@ -95,7 +82,25 @@ def extension_zip() -> bytes:
         for path in sorted(EXTENSION_FRONTEND.rglob("*")):
             if path.is_file():
                 archive.write(path, Path("SecondThought") / path.relative_to(EXTENSION_FRONTEND))
-        archive.writestr("SecondThought/HOW TO INSTALL.txt", INSTALL_NOTE)
+        archive.write(INSTALL_NOTE, "SecondThought/HOW TO INSTALL.txt")
+    return buffer.getvalue()
+
+
+# Double-click setup files, so nobody has to open a terminal.
+SCRIPTS = EXTENSION_FRONTEND.parents[1] / "scripts"
+WINDOWS_SETUP = "/downloads/SecondThought-Setup-Windows.cmd"
+MAC_SETUP = "/downloads/SecondThought-Setup-macOS.zip"
+
+
+def mac_setup_zip() -> bytes:
+    """The macOS setup file in a zip, because a plain download loses its run permission."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        info = zipfile.ZipInfo("SecondThought Setup.command")
+        info.external_attr = 0o100755 << 16
+        info.compress_type = zipfile.ZIP_DEFLATED
+        script = (SCRIPTS / "SecondThought-Setup-macOS.command").read_bytes()
+        archive.writestr(info, script.replace(b"\r\n", b"\n"))
     return buffer.getvalue()
 
 
@@ -339,6 +344,7 @@ def create_app(service=None, *, service_factory=None, scorer_factory=None) -> Fa
                     steering_features=[f.label for f in get_catalog().spec.features] if page == "home" else [],
                     extension_download_url=EXTENSION_DOWNLOAD_URL,
                     extension_api_url=EXTENSION_API_URL,
+                    installer_base_url=INSTALLER_BASE_URL,
                     navigation=[(key, path, label) for key, (path, label, _) in PAGES.items()],
                 ),
             )
@@ -365,6 +371,22 @@ def create_app(service=None, *, service_factory=None, scorer_factory=None) -> Fa
             extension_zip(),
             media_type="application/zip",
             headers={"Content-Disposition": 'attachment; filename="secondthought-extension.zip"'},
+        )
+
+    @app.get(WINDOWS_SETUP, include_in_schema=False)
+    async def windows_setup():
+        return Response(
+            (SCRIPTS / "SecondThought-Setup-Windows.cmd").read_bytes(),
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": 'attachment; filename="SecondThought-Setup.cmd"'},
+        )
+
+    @app.get(MAC_SETUP, include_in_schema=False)
+    async def mac_setup():
+        return Response(
+            mac_setup_zip(),
+            media_type="application/zip",
+            headers={"Content-Disposition": 'attachment; filename="SecondThought-Setup-macOS.zip"'},
         )
 
     # A versioned prefix also versions every relative ES-module import.
