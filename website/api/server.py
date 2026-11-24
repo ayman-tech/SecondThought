@@ -63,6 +63,8 @@ INSTALLER_BASE_URL = os.getenv(
     "https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts",
 )
 TERMINAL = {"completed", "cancelled", "error"}
+# The public lab exposes a subset of the research catalog.
+HOME_STEERING_FEATURES = ("formality", "fluency", "empathy", "politeness")
 PAGES = {
     "home": ("/", "Home", "Rewrite privately in Chrome or tune model behavior in the SecondThought Steering Lab."),
     "steering": ("/explore", "Explore", "Explore activation steering, one layer at a time."),
@@ -342,7 +344,8 @@ def create_app(service=None, *, service_factory=None, scorer_factory=None) -> Fa
                         selectable=get_catalog().artifacts[v['artifact_id']].format == 'all_layers_v1')
                         for v in get_catalog().public()['vectors'] if v['model_id'] == DEFAULT_MODEL]
                         if page == 'steering' else [],
-                    steering_features=[f.label for f in get_catalog().spec.features] if page == "home" else [],
+                    steering_features=[get_catalog().features[key].label for key in HOME_STEERING_FEATURES]
+                    if page == "home" else [],
                     extension_download_url=EXTENSION_DOWNLOAD_URL,
                     extension_api_url=EXTENSION_API_URL,
                     installer_base_url=INSTALLER_BASE_URL,
