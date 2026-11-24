@@ -236,3 +236,49 @@ code {
   .install { padding-bottom: 70px; }
   .install-step { padding: 20px; }
 }
+
+/* Hero: install first, the zip as a quieter second option. */
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.zip-button {
+  display: inline-block;
+  padding: 14px 20px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 550;
+  text-decoration: none;
+}
+.zip-button:hover { border-color: var(--purple); color: var(--purple); }
+.zip-button:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 3px;
+}
+
+/* What you need, at a glance. */
+.requirements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+}
+.requirements li {
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: #5d5b6a;
+  font-size: 12.5px;
+}
+.releases-link {
+  margin-left: 14px;
+  font-size: 13px;
+}

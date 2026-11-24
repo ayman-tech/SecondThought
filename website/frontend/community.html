@@ -2,10 +2,10 @@
 {% block styles %}<link rel="stylesheet" href="/assets/install.css">{% endblock %}
 {% block scripts %}<script src="/assets/install.js" defer></script>{% endblock %}
 {% block content %}
-{% set download_url = extension_download_url | default("/downloads/secondthought-extension.zip", true) %}
+{% set download_url = extension_download_url | default("https://github.com/ayman-tech/SecondThought/releases/latest/download/secondthought-extension.zip", true) %}
 {% set installer = installer_base_url | default("https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts", true) %}
 <section class="community">
-<div class="community-copy"><p class="eyebrow">SECONDTHOUGHT, WHERE YOU WRITE</p><h1>Keep the thought.<br><span>Find the words.</span></h1><p class="lede">A little pause can change a conversation. Detoxify or formalize your writing with our browser extension, before you hit send.</p><a class="download-button" href="#install">Install SecondThought <span aria-hidden="true">↓</span></a><p class="small-note">Free · Windows, macOS and Linux · Runs on your own computer</p>
+<div class="community-copy"><p class="eyebrow">SECONDTHOUGHT, WHERE YOU WRITE</p><h1>Keep the thought.<br><span>Find the words.</span></h1><p class="lede">A little pause can change a conversation. Detoxify or formalize your writing with our browser extension, before you hit send.</p><div class="cta-row"><a class="download-button" href="#install">Install SecondThought <span aria-hidden="true">↓</span></a><a class="zip-button" href="{{ download_url }}">Download .zip</a></div><p class="small-note">Free · Windows, macOS and Linux · Runs on your own computer</p>
 <div class="community-features">
 <div><span>01 / DETOXIFY</span><p>Less heat.<br>Same intention.</p>
 </div>
@@ -34,6 +34,12 @@
     <p class="eyebrow">GET SECONDTHOUGHT</p>
     <h2 id="install-title">Up and running in three steps.</h2>
     <p class="install-intro">One command sets everything up on your computer. No admin rights needed, and nothing you write leaves your machine.</p>
+    <ul class="requirements" aria-label="Requirements">
+      <li>Windows, macOS or Linux</li>
+      <li>Chrome, Edge or Brave</li>
+      <li>About 4 GB free</li>
+      <li>No admin rights</li>
+    </ul>
   </header>
 
   <ol class="install-steps">
@@ -57,7 +63,7 @@
         <p>Open a <strong>terminal</strong> and paste:</p>
         <div class="terminal"><code>curl -fsSL {{ installer }}/install.sh | sh</code><button type="button" class="copy" data-copy="curl -fsSL {{ installer }}/install.sh | sh">Copy</button></div>
       </div>
-      <p class="step-hint">About 5 minutes the first time. Run it again any time to update.</p>
+      <p class="step-hint">About 5 minutes the first time. Run it again any time to update. <a class="text-link" href="https://github.com/ayman-tech/SecondThought/tree/master/scripts" target="_blank" rel="noopener">View the script ↗</a></p>
       <details class="what-it-does">
         <summary>What does it do?</summary>
         <ul>
@@ -115,6 +121,7 @@
       <summary>Can I install it by hand instead?</summary>
       <p>Yes. Download the extension, unzip it somewhere it can stay, and load that folder with <span class="ui-label">Load unpacked</span>. You'll also need the project to run the service: <code>uv run python -m extension.api.server</code> from its folder.</p>
       <a class="zip-link" href="{{ download_url }}">Download the extension (.zip)</a>
+      <a class="text-link releases-link" href="https://github.com/ayman-tech/SecondThought/releases" target="_blank" rel="noopener">All releases ↗</a>
     </details>
     <details>
       <summary>The pill doesn't show up.</summary>

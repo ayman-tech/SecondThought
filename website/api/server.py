@@ -52,7 +52,10 @@ EXTENSION_FRONTEND = Path(__file__).resolve().parents[2] / "extension" / "fronte
 LOCAL_DOWNLOAD = "/downloads/secondthought-extension.zip"
 # Where the setup page sends people. Both point at this machine until we deploy;
 # set these to the hosted package and API to switch, no code changes needed.
-EXTENSION_DOWNLOAD_URL = os.getenv("SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL", LOCAL_DOWNLOAD)
+# The latest GitHub release (see .github/workflows/release-extension.yml). For a
+# copy built from this checkout instead, set this to {LOCAL_DOWNLOAD}.
+RELEASE_DOWNLOAD = "https://github.com/ayman-tech/SecondThought/releases/latest/download/secondthought-extension.zip"
+EXTENSION_DOWNLOAD_URL = os.getenv("SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL", RELEASE_DOWNLOAD)
 EXTENSION_API_URL = os.getenv("SECONDTHOUGHT_EXTENSION_API_URL", "http://127.0.0.1:8000")
 # Where the one-command installers live (scripts/install.ps1 and install.sh).
 INSTALLER_BASE_URL = os.getenv(
