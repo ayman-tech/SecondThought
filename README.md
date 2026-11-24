@@ -10,6 +10,10 @@ For a fresh checkout, follow the [local setup and testing guide](docs/LOCAL_TEST
 It covers the PR branch, Python/uv setup, artifact checks, multi-feature controls,
 automated tests, and troubleshooting on macOS, Linux and Windows.
 
+For an AWS demo, use the [EC2 deployment guide](deploy/README.md). It includes
+CPU/GPU containers, a private SSH tunnel, persistent model caching, credit and
+quota checks, and a cost example for a $120 demo budget in `us-east-2`.
+
 ```bash
 uv sync --python 3.12 --locked
 uv run --locked python -m website.api.check_setup

@@ -97,6 +97,17 @@ def select_device() -> torch.device:
     return torch.device("cpu")
 
 
+def inference_dtype(device: torch.device, precision: str = 'auto') -> torch.dtype:
+    """Preserve local defaults and allow explicit float32 deployment comparisons."""
+    if precision not in ('auto', 'float32', 'float16'):
+        raise ValueError('Precision must be auto, float32 or float16')
+    if precision == 'float16' and device.type != 'cuda':
+        raise ValueError('Explicit float16 inference is supported only on CUDA')
+    if precision == 'float32':
+        return torch.float32
+    return torch.float16 if device.type == 'cuda' else torch.float32
+
+
 def resolve_model_source(model_id: str, revision: str | None = None) -> str:
     """Prefer a local Hugging Face snapshot and download only when absent."""
 
@@ -167,6 +178,7 @@ class SteeredQwenRewriter:
         device: str | torch.device | None = None,
         max_new_tokens: int = 64,
         model_revision: str | None = None,
+        precision: str = 'auto',
     ) -> None:
         artifacts = {
             "formality": load_direction_artifact(
@@ -211,7 +223,7 @@ class SteeredQwenRewriter:
 
         # MPS float16 produced repetition even with no steering (e.g. "hello").
         # Full precision matches the CPU baseline on the supported Mac runtime.
-        dtype = torch.float16 if self.device.type == "cuda" else torch.float32
+        dtype = inference_dtype(self.device, precision)
         self.model_revision = model_revision
         model_source = resolve_model_source(self.model_id, **({"revision": model_revision} if model_revision else {}))
         source_options = {"revision": model_revision} if model_revision and model_source == self.model_id else {}

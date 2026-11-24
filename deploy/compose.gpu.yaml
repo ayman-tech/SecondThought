@@ -1,0 +1,17 @@
+# Use together with compose.yaml on a Linux NVIDIA GPU host.
+services:
+  app:
+    image: secondthought-lab:cu128
+    build:
+      args:
+        TORCH_BACKEND: cu128
+    environment:
+      SECONDTHOUGHT_WEBSITE_DEVICE: cuda
+      SECONDTHOUGHT_WEBSITE_PRECISION: float32
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
