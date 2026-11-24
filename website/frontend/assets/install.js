@@ -31,8 +31,8 @@
   const os = platform.includes("mac") ? "mac" : platform.includes("linux") ? "linux" : "windows";
 
   // Developer commands, starting on the visitor's own system.
-  const osTabs = [...section.querySelectorAll(".os-tabs [role=tab]")];
-  const osPanels = [...section.querySelectorAll(".os-panel")];
+  const osTabs = [...page.querySelectorAll(".os-tabs [role=tab]")];
+  const osPanels = [...page.querySelectorAll(".os-panel")];
   const selectOs = tablist(osTabs, (tab) => {
     for (const panel of osPanels) panel.hidden = panel.dataset.os !== tab.dataset.os;
   });
@@ -65,7 +65,7 @@
   }
   showSetup(os === "mac" ? "mac" : "windows");
 
-  for (const button of section.querySelectorAll(".copy")) {
+  for (const button of page.querySelectorAll(".copy")) {
     button.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(button.dataset.copy);
