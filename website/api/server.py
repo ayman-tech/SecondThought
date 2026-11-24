@@ -86,6 +86,24 @@ def extension_zip() -> bytes:
     return buffer.getvalue()
 
 
+# Double-click setup files, so nobody has to open a terminal.
+SCRIPTS = EXTENSION_FRONTEND.parents[1] / "scripts"
+WINDOWS_SETUP = "/downloads/SecondThought-Setup-Windows.cmd"
+MAC_SETUP = "/downloads/SecondThought-Setup-macOS.zip"
+
+
+def mac_setup_zip() -> bytes:
+    """The macOS setup file in a zip, because a plain download loses its run permission."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        info = zipfile.ZipInfo("SecondThought Setup.command")
+        info.external_attr = 0o100755 << 16
+        info.compress_type = zipfile.ZIP_DEFLATED
+        script = (SCRIPTS / "SecondThought-Setup-macOS.command").read_bytes()
+        archive.writestr(info, script.replace(b"\r\n", b"\n"))
+    return buffer.getvalue()
+
+
 def load_scorer():
     """The response inspector's scorer, warmed up so the first real score isn't slow."""
     from .scoring import ResponseScorer
@@ -353,6 +371,22 @@ def create_app(service=None, *, service_factory=None, scorer_factory=None) -> Fa
             extension_zip(),
             media_type="application/zip",
             headers={"Content-Disposition": 'attachment; filename="secondthought-extension.zip"'},
+        )
+
+    @app.get(WINDOWS_SETUP, include_in_schema=False)
+    async def windows_setup():
+        return Response(
+            (SCRIPTS / "SecondThought-Setup-Windows.cmd").read_bytes(),
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": 'attachment; filename="SecondThought-Setup.cmd"'},
+        )
+
+    @app.get(MAC_SETUP, include_in_schema=False)
+    async def mac_setup():
+        return Response(
+            mac_setup_zip(),
+            media_type="application/zip",
+            headers={"Content-Disposition": 'attachment; filename="SecondThought-Setup-macOS.zip"'},
         )
 
     # A versioned prefix also versions every relative ES-module import.

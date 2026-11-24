@@ -287,6 +287,23 @@ def test_extension_download_is_a_loadable_zip():
         assert "SecondThought/HOW TO INSTALL.txt" in names
 
 
+def test_setup_files_download_ready_to_double_click():
+    import io
+    import zipfile
+
+    with TestClient(create_app(FakeService())) as client:
+        windows = client.get("/downloads/SecondThought-Setup-Windows.cmd")
+        assert windows.status_code == 200
+        assert "attachment" in windows.headers["content-disposition"]
+        assert b"install.ps1 | iex" in windows.content
+
+        mac = client.get("/downloads/SecondThought-Setup-macOS.zip")
+        assert mac.status_code == 200
+        [entry] = zipfile.ZipFile(io.BytesIO(mac.content)).infolist()
+        assert entry.filename == "SecondThought Setup.command"
+        assert (entry.external_attr >> 16) & 0o111, "the .command must stay runnable"
+
+
 def test_detox_vector_choice_reaches_worker_and_stream_events():
     from secondthought.lab.catalog import get_catalog
     vector = next(v for v in get_catalog().spec.vectors if
