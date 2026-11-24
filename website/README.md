@@ -68,9 +68,11 @@ On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
 - **Explore** (`/explore`): animated 24-layer schematic above the live draft/rewrite
   comparison. Click a layer to inspect it, check **Select layer** to include it,
   and set its independent alpha from -2 to +2. Default: layer 11 at +0.5.
-- **Community** (`/community`): extension introduction. Download is deliberately
-  disabled until packaging is ready.
-- **Evaluation** (`/evaluation`): empty content area for the upcoming evaluation UI.
+- **Community** (`/community`): the extension's home, with the download and a
+  setup guide (see "The extension download" above).
+- **Evaluation** (`/evaluation`): results dashboard for `both-t5` on the 35
+  workplace messages: pipeline, headline scores, ready to send, light touch and
+  before/after.
 
 Legacy `/steering` links redirect to Explore; `/extension` and `/about`
 redirect to Community. Only Explore loads the generation JavaScript. Shared
