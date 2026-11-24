@@ -2,65 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SecondThought settings</title>
+  <link rel="icon" href="icons/icon48.png">
   <link rel="stylesheet" href="theme.css">
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
+  <header class="hero">
+    <div class="topbar">
+      <div class="brand">
+        <img src="icons/icon48.png" alt="" width="32" height="32">
+        <span>SecondThought<b>.</b></span>
+      </div>
+      <span id="version" class="version"></span>
+    </div>
+    <div class="intro">
+      <h1>Settings</h1>
+      <p>Choose when SecondThought speaks up. Changes save as soon as you make them.</p>
+    </div>
+  </header>
+
   <main>
-    <header>
-      <h1>SecondThought settings</h1>
-      <p class="hint">Changes save as soon as you make them.</p>
-    </header>
+    <section id="server" class="card status-card" aria-live="polite">
+      <span id="server-dot" class="status-dot big"></span>
+      <div class="status-text">
+        <strong id="server-title">Checking SecondThought…</strong>
+        <span id="server-detail"></span>
+      </div>
+      <button id="server-recheck" type="button" class="ghost">Check again</button>
+    </section>
 
-    <section>
-      <h2>Suggestions while typing</h2>
-      <label class="row">
-        <input id="nudge-enabled" type="checkbox">
-        <span>
-          <strong>Show the "SecondThought?" pill while typing</strong>
-          <small>On every website, unless you turn a site off below or from the popup.</small>
+    <section class="card">
+      <h2><span class="icon" aria-hidden="true">✎</span>While you type</h2>
+      <label class="switch-row">
+        <span class="row-text">
+          <strong>Suggest better wording</strong>
+          <small>A small <em>SecondThought?</em> bubble appears when a line sounds harsh or too casual. Works on every site unless you pause it there.</small>
         </span>
+        <input id="nudge-enabled" type="checkbox" role="switch">
       </label>
-      <label id="idle-row" class="row">
-        <input id="idle-check" type="checkbox">
-        <span>
-          <strong>Offer a tone check when I pause typing</strong>
-          <small>After about 5 seconds, a "Check tone?" pill offers to check wording the lists below don't cover. Nothing is sent until you click it.</small>
+      <label id="idle-row" class="switch-row">
+        <span class="row-text">
+          <strong>Offer a tone check when I pause</strong>
+          <small>After about 5 seconds, a <em>Check tone?</em> bubble offers to look over wording the lists below don't cover. Nothing is checked until you click it.</small>
         </span>
+        <input id="idle-check" type="checkbox" role="switch">
       </label>
     </section>
 
-    <section id="kinds-section">
-      <h2>What to look out for</h2>
-      <p class="hint">The pill appears when your message has any of these.</p>
-      <div id="kinds"></div>
+    <section id="kinds-section" class="card">
+      <h2><span class="icon" aria-hidden="true">◎</span>What to look out for</h2>
+      <p class="hint">The bubble appears when a line has any of these turned on.</p>
+      <div id="kinds" class="kinds"></div>
     </section>
 
-    <section>
-      <h2>Sites where suggestions are off</h2>
-      <ul id="sites"></ul>
-      <p id="no-sites" class="hint">None. You can turn suggestions off for a site from the popup.</p>
+    <section class="card">
+      <h2><span class="icon" aria-hidden="true">⏸</span>Paused sites</h2>
+      <ul id="sites" class="sites"></ul>
+      <p id="no-sites" class="empty">No paused sites. To pause one, open the SecondThought menu on that site and turn it off there.</p>
     </section>
 
-    <section>
-      <h2>SecondThought website</h2>
-      <p class="hint">Try fine-grained formality control on a larger model, or get help setting things up.</p>
-      <p class="site-links">
-        <a id="advanced-link" target="_blank" rel="noopener">Advanced controls ↗</a>
-        <a id="guide-link" target="_blank" rel="noopener">Setup guide ↗</a>
-      </p>
-      <p class="hint">For now the website runs on your computer too: start it with <code>uv run python -m website.api.server</code>.</p>
+    <section class="card">
+      <h2><span class="icon" aria-hidden="true">?</span>Help and more</h2>
+      <div class="links">
+        <a id="guide-link" class="link-card" target="_blank" rel="noopener">
+          <strong>Setup guide ↗</strong>
+          <small>Install steps, common questions and a live check that everything's running.</small>
+        </a>
+        <a id="advanced-link" class="link-card" target="_blank" rel="noopener">
+          <strong>Steering Lab ↗</strong>
+          <small>Fine-grained control over formality, politeness and more, on a larger model.</small>
+        </a>
+      </div>
+      <p class="hint small">The website runs on this computer for now. Start it with <code>uv run python -m website.api.server</code>.</p>
     </section>
 
-    <section>
-      <h2>Rewriting server</h2>
-      <p class="server"><span id="server-dot" class="status-dot"></span><span id="server-text">Checking…</span></p>
-      <p class="hint">Rewrites run on your own computer at <code>http://127.0.0.1:8000</code>. Start the server with <code>python -m extension.api.server</code> from the repo root.</p>
-    </section>
+    <p class="privacy">🔒 Your writing never leaves this computer. Rewrites run on the SecondThought service at <code>127.0.0.1:8000</code>.</p>
   </main>
 
-  <p id="saved" class="saved" hidden>Saved</p>
+  <p id="saved" class="saved" role="status" hidden>Saved</p>
 
   <script src="settings.js"></script>
   <script src="options.js"></script>
