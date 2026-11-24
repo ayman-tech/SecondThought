@@ -1,5 +1,6 @@
-// "Get SecondThought" on the Community page: OS tabs for the installer command,
-// copy buttons, and a live check of whether the local service is running.
+// "Get SecondThought" on the Community page: the download button for the
+// visitor's system, OS tabs and copy buttons for developers, and a live check
+// of whether the local service is running.
 (() => {
   const section = document.getElementById("install");
   if (!section) return;
@@ -17,7 +18,23 @@
     for (const panel of panels) panel.hidden = panel.dataset.os !== os;
   }
   const platform = (navigator.userAgentData?.platform || navigator.platform || navigator.userAgent).toLowerCase();
-  select(platform.includes("mac") ? "mac" : platform.includes("linux") ? "linux" : "windows");
+  const os = platform.includes("mac") ? "mac" : platform.includes("linux") ? "linux" : "windows";
+  select(os);
+
+  // The big download button: the visitor's own system, with a link to the other one.
+  const setup = section.querySelector(".setup-button");
+  const switcher = section.querySelector("[data-switch-os]");
+  const names = { windows: "Windows", mac: "Mac" };
+  function showSetup(target) {
+    setup.href = setup.dataset[target];
+    setup.querySelector(".setup-label").textContent = `Download for ${names[target]}`;
+    const other = target === "mac" ? "windows" : "mac";
+    switcher.textContent = `Get the ${names[other]} version`;
+    switcher.parentElement.firstChild.textContent = `Not on ${names[target]}? `;
+    switcher.onclick = () => showSetup(other);
+    for (const help of section.querySelectorAll(".os-help")) help.hidden = help.dataset.os !== target;
+  }
+  showSetup(os === "mac" ? "mac" : "windows");
   for (const tab of tabs) {
     tab.addEventListener("click", () => select(tab.dataset.os));
     tab.addEventListener("keydown", (event) => {

@@ -189,18 +189,6 @@ code {
 .service-status.running .dot { background: var(--teal); }
 .service-status.stopped .dot { background: #e0a14f; }
 
-/* The one manual step */
-.install-callout {
-  margin-top: 18px;
-  padding: 16px 20px;
-  border-radius: 12px;
-  background: var(--pale);
-  color: #4a3f66;
-  font-size: 14px;
-  line-height: 1.6;
-}
-.install-callout code { word-break: break-word; }
-
 /* FAQ */
 .faq {
   max-width: 760px;
@@ -237,30 +225,13 @@ code {
   .install-step { padding: 20px; }
 }
 
-/* Hero: install first, the zip as a quieter second option. */
+/* Hero: one clear action. */
 .cta-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
 }
-.zip-button {
-  display: inline-block;
-  padding: 14px 20px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: #fff;
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 550;
-  text-decoration: none;
-}
-.zip-button:hover { border-color: var(--purple); color: var(--purple); }
-.zip-button:focus-visible {
-  outline: 2px solid var(--purple);
-  outline-offset: 3px;
-}
-
 /* What you need, at a glance. */
 .requirements {
   display: flex;
@@ -282,3 +253,75 @@ code {
   margin-left: 14px;
   font-size: 13px;
 }
+
+/* Step 1: the big download button and the security-prompt notes. */
+.setup-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 4px 0 10px;
+  padding: 15px 20px;
+  border-radius: 10px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 650;
+  text-decoration: none;
+  box-shadow: 0 6px 18px #7955db40;
+}
+.setup-button::before {
+  content: "↓";
+  font-size: 17px;
+}
+.setup-button:hover { background: #6945ca; }
+.setup-other {
+  color: var(--muted);
+  font-size: 13px !important;
+  text-align: center;
+}
+.link-button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--purple);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.friendly-note {
+  padding: 10px 12px;
+  border-left: 3px solid #e0a14f;
+  border-radius: 6px;
+  background: #fdf7ee;
+  color: #6b5330;
+  font-size: 13px !important;
+}
+
+/* Everything technical, folded away. */
+.developers {
+  max-width: 760px;
+  margin-top: 40px;
+  padding: 16px 20px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+.developers > summary { color: var(--muted) !important; }
+.developers-body { margin-top: 14px; }
+.developers-body > p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #5d5b6a;
+}
+.dev-notes {
+  margin: 6px 0 4px;
+  padding-left: 18px;
+  color: #5d5b6a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.dev-notes li { margin-bottom: 6px; }
+.dev-notes .text-link { color: var(--purple); }
+.releases-link { white-space: nowrap; }
