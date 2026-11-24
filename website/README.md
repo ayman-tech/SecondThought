@@ -47,10 +47,13 @@ The website API currently runs from the repository checkout, not a standalone wh
 
 ## The extension download
 
-The Community page (`/community`) is the extension's home. It leads with the
-one-command installers in `scripts/` (`install.ps1` for Windows, `install.sh` for
-macOS and Linux), shown under OS tabs, then three short steps and an FAQ. The
-manual route stays in the FAQ: `/downloads/secondthought-extension.zip` zips
+The Community page (`/community`) is the extension's home, written for people
+who have never opened a terminal. Its big button downloads a double-click setup
+file for the visitor's system (`/downloads/SecondThought-Setup-Windows.cmd`, or
+`/downloads/SecondThought-Setup-macOS.zip`, which keeps the `.command` file
+runnable). Both just run the installers in `scripts/`. Three short steps and an
+FAQ follow. The terminal commands and the manual zip sit in a folded "For
+developers" section: `/downloads/secondthought-extension.zip` zips
 `extension/frontend/` on the fly (plus a short `HOW TO INSTALL.txt`), so it's
 always the current version. The guide also checks live whether the extension's
 service is running.

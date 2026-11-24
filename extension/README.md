@@ -35,9 +35,12 @@ change them without touching code.
 
 ## Running it
 
-**Just want to use it?** One command sets everything up in `~/SecondThought`
-(no admin rights) and opens the browser's extensions page for the last three
-clicks. Run it again any time to update.
+**Just want to use it?** Download the setup file from the website's Community
+page and double-click it (`scripts/SecondThought-Setup-Windows.cmd`, or
+`SecondThought-Setup-macOS.command` on a Mac). It sets everything up in
+`~/SecondThought` (no admin rights), downloads the model, and opens the
+browser's extensions page for the last three clicks. Run it again any time to
+update. The setup file only runs one of these commands:
 
 ```powershell
 irm https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts/install.ps1 | iex   # Windows
@@ -47,9 +50,10 @@ irm https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts/in
 curl -fsSL https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts/install.sh | sh   # macOS / Linux
 ```
 
-The model isn't public yet, so copy the `both-t5` folder into
-`~/SecondThought/models/`, or set `SECONDTHOUGHT_MODEL` to its path before
-running. Then double-click `start-secondthought`. The website's Community page
+The model comes from Hugging Face, or from `both-t5.zip` on the latest GitHub
+release if it isn't there (`scripts/get_model.py`; see "Hosting the model"
+below). To use a copy you already have, set `SECONDTHOUGHT_MODEL` to its folder
+or zip first. Then double-click **Start SecondThought** on the Desktop. The website's Community page
 (`uv run python -m website.api.server`, then http://127.0.0.1:8001/community)
 walks through the same steps with a live status check. The steps below do it
 by hand from the repo.
@@ -64,6 +68,8 @@ folder (it's git-ignored, so get it from the team drive or from
 ```text
 models/both-t5/    config.json, model.safetensors, tokenizer files...
 ```
+
+Or download it: `uv run python scripts/get_model.py`.
 
 **2. Start the server** from the repo root and leave it running:
 
@@ -95,6 +101,28 @@ missing model folder.
 
 Open the popup. The small dot in the corner is green when the server is
 reachable and red when it isn't. Hovering it shows which model is loaded.
+
+## Hosting the model
+
+The installers fetch `both-t5` with `scripts/get_model.py`: first from the
+Hugging Face repo `SAI-RAHUL-M/secondthought-both-t5`, then from `both-t5.zip`
+on the latest GitHub release. Point them at a different repo with
+`SECONDTHOUGHT_MODEL_REPO`, or change `HF_REPO` in `get_model.py`.
+
+Upload to Hugging Face (free; needs a write token from
+https://huggingface.co/settings/tokens):
+
+```bash
+uv run hf auth login
+uv run hf upload SAI-RAHUL-M/secondthought-both-t5 models/both-t5 . --exclude training_args.bin
+```
+
+Attach it to a GitHub release as the backup (after the release exists):
+
+```powershell
+Compress-Archive models/both-t5 both-t5.zip    # macOS/Linux: cd models && zip -r ../both-t5.zip both-t5
+gh release upload extension-v0.3.0 both-t5.zip
+```
 
 ## Quick manual test (about 30 seconds)
 
