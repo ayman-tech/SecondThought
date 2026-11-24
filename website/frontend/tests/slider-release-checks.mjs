@@ -100,10 +100,9 @@ export async function checkSliderRelease({ evaluate, cdp, until }) {
     assert.equal(await requestCount(), 5);
 
     await evaluate(`
-      document.querySelector('#layer-mode-multi').click();
       const preview=document.querySelector('.layer.preview');
-      if(preview) { preview.click(); document.querySelector('#layer-enabled').click(); window.__releaseEdit('1.8'); }
-      document.querySelector('[data-layer="4"]').click(); window.__releaseEdit('0.7');`);
+      if(preview) { preview.click(); window.__releaseEdit('1.8'); }
+      document.querySelector('[data-layer="4"]').click();document.querySelector('[data-layer="4"]').click(); window.__releaseEdit('0.7');`);
     assert.equal(await requestCount(), 5, "Preview and unselected layers never submit on release");
     await evaluate(`document.querySelector('#draft').value = 'Pending typing';
       document.querySelector('#draft').dispatchEvent(new Event('input'));`);
@@ -113,7 +112,7 @@ export async function checkSliderRelease({ evaluate, cdp, until }) {
     assert.equal(await requestCount(),5,'Disabled spider-axis release cannot flush pending typing');
     assert.equal(await evaluate(`[...window.__releaseQA.timers.values()].some(t => t.delay === 450)`), true);
     await evaluate(`document.querySelector('#clear').click();
-      document.querySelector('[data-layer="11"]').click(); window.__releaseEdit('0.6');`);
+      document.querySelector('#reset-layers').click(); window.__releaseEdit('0.6');`);
     assert.equal(await requestCount(), 5, "Empty/cleared drafts never generate");
     assert.equal(await evaluate(`window.__releaseQA.timers.size`), 0);
 

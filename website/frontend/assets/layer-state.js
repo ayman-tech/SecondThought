@@ -47,6 +47,12 @@ export class LayerSelection {
     if (this.mode === 'single')
       this.selected = new Set(this.available.has(index) ? [index] : []);
   }
+  toggle(index) {
+    this.focused = index;
+    if (!this.available.has(index)) return;
+    if (this.selected.has(index)) this.selected.delete(index);
+    else this.selected.add(index);
+  }
   setMode(mode) {
     if (!['single','multi'].includes(mode)) throw new Error('Unknown layer mode');
     this.mode = mode;

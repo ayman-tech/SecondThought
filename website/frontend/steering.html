@@ -8,52 +8,38 @@
 <div class="intro">
 <div><h1 class="lab-title">Steering Lab</h1>
 </div>
-<div class="model-state"><span id="model-dot" class="status-dot loading"></span><span id="model-status">Connecting to the model…</span><button id="reconnect" hidden>Reconnect</button>
+<div class="lab-toolbar"><button type="button" class="task-trigger" popovertarget="task-controls">Task: <span id="task-label">Rewrite</span></button><div class="model-state"><span id="model-dot" class="status-dot loading"></span><span id="model-status">Connecting to the model…</span><button id="reconnect" hidden>Reconnect</button>
 </div>
-</div>
+</div></div>
 
-<section class="experiment-settings" aria-labelledby="settings-title">
-<div class="setup-panel-body">
-  <div class="settings-heading"><h2 id="settings-title">Experiment setup</h2></div>
-  <div class="settings-grid">
-    <div class="setup-field"><label for="experiment-model">Model <span>Fixed</span></label><select id="experiment-model" disabled aria-describedby="settings-note"><option value="Qwen/Qwen2.5-0.5B-Instruct">Qwen 2.5 · 0.5B Instruct</option></select><small>24 decoder blocks · indices 0–23</small></div>
-    <div class="setup-field"><label>Features</label><div id="feature-selection" class="feature-selection"></div></div>
-    <div class="setup-field"><label for="focused-feature">Edit layers for</label><select id="focused-feature" aria-label="Feature whose layers are being edited"></select></div>
-    <div class="setup-field"><label for="focused-pooling">Extraction pooling <span>Per feature</span></label><select id="focused-pooling" aria-describedby="settings-note"><option value="mean" selected>Mean pooling</option><option value="final_token">Last-token pooling</option></select></div>
-    <div class="setup-field"><label for="experiment-prompt">Task</label><select id="experiment-prompt">{% for id,preset in task_presets.items() %}<option value="{{ id }}">{{ preset.label }}</option>{% endfor %}</select></div>
-  </div>
-  <button type="button" class="feature-data-trigger" popovertarget="feature-data-guide">Dataset &amp; direction ↗</button>
-  <div id="feature-data-guide" class="mix-layer-popover" popover="auto"><strong id="feature-data-name"></strong><p id="feature-data-dataset"></p><p id="feature-data-pairs"></p><p id="feature-data-limits"></p><small>Scores describe held-out activation separation, not generated response quality.</small></div>
-  <div class="settings-bottom" hidden><p id="settings-note">Each feature and pooling combination selects an artifact family. Select layers and set strengths to apply it. Model switching awaits backend integration.</p></div>
   <script id="feature-source-data" type="application/json">{{ feature_sources | tojson }}</script>
   <script id="prompt-limits" type="application/json">{{ prompt_limits | tojson }}</script>
   <script id="task-presets" type="application/json">{{ task_presets | tojson }}</script>
-  <details class="advanced-settings" id="prompt-settings"><summary>Instructions &amp; limits</summary>
+
+<div id="task-controls" class="task-popover" popover="auto" aria-label="Task and instructions"><div class="setup-field"><label for="experiment-prompt">Task</label><select id="experiment-prompt">{% for id,preset in task_presets.items() %}<option value="{{ id }}">{{ preset.label }}</option>{% endfor %}</select></div><details class="advanced-settings" id="prompt-settings"><summary>Instructions &amp; limits</summary>
     <div class="advanced-settings-grid">
       <div class="prompt-editor"><div class="prompt-editor-heading"><label for="system-prompt">System instruction</label><span id="prompt-state" class="setup-badge">Applied</span></div><textarea id="system-prompt" rows="5" maxlength="{{ prompt_limits.system_characters }}" aria-label="System instruction">{{ rewrite_prompt }}</textarea></div>
       <div class="budget-controls"><label for="input-budget">Input budget <span>tokens</span></label><input id="input-budget" type="number" min="{{ prompt_limits.input.min }}" max="{{ prompt_limits.input.max }}" step="1" value="{{ prompt_limits.input.default }}" title="Full formatted prompt, including system instructions" required><label for="output-budget">Output limit <span>tokens</span></label><input id="output-budget" type="number" min="{{ prompt_limits.output.min }}" max="{{ prompt_limits.output.max }}" step="1" value="{{ prompt_limits.output.default }}" required></div>
       <button id="apply-prompt" type="button" disabled>Apply</button>
     </div>
-  </details>
-</div>
-</section>
+  </details></div>
+  <div id="feature-data-guide" class="mix-layer-popover" popover="auto"><strong id="feature-data-name"></strong><p id="feature-data-dataset"></p><p id="feature-data-pairs"></p><p id="feature-data-limits"></p><small>Scores describe held-out activation separation, not generated response quality.</small></div>
 
 <section class="model-section" aria-label="Interactive model layers">
 
 <script id="layer-vector-data" type="application/json">{{ layer_vectors | tojson }}</script>
-<script id="layer-evidence-data" type="application/json">{{ layer_evidence | tojson }}</script>
 <div class="model-visual">
 <aside class="feature-mixer" aria-labelledby="mix-title">
   <div class="mix-title"><h2 id="mix-title">Feature mix</h2><button class="mix-precision-toggle" popovertarget="mix-precise-controls">Layer controls ↗</button></div>
   <div class="mix-dial" title="Drag each point along its axis, or focus it and use arrow keys. Each point edits the displayed layer only. This diagram shows controls, not measured vector similarity."><svg id="mix-wheel" viewBox="0 0 320 290" role="group" aria-label="Feature strengths: drag a point or use arrow keys. Centre minus two, middle zero, edge plus two."></svg></div>
   <div class="mix-scale"><span>Centre −2</span><span>Middle 0</span><span>Edge +2</span></div>
-  <div id="mix-precise-controls" class="mix-precision-popover" popover="auto" aria-label="Precise feature and layer controls"><div id="mix-controls"></div></div>
+  <div id="mix-precise-controls" class="mix-precision-popover" popover="auto" aria-label="Precise feature and layer controls"><div class="setup-field"><label for="focused-pooling">Pooling for the focused feature</label><select id="focused-pooling"><option value="mean">Mean pooling</option><option value="final_token">Last-token pooling</option></select></div><div id="mix-controls"></div></div>
 </aside>
 <div class="model-map">
 <div class="layer-evidence-toolbar">
-<fieldset class="layer-mode"><legend class="sr-only">Layer selection mode</legend><label><input id="layer-mode-single" type="radio" name="layer-mode" value="single" checked> Single layer</label><label><input id="layer-mode-multi" type="radio" name="layer-mode" value="multi"> Multi-layer</label></fieldset>
+
   <span class="evidence-heading"><strong id="layer-family-label"></strong></span>
-  <div class="layer-evidence-legend"><span class="heat-scale">50% <i aria-hidden="true"></i> 100%</span><span><i class="heat-missing" aria-hidden="true"></i>No measurement</span><span><i class="heat-selected" aria-hidden="true"></i>Selected</span><button class="guide-trigger" popovertarget="layer-guide" aria-label="How to use the steering lab and colour evidence" title="How it works">?</button></div>
+  <button class="guide-trigger" popovertarget="layer-guide" aria-label="How to use the steering lab" title="How it works">?</button>
 </div>
 
 
@@ -63,7 +49,7 @@
 </div>
 <svg class="pathways" viewBox="0 0 1200 260" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="flow"><stop stop-color="#7654e8" stop-opacity="0"/><stop offset=".15" stop-color="#7654e8"/><stop offset=".85" stop-color="#7654e8"/><stop offset="1" stop-color="#7654e8" stop-opacity="0"/></linearGradient></defs><path id="violet-path" d="M0 145 C150 185 250 75 400 115 S650 185 800 125 S1050 100 1200 145"/><path class="teal" d="M0 115 C170 65 240 180 400 155 S600 65 780 125 S1050 180 1200 110"/><path class="flow-pulse" d="M0 145 C150 185 250 75 400 115 S650 185 800 125 S1050 100 1200 145"/><path class="flow-pulse teal" d="M0 115 C170 65 240 180 400 155 S600 65 780 125 S1050 180 1200 110"/></svg>
 
-<div class="layer-grid" id="layer-grid">{% for layer in layers %}<button class="layer {{ 'available' if layer.available else 'preview' }} {{ 'selected focused' if layer.index == 11 else '' }}" data-layer="{{ layer.index }}" data-concept="{{ layer.concept|default('') }}" data-pooling="{{ layer.pooling|default('') }}" data-candidate="{{ layer.candidate|default('') }}" data-scale="{{ 'unit norm' if layer.normalized|default(false) else 'raw' }}" data-behavior="{{ layer.behavioral_status|default('experimental') }}" aria-pressed="{{ 'true' if layer.index == 11 else 'false' }}" aria-label="Layer {{ layer.index }}: {{ layer.concept if layer.available else 'preview only' }}"><span class="layer-fin"></span><span class="layer-label">{{ '%02d'|format(layer.index) }}</span><span class="layer-score" aria-hidden="true">—</span><span class="layer-feature-marks" aria-hidden="true"></span></button>{% endfor %}
+<div class="layer-grid" id="layer-grid">{% for layer in layers %}<button class="layer {{ 'available' if layer.available else 'preview' }} {{ 'selected focused' if layer.index == 11 else '' }}" data-layer="{{ layer.index }}" data-concept="{{ layer.concept|default('') }}" data-pooling="{{ layer.pooling|default('') }}" data-candidate="{{ layer.candidate|default('') }}" data-scale="{{ 'unit norm' if layer.normalized|default(false) else 'raw' }}" data-behavior="{{ layer.behavioral_status|default('experimental') }}" aria-pressed="{{ 'true' if layer.index == 11 else 'false' }}" aria-label="Layer {{ layer.index }}: {{ layer.concept if layer.available else 'preview only' }}"><span class="layer-fin"></span><span class="layer-label">{{ '%02d'|format(layer.index) }}</span></button>{% endfor %}
 </div>
 </div>
 
@@ -72,7 +58,7 @@
 
 <div class="layer-inspector" id="slider-panel">
 <div class="layer-title"><strong id="layer-name">Layer 11</strong><span id="layer-kind">Formality vector</span>
-</div><label class="enable-control"><input id="layer-enabled" type="checkbox" checked> Enable layer</label>
+</div>
 <div class="active-layers"><strong id="active-layer-summary" role="status" aria-live="polite">1 layer steering</strong><div id="active-layer-list" aria-label="Enabled layers and strengths"></div><button id="clear-layers" class="text-button">Clear layers</button></div>
 <button id="reset-layers" class="quiet-button">Reset</button>
 </div>
@@ -83,22 +69,20 @@
 
 <aside id="layer-guide" class="layer-guide" popover aria-labelledby="guide-title">
   <h2 id="guide-title">A quick guide</h2>
-<p id="layer-profile-note" class="layer-profile-note">Colours show held-out pair ordering, not measured rewrite quality.</p>
-<span id="layer-mode-help">Single layer: clicking a layer replaces the enabled layer.</span>
+<p id="layer-profile-note" class="layer-profile-note">Neutral tiles are unselected. Colours identify selected features.</p>
+
 <p class="focused-vector-note" id="focused-vector">Focused vector: negative_layer11_mean · raw</p>
 <p class="focused-evidence-note" id="layer-evidence-summary" role="status" aria-live="polite"></p>
 <p id="multi-layer-note" class="multi-layer-note" hidden>All listed nonzero shifts are applied together, at every token. Combining layers can cause repetition or change meaning.</p>
   <ol>
-    <li><strong>Pick a layer.</strong> Single layer mode replaces the enabled layer when you click a panel. Multi-layer mode lets you inspect panels and check Enable layer to add each one.</li>
-    <li><strong>Choose a vector family.</strong> Pick Formality or Detoxification and mean or last-token pooling. Select layers and adjust their strengths to apply this family.</li>
-    <li><strong>Try a sentence.</strong> Your rewrite updates automatically; highlights show changed words.</li>
+    <li><strong>Select features in Feature mix.</strong> Click a feature name to turn it on or off. Drag its point to set the strength for its focused layer.</li>
+    <li><strong>Choose layers.</strong> Click a layer to add it, then click again to remove it. Selected layers apply together, each with its own strength.</li>
+    <li><strong>Choose a task and enter text.</strong> The response updates automatically. Task contains custom instructions and limits; Layer controls contains pooling and precise strengths.</li>
   </ol>
-  <p>Preview layers have no saved vector and won’t affect the rewrite. The moving lines are illustrative.</p>
-  <p>Set all strengths to zero or deselect all layers to compare without steering.</p>
-  <p>Each feature keeps its own layers, mode, pooling and strengths. Choose Edit layers for to change the feature shown in the layer diagram. The enabled-layer chips show each retained strength. Click × to disable a layer, or Clear layers for a prompt-only baseline. Returning to Single layer keeps the focused enabled layer, or the first enabled layer. Reset restores Single layer mode.</p>
-  <p><strong>Layer colours:</strong> darker teal means higher held-out pair ordering for the feature and pooling you chose. The number is the percentage of held-out pairs whose target-minus-source activations project positively onto that exact direction. A 50% reference is shown; colours are not adjusted against shuffled controls.</p>
-  <p>Compare within the same feature, pooling and extraction cohort. Hover or focus a layer for its score and Wilson 95% interval. Overlapping intervals do not establish a reliable ranking. Grey means no recorded measurement for that exact vector, not ineffective steering.</p>
-  <p>Colours describe the selected feature and pooling vectors. Reset selects Formality, mean pooling, layer 11 at +0.5. Fluency uses human-annotated document revisions; its effects on other tasks remain experimental. Pair ordering measures activation separation, not response quality or meaning preservation.</p>
+  <p>Each feature retains its own layers, strengths and pooling. Drag a feature point or focus its precise slider to edit that feature's layers. Remove individual layers with the chips, or Clear layers for a prompt-only baseline.</p>
+  <button type="button" class="feature-data-trigger" popovertarget="feature-data-guide">Dataset &amp; direction</button>
+  <p><strong>Layer colours:</strong> neutral tiles have no selected feature. A selected layer takes its feature's colour; stripes show multiple features on the same layer. Colours do not represent accuracy or strength.</p>
+  <p>Layer indices identify decoder blocks. Reset selects Formality, mean pooling, layer 11 at +0.5.</p>
 </aside>
 
 </section>
