@@ -33,10 +33,12 @@ containing that PR. An older master checkout will not contain these controls.
 
 ```bash
 uv python install 3.12
-uv sync --python 3.12 --locked
+uv sync --python 3.12 --locked --extra evaluation
 ```
 
 This creates `.venv/` and installs the project and development test dependencies.
+`--extra evaluation` adds the response inspector's scoring models; without it the
+inspector shows "Scoring unavailable".
 The dependency download can take time; the repository also includes research
 dependencies. It does not download Qwen weights during this step.
 

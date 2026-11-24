@@ -18,10 +18,16 @@ including the offline artifact preflight and tests of the three steering feature
 From the repository root:
 
 ```bash
-uv sync --python 3.12 --locked
+uv sync --python 3.12 --locked --extra evaluation
 uv run --locked python -m website.api.check_setup
 uv run --locked python -m website.api.server
 ```
+
+`--extra evaluation` installs the models the response inspector scores with
+(Detoxify and sentence-transformers). Without it the site still runs, but the
+inspector shows "Scoring unavailable". Plain `uv sync` removes extras you don't
+name, so keep the flag on every sync. The first start downloads the scoring
+models (about 1.5 GB); until they load, the inspector shows "Scoring loading…".
 
 No `make` (e.g. on Windows)? Run `uv run python -m website.api.server` instead.
 The same goes for the extension's service: `uv run python -m extension.api.server`.
@@ -47,8 +53,13 @@ The website API currently runs from the repository checkout, not a standalone wh
 
 ## The extension download
 
-The Community page (`/community`) is the extension's home: a download button and
-a four-step setup guide. `/downloads/secondthought-extension.zip` zips
+The Community page (`/community`) is the extension's home, written for people
+who have never opened a terminal. Its big button downloads a double-click setup
+file for the visitor's system (`/downloads/SecondThought-Setup-Windows.cmd`, or
+`/downloads/SecondThought-Setup-macOS.zip`, which keeps the `.command` file
+runnable). Both just run the installers in `scripts/`. Three short steps and an
+FAQ follow. The terminal commands and the manual zip sit in a folded "For
+developers" section: `/downloads/secondthought-extension.zip` zips
 `extension/frontend/` on the fly (plus a short `HOW TO INSTALL.txt`), so it's
 always the current version. The guide also checks live whether the extension's
 service is running.
@@ -58,6 +69,7 @@ changing code:
 
 - `SECONDTHOUGHT_EXTENSION_DOWNLOAD_URL`: where the download button goes
 - `SECONDTHOUGHT_EXTENSION_API_URL`: the service the guide checks (default `http://127.0.0.1:8000`)
+- `SECONDTHOUGHT_INSTALLER_BASE_URL`: where the install commands fetch the scripts from (default: `scripts/` on GitHub master)
 
 On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
 `SITE_URL` (`extension/frontend/settings.js`) are the matching switches.
@@ -68,9 +80,11 @@ On the extension side, `SECONDTHOUGHT_WEBSITE_ORIGINS` (extension API) and
 - **Explore** (`/explore`): animated 24-layer schematic above the live draft/rewrite
   comparison. Click a layer to inspect it, check **Select layer** to include it,
   and set its independent alpha from -2 to +2. Default: layer 11 at +0.5.
-- **Community** (`/community`): extension introduction. Download is deliberately
-  disabled until packaging is ready.
-- **Evaluation** (`/evaluation`): empty content area for the upcoming evaluation UI.
+- **Community** (`/community`): the extension's home, with the download and a
+  setup guide (see "The extension download" above).
+- **Evaluation** (`/evaluation`): results dashboard for `both-t5` on the 35
+  workplace messages: pipeline, headline scores, ready to send, light touch and
+  before/after.
 
 Legacy `/steering` links redirect to Explore; `/extension` and `/about`
 redirect to Community. Only Explore loads the generation JavaScript. Shared
@@ -87,9 +101,13 @@ then press **Apply**. Typing in the editor does not change a running experiment
 until Apply is pressed. Choosing a task preset applies it immediately.
 
 The inspector has keyboard-accessible Metrics, Curves, and Run details tabs.
-Run metadata and original-input word comparisons are live. Quality scores,
-strength-curve points, sweep execution, and zero-baseline comparison are explicitly
-unconnected; the UI does not manufacture values or send unsupported request fields.
+Run metadata and original-input word comparisons are live. Each completed response
+is scored through `POST /api/v2/lab/score` with the same models as the evaluation
+pipeline: formality (`s-nlp/roberta-base-formality-ranker`), toxicity (Detoxify
+`original`) and, for Rewrite, meaning kept (`all-mpnet-base-v2`, cut-off 0.90) and
+facts kept (numbers, dates, times and names). Curves plots each response's formality
+and toxicity over time. Sweep execution and zero-baseline comparison are not
+connected; the UI does not manufacture values or send unsupported request fields.
 Opening the prompt display or changing inspector tabs never starts generation.
 
 Available directions come from the existing artifacts, never synthetic vectors:

@@ -15,7 +15,7 @@ CPU/GPU containers, a private SSH tunnel, persistent model caching, credit and
 quota checks, and a cost example for a $120 demo budget in `us-east-2`.
 
 ```bash
-uv sync --python 3.12 --locked
+uv sync --python 3.12 --locked --extra evaluation
 uv run --locked python -m website.api.check_setup
 uv run --locked python -m website.api.server
 ```
@@ -46,7 +46,7 @@ available in the lab under **Dataset & direction**.
 Use Python 3.12 (the project supports Python 3.12–3.13). Install the application, local inference, notebook, and development dependencies:
 
 ```bash
-uv sync
+uv sync --extra evaluation
 source .venv/bin/activate
 ```
 

@@ -297,6 +297,23 @@ def test_extension_download_is_a_loadable_zip():
         assert "SecondThought/HOW TO INSTALL.txt" in names
 
 
+def test_setup_files_download_ready_to_double_click():
+    import io
+    import zipfile
+
+    with TestClient(create_app(FakeService())) as client:
+        windows = client.get("/downloads/SecondThought-Setup-Windows.cmd")
+        assert windows.status_code == 200
+        assert "attachment" in windows.headers["content-disposition"]
+        assert b"install.ps1 | iex" in windows.content
+
+        mac = client.get("/downloads/SecondThought-Setup-macOS.zip")
+        assert mac.status_code == 200
+        [entry] = zipfile.ZipFile(io.BytesIO(mac.content)).infolist()
+        assert entry.filename == "SecondThought Setup.command"
+        assert (entry.external_attr >> 16) & 0o111, "the .command must stay runnable"
+
+
 def test_detox_vector_choice_reaches_worker_and_stream_events():
     from secondthought.lab.catalog import get_catalog
     vector = next(v for v in get_catalog().spec.vectors if
@@ -345,7 +362,7 @@ def test_task_prompt_and_larger_budgets_reach_worker_and_completed_metadata(task
         assert result['max_new_tokens'] == 512
 
 
-def test_download_buttons_always_point_at_the_zip():
+def test_install_section_links_the_installers_and_the_zip():
     import re
 
     from jinja2 import Environment, FileSystemLoader
@@ -354,11 +371,17 @@ def test_download_buttons_always_point_at_the_zip():
 
     with TestClient(create_app(FakeService())) as client:
         served = client.get("/community").text
-    # A server started before a pull renders the page without the download address;
-    # the buttons must still link to the zip, never to an empty href (which saves the page).
+    # A server started before a pull renders the page without these addresses;
+    # the links must still work, never fall back to an empty href (which saves the page).
     stale = Environment(loader=FileSystemLoader(str(FRONTEND))).get_template("community.html").render(
         page="community", title="Community", description="", navigation=[]
     )
+    base = "https://raw.githubusercontent.com/ayman-tech/SecondThought/master/scripts"
     for html in (served, stale):
-        links = re.findall(r'class="(?:download|install)-button" href="([^"]*)"', html)
-        assert links == ["/downloads/secondthought-extension.zip"] * 2
+        release = "https://github.com/ayman-tech/SecondThought/releases/latest/download/secondthought-extension.zip"
+        assert re.findall(r'class="zip-link" href="([^"]*)"', html) == [release]
+        assert re.findall(r'class="setup-button" href="([^"]*)"', html) == ["/downloads/SecondThought-Setup-Windows.cmd"]
+        assert 'data-mac="/downloads/SecondThought-Setup-macOS.zip"' in html
+        assert re.findall(r'class="download-button" href="([^"]*)"', html) == ["#install"]
+        assert f'data-copy="irm {base}/install.ps1 | iex"' in html
+        assert f'data-copy="curl -fsSL {base}/install.sh | sh"' in html

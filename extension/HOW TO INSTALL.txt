@@ -1,0 +1,26 @@
+SecondThought for Chrome
+=======================
+
+Easiest: run the one-command installer from the website's Community page,
+or from https://github.com/ayman-tech/SecondThought/releases. It sets
+everything up and opens the browser for you. Doing it by hand:
+
+1. Keep this folder somewhere it can stay, like Documents/SecondThought.
+   Chrome runs the extension from here, so don't move or delete it.
+
+2. Open chrome://extensions, switch on "Developer mode" (top right),
+   click "Load unpacked" and choose this SecondThought folder.
+
+3. Start the rewriting service. From the project folder, run:
+
+       uv run python -m extension.api.server
+
+   Leave that window open. First time on this computer? Run
+   "uv sync --extra evaluation" first, and put the both-t5 model
+   folder in models/.
+
+4. Pin SecondThought from the puzzle-piece icon, then type something
+   heated in Gmail or Slack. A small "SecondThought?" pill appears.
+
+The full guide, with a live check of the service, is on the website's
+Community page.
